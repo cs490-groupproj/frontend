@@ -1,0 +1,8 @@
+{
+  "recommendations": [
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "vitejs.vite",
+    "dsznajder.es7-react-js-snippets"
+  ]
+}
