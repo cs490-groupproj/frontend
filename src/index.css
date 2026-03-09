@@ -15,7 +15,7 @@
 * color-secondary:	Complementary UI elements: secondary buttons, status badges, decorative borders
 * color-accent:	High-contrast highlights, call-to-action buttons, stand out notifications
 * color-foreground:	The primary text and icon color, maintains high contrast against  background and surface
-* E.G.:
+* eg.:
   --color-background: #000814;
   --color-surface: #001d3d;
   --color-primary: #ffc300;
