@@ -2,6 +2,7 @@ import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Sidebar from "./components/Sidebar.jsx";
 import ClientDashboard from "./components/ClientDashboard.jsx";
+import BrowseCoaches from "./components/BrowseCoaches.jsx";
 
 const App = () => {
   return (
@@ -15,7 +16,7 @@ const App = () => {
         <main className="flex-1 p-8 overflow-y-auto">
           <Routes>
             <Route path="/" element={<ClientDashboard />} />
-            <Route path="/coaches" element={<div className="p-4">Browse Coaches Content</div>} />
+            <Route path="/coaches" element={<BrowseCoaches />} />
             <Route path="/exercises" element={<div className="p-4">Exercises Content</div>} />
             <Route path="/payment" element={<div className="p-4">Payment Content</div>} />
             <Route path="/profile" element={<div className="p-4">Edit Profile Content</div>} />
