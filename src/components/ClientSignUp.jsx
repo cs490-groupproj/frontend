@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
-const UserSignUp = () => {
+const ClientSignUp = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fname, setFname] = useState("");
@@ -199,4 +199,4 @@ const UserSignUp = () => {
   );
 };
 
-export default UserSignUp;
+export default ClientSignUp;

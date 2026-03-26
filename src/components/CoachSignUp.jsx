@@ -181,7 +181,7 @@ const CoachSignUp = () => {
         <p className="mt-6 text-center text-sm text-muted-foreground">
           Want to be a coach?{" "}
           <Link
-            to="/usersignup"
+            to="/clientsignup"
             className="font-medium text-primary underline-offset-4 hover:underline">
             User Sign Up
           </Link>

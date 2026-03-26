@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
-const UserorCoach = () => {
+const ClientorCoach = () => {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
@@ -14,7 +14,7 @@ const UserorCoach = () => {
         <div className="Flex Flex-col gap-2">
 
 
-          <Link to="/usersignup" className="font-medium text-primary underline-offset-4 hover:underline">
+          <Link to="/clientsignup" className="font-medium text-primary underline-offset-4 hover:underline">
             <Button className="mt-2 w-full text-lg cursor-pointer" size="lg">
                 I'm A User
             </Button>
@@ -32,4 +32,4 @@ const UserorCoach = () => {
   );
 };
 
-export default UserorCoach;
+export default ClientorCoach;
