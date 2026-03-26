@@ -1,8 +1,12 @@
-import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
-const CoachSignUp = () => {
+const SignUp = () => {
+  const location = useLocation();
+
+  const [accountType, setAccountType] = useState("client");
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fname, setFname] = useState("");
@@ -12,16 +16,18 @@ const CoachSignUp = () => {
   const [weightLbs, setWeightLbs] = useState("");
 
   const feetOptions = [3, 4, 5, 6, 7, 8, 9];
-  const inchOptions = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+  const inchOptions = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+
     const heightInInches =
       heightFeet === "" || heightInches === ""
         ? null
         : Number(heightFeet) * 12 + Number(heightInches);
 
-    console.log("coach sign up", {
+    const payload = {
+      accountType,
       fname,
       lname,
       email,
@@ -29,16 +35,61 @@ const CoachSignUp = () => {
       heightFeet,
       heightInches,
       heightInInches,
-      weightLbs,
-    });
+      weightLbs: weightLbs === "" ? null : Number(weightLbs),
+    };
+
+    console.log("sign up payload", payload);
+
+
+    const signupEndpoint = "/api/signup";
+    try {
+      const res = await fetch(signupEndpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        const text = await res.text();
+        console.error("signup failed:", res.status, text);
+      }
+    } catch (err) {
+      console.error("signup request error:", err);
+    }
   };
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="w-full max-w-sm rounded-xl border border-border bg-card p-8 shadow-sm">
-        <h1 className="mb-6 text-center text-xl font-semibold text-card-foreground">
-          Coach Sign up
+        <h1 className="mb-4 text-center text-xl font-semibold text-card-foreground">
+          Sign up
         </h1>
+
+        <div className="mb-6 grid grid-cols-2 border-b border-border">
+          <button
+            type="button"
+            onClick={() => setAccountType("client")}
+            className={`border-b-2 pb-2 text-center text-sm font-medium ${
+              accountType === "client"
+                ? "border-primary text-primary"
+                : "border-border text-muted-foreground"
+            }`}
+          >
+            Client
+          </button>
+          <button
+            type="button"
+            onClick={() => setAccountType("coach")}
+            className={`border-b-2 pb-2 text-center text-sm font-medium ${
+              accountType === "coach"
+                ? "border-primary text-primary"
+                : "border-border text-muted-foreground"
+            }`}
+          >
+            Coach
+          </button>
+        </div>
+
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
             <label htmlFor="fname" className="text-sm font-medium text-foreground">
@@ -47,8 +98,8 @@ const CoachSignUp = () => {
             <input
               id="fname"
               name="fname"
-              type="fname"
-              autoComplete="fname"
+              type="text"
+              autoComplete="given-name"
               value={fname}
               onChange={(e) => setFname(e.target.value)}
               placeholder="Joe"
@@ -56,6 +107,7 @@ const CoachSignUp = () => {
               required
             />
           </div>
+
           <div className="flex flex-col gap-2">
             <label htmlFor="lname" className="text-sm font-medium text-foreground">
               Last Name
@@ -63,8 +115,8 @@ const CoachSignUp = () => {
             <input
               id="lname"
               name="lname"
-              type="lname"
-              autoComplete="lname"
+              type="text"
+              autoComplete="family-name"
               value={lname}
               onChange={(e) => setLname(e.target.value)}
               placeholder="Michelangelo"
@@ -72,6 +124,7 @@ const CoachSignUp = () => {
               required
             />
           </div>
+
           <div className="flex flex-col gap-2">
             <label htmlFor="signup-email" className="text-sm font-medium text-foreground">
               Email
@@ -88,6 +141,7 @@ const CoachSignUp = () => {
               required
             />
           </div>
+
           <div className="flex flex-col gap-2">
             <label htmlFor="signup-password" className="text-sm font-medium text-foreground">
               Password
@@ -104,49 +158,57 @@ const CoachSignUp = () => {
               required
             />
           </div>
+
           <div className="flex flex-col gap-2">
             <label className="text-sm font-medium text-foreground">Height</label>
             <div className="flex gap-3">
               <div className="flex-1">
+                <label htmlFor="height-feet" className="sr-only">
+                  Feet
+                </label>
                 <select
                   id="height-feet"
                   name="heightFeet"
                   value={heightFeet}
                   onChange={(e) => setHeightFeet(e.target.value)}
                   className="h-9 w-full rounded-lg border border-input bg-background px-3 text-sm placeholder:text-muted-foreground text-foreground outline-none ring-ring/50 focus-visible:border-ring focus-visible:ring-3"
-                  required>
+                  required
+                >
                   <option value="" disabled>
                     ft
                   </option>
-                {feetOptions.map((ft) => (
-                <option key={ft} value={ft}>
-                    {ft} ft
-                </option>
-                ))}
+                  {feetOptions.map((ft) => (
+                    <option key={ft} value={ft}>
+                      {ft} ft
+                    </option>
+                  ))}
                 </select>
               </div>
               <div className="flex-1">
+                <label htmlFor="height-inches" className="sr-only">
+                  Inches
+                </label>
                 <select
                   id="height-inches"
                   name="heightInches"
                   value={heightInches}
                   onChange={(e) => setHeightInches(e.target.value)}
                   className="h-9 w-full rounded-lg border border-input bg-background px-3 text-sm placeholder:text-muted-foreground text-foreground outline-none ring-ring/50 focus-visible:border-ring focus-visible:ring-3"
-                  required>
+                  required
+                >
                   <option value="" disabled>
                     in
                   </option>
-
-
-                {inchOptions.map((inch) => (
-                <option key={inch} value={inch}>
-                    {inch} in
-                </option>
-                ))}
+                  {inchOptions.map((inch) => (
+                    <option key={inch} value={inch}>
+                      {inch} in
+                    </option>
+                  ))}
                 </select>
               </div>
             </div>
           </div>
+
           <div className="flex flex-col gap-2">
             <label htmlFor="weight-lbs" className="text-sm font-medium text-foreground">
               Weight (lbs)
@@ -165,32 +227,29 @@ const CoachSignUp = () => {
               required
             />
           </div>
+
           <Button type="submit" className="mt-2 w-full" size="lg">
             Create account
           </Button>
+
           <hr className="my-4 border-t border-border" />
+
           <Button
             type="button"
             variant="outline"
             className="w-full"
-            onClick={() => console.log("google sso")}
+            onClick={() => console.log("google sso", { accountType })}
           >
             Continue with Google
           </Button>
         </form>
-        <p className="mt-6 text-center text-sm text-muted-foreground">
-          Want to be a coach?{" "}
-          <Link
-            to="/clientsignup"
-            className="font-medium text-primary underline-offset-4 hover:underline">
-            User Sign Up
-          </Link>
-        </p>
+
         <p className="mt-6 text-center text-sm text-muted-foreground">
           Already have an account?{" "}
           <Link
             to="/signin"
-            className="font-medium text-primary underline-offset-4 hover:underline">
+            className="font-medium text-primary underline-offset-4 hover:underline"
+          >
             Sign in
           </Link>
         </p>
@@ -199,4 +258,5 @@ const CoachSignUp = () => {
   );
 };
 
-export default CoachSignUp;
+export default SignUp;
+
