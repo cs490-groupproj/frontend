@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
 const SignUp = () => {
-  const location = useLocation();
+  const navigate = useNavigate();
 
   const [accountType, setAccountType] = useState("client");
 
@@ -11,20 +11,9 @@ const SignUp = () => {
   const [password, setPassword] = useState("");
   const [fname, setFname] = useState("");
   const [lname, setLname] = useState("");
-  const [heightFeet, setHeightFeet] = useState("");
-  const [heightInches, setHeightInches] = useState("");
-  const [weightLbs, setWeightLbs] = useState("");
-
-  const feetOptions = [3, 4, 5, 6, 7, 8, 9];
-  const inchOptions = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    const heightInInches =
-      heightFeet === "" || heightInches === ""
-        ? null
-        : Number(heightFeet) * 12 + Number(heightInches);
 
     const payload = {
       accountType,
@@ -32,10 +21,6 @@ const SignUp = () => {
       lname,
       email,
       password,
-      heightFeet,
-      heightInches,
-      heightInInches,
-      weightLbs: weightLbs === "" ? null : Number(weightLbs),
     };
 
     console.log("sign up payload", payload);
@@ -55,6 +40,10 @@ const SignUp = () => {
       }
     } catch (err) {
       console.error("signup request error:", err);
+    }
+
+    if (accountType === "client") {
+      navigate("/clientsurvey");
     }
   };
 
@@ -154,75 +143,6 @@ const SignUp = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
-              className="h-9 w-full rounded-lg border border-input bg-background px-3 text-sm text-foreground outline-none ring-ring/50 placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3"
-              required
-            />
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-foreground">Height</label>
-            <div className="flex gap-3">
-              <div className="flex-1">
-                <label htmlFor="height-feet" className="sr-only">
-                  Feet
-                </label>
-                <select
-                  id="height-feet"
-                  name="heightFeet"
-                  value={heightFeet}
-                  onChange={(e) => setHeightFeet(e.target.value)}
-                  className="h-9 w-full rounded-lg border border-input bg-background px-3 text-sm placeholder:text-muted-foreground text-foreground outline-none ring-ring/50 focus-visible:border-ring focus-visible:ring-3"
-                  required
-                >
-                  <option value="" disabled>
-                    ft
-                  </option>
-                  {feetOptions.map((ft) => (
-                    <option key={ft} value={ft}>
-                      {ft} ft
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="flex-1">
-                <label htmlFor="height-inches" className="sr-only">
-                  Inches
-                </label>
-                <select
-                  id="height-inches"
-                  name="heightInches"
-                  value={heightInches}
-                  onChange={(e) => setHeightInches(e.target.value)}
-                  className="h-9 w-full rounded-lg border border-input bg-background px-3 text-sm placeholder:text-muted-foreground text-foreground outline-none ring-ring/50 focus-visible:border-ring focus-visible:ring-3"
-                  required
-                >
-                  <option value="" disabled>
-                    in
-                  </option>
-                  {inchOptions.map((inch) => (
-                    <option key={inch} value={inch}>
-                      {inch} in
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <label htmlFor="weight-lbs" className="text-sm font-medium text-foreground">
-              Weight (lbs)
-            </label>
-            <input
-              id="weight-lbs"
-              name="weightLbs"
-              type="number"
-              inputMode="numeric"
-              min={1}
-              step={1}
-              value={weightLbs}
-              onChange={(e) => setWeightLbs(e.target.value)}
-              placeholder="150"
               className="h-9 w-full rounded-lg border border-input bg-background px-3 text-sm text-foreground outline-none ring-ring/50 placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3"
               required
             />
