@@ -25,7 +25,7 @@ import { Button } from "../ui/button";
 
 const Navbar = ({ navbar_contents }) => {
   return (
-    <header className="bg-card border-border fixed h-auto w-full border-b">
+    <header className="bg-card border-border fixed z-50 h-auto w-full border-b">
       <nav className="flex items-center justify-between px-6 py-4">
         {/* This handles the logo and title, pathing to a home page of some sort */}
         {"homePath" in navbar_contents && (
@@ -60,7 +60,8 @@ const Navbar = ({ navbar_contents }) => {
               }
               return (
                 <NavLink
-                  className="hover:text-primary text-lg transition duration-300"
+                  className="hover:text-primary text-base transition
+                    duration-300"
                   to={navPath.path}
                   key={navPath.pathTitle}
                 >

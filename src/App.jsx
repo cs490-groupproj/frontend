@@ -1,7 +1,7 @@
 import React from "react";
 import { useLocation, Routes, Route } from "react-router-dom";
 import Navbar from "./components/layout/Navbar.jsx";
-import LandingPage from "./pages/LandingPage.jsx";
+import LandingPage from "./pages/LandingPage/LandingPage.jsx";
 import { WeightliftingIcon } from "./components/icons/guidance-weightlifting.jsx";
 
 const navbar_contents = {
