@@ -25,9 +25,9 @@ const LandingPageFooter = () => {
         </NavLink>
         <NavLink
           className="hover:text-primary text-lg transition duration-300"
-          to="/signin"
+          to="/login"
         >
-          Sign In
+          Log In
         </NavLink>
         <NavLink
           className="hover:text-primary text-lg transition duration-300"

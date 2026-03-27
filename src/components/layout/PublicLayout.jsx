@@ -11,11 +11,11 @@ const PublicLayout = () => {
       path: "/",
     },
     navPaths: [
-      { pathTitle: "Client Dashboard", path: "/clientdashboard" },
+      { pathTitle: "Client Dashboard", path: "/clientDashboard" },
       { pathTitle: "Path2", path: "/pathname2" },
       {
-        pathTitle: "Sign In",
-        path: "/signin",
+        pathTitle: "Log In",
+        path: "/login",
         type: "btn",
         size: "lg",
         variant: "default",

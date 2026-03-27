@@ -5,7 +5,7 @@ import ClientDashboard from "./components/ClientDashboard.jsx";
 import ClientSurvey from "./components/ClientSurvey.jsx";
 import LandingPage from "./pages/LandingPage/LandingPage.jsx";
 
-import SignIn from "./components/SignIn.jsx";
+import LogIn from "./components/LogIn.jsx";
 import SignUp from "./components/SignUp.jsx";
 
 import DashboardLayout from "./components/layout/DashboardLayout.jsx";
@@ -21,7 +21,7 @@ const App = () => {
       </Route>
       {/* put things that need the sidebar in here */}
       <Route element={<DashboardLayout />}>
-        <Route path="/clientdashboard" element={<ClientDashboard />} />
+        <Route path="/clientDashboard" element={<ClientDashboard />} />
         <Route path="/coaches" element={<BrowseCoaches />} />
         <Route path="/exercises" element={<div>Exercises</div>} />
         <Route path="/payment" element={<div>Payment</div>} />
@@ -29,9 +29,9 @@ const App = () => {
         <Route path="/chat" element={<div>Chat Content</div>} />
       </Route>
       {/* Put things that need neither here */}
-      <Route path="/signin" element={<SignIn />} />
+      <Route path="/login" element={<LogIn />} />
       <Route path="/signup" element={<SignUp />} />
-      <Route path="/clientsurvey" element={<ClientSurvey />} />
+      <Route path="/clientSurvey" element={<ClientSurvey />} />
     </Routes>
   );
 };

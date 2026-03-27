@@ -11,7 +11,7 @@ import React from "react";
 
 export default function Sidebar() {
   const links = [
-    { to: "/clientdashboard", icon: LayoutDashboard, label: "Dashboard" },
+    { to: "/clientDashboard", icon: LayoutDashboard, label: "Dashboard" },
     { to: "/coaches", icon: Users, label: "Browse Coaches" },
     { to: "/exercises", icon: Dumbbell, label: "Exercises" },
     { to: "/payment", icon: CreditCard, label: "Payment" },
