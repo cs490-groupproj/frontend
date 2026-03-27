@@ -9,6 +9,8 @@ import BrowseCoaches from "./components/BrowseCoaches.jsx";
 
 
 const App = () => {
+  const location = useLocation();
+  const showNavbar = location.pathname === "/";
   return (
    <BrowserRouter>
       <div className="flex min-h-screen bg-background text-foreground">
