@@ -1,12 +1,12 @@
 import React from "react";
 import { Routes, Route } from "react-router-dom";
-import BrowseCoaches from "./components/BrowseCoaches.jsx";
-import ClientDashboard from "./components/ClientDashboard.jsx";
-import ClientSurvey from "./components/ClientSurvey.jsx";
+import BrowseCoaches from "./pages/ClientDashboard/components/BrowseCoaches.jsx";
+import ClientDashboard from "./pages/ClientDashboard/ClientDashboard.jsx";
+import ClientSurvey from "./pages/SignUp_Login/ClientSurvey.jsx";
 import LandingPage from "./pages/LandingPage/LandingPage.jsx";
 
-import LogIn from "./components/LogIn.jsx";
-import SignUp from "./components/SignUp.jsx";
+import LogIn from "./pages/SignUp_Login/LogIn.jsx";
+import SignUp from "./pages/SignUp_Login/SignUp.jsx";
 
 import DashboardLayout from "./components/layout/DashboardLayout.jsx";
 import PublicLayout from "./components/layout/PublicLayout.jsx";

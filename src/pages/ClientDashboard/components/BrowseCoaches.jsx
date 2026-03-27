@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { Button } from "./ui/button.jsx";
+import { Button } from "../../../components/ui/button.jsx";
 
 const initialCoaches = [
   {
@@ -10,7 +10,12 @@ const initialCoaches = [
     costPerHour: 85,
     rating: 4.9,
     reviews: [
-      { id: 1, user: "Chris", rating: 5, text: "Fantastic guidance and nutrition advice!" },
+      {
+        id: 1,
+        user: "Chris",
+        rating: 5,
+        text: "Fantastic guidance and nutrition advice!",
+      },
     ],
     bio: "Strength and nutrition coach focused on sustainable fat loss and muscle building.",
     reports: 0,
@@ -23,7 +28,12 @@ const initialCoaches = [
     costPerHour: 70,
     rating: 4.6,
     reviews: [
-      { id: 1, user: "Jamie", rating: 4.5, text: "Great energy and form cues." },
+      {
+        id: 1,
+        user: "Jamie",
+        rating: 4.5,
+        text: "Great energy and form cues.",
+      },
     ],
     bio: "Expert in functional training, mobility and sports performance.",
     reports: 0,
@@ -32,11 +42,19 @@ const initialCoaches = [
     id: 3,
     name: "Casey Morgan",
     specializations: ["Nutrition"],
-    certifications: ["Registered Dietitian (RD)", "Certified Diabetes Educator"],
+    certifications: [
+      "Registered Dietitian (RD)",
+      "Certified Diabetes Educator",
+    ],
     costPerHour: 95,
     rating: 4.7,
     reviews: [
-      { id: 1, user: "Taylor", rating: 4.8, text: "Made eating healthy easy and delicious." },
+      {
+        id: 1,
+        user: "Taylor",
+        rating: 4.8,
+        text: "Made eating healthy easy and delicious.",
+      },
     ],
     bio: "Nutrition strategist for clients who want flexible meal plans and blood sugar balance.",
     reports: 0,
@@ -49,7 +67,12 @@ const initialCoaches = [
     costPerHour: 105,
     rating: 4.8,
     reviews: [
-      { id: 1, user: "Morgan", rating: 4.9, text: "Holistic approach that finally worked." },
+      {
+        id: 1,
+        user: "Morgan",
+        rating: 4.9,
+        text: "Holistic approach that finally worked.",
+      },
     ],
     bio: "Lifestyle coach specializing in holistic transformation and mindset.",
     reports: 0,
@@ -66,7 +89,10 @@ const specializationFilters = [
 function matchesSpecialization(coach, filterKey) {
   if (filterKey === "all") return true;
   if (filterKey === "both") {
-    return coach.specializations.includes("Fitness") && coach.specializations.includes("Nutrition");
+    return (
+      coach.specializations.includes("Fitness") &&
+      coach.specializations.includes("Nutrition")
+    );
   }
   return coach.specializations.some((item) => item.toLowerCase() === filterKey);
 }
@@ -94,7 +120,10 @@ export default function BrowseCoaches() {
 
   const requestCoach = (coach) => {
     if (activeCoachId && activeCoachId !== coach.id) {
-      addNotification("You can only have one active coach. Fire your current coach first.", "warning");
+      addNotification(
+        "You can only have one active coach. Fire your current coach first.",
+        "warning"
+      );
       return;
     }
 
@@ -109,7 +138,10 @@ export default function BrowseCoaches() {
     }
 
     setPendingCoachId(coach.id);
-    addNotification(`Coach request sent to ${coach.name}. Waiting for response...`, "info");
+    addNotification(
+      `Coach request sent to ${coach.name}. Waiting for response...`,
+      "info"
+    );
 
     window.setTimeout(() => {
       const accepted = Math.random() < 0.75;
@@ -117,7 +149,10 @@ export default function BrowseCoaches() {
 
       if (accepted) {
         setActiveCoachId(coach.id);
-        addNotification(`${coach.name} accepted your coach request!`, "success");
+        addNotification(
+          `${coach.name} accepted your coach request!`,
+          "success"
+        );
       } else {
         addNotification(`${coach.name} rejected your coach request.`, "danger");
       }
@@ -126,12 +161,18 @@ export default function BrowseCoaches() {
 
   const fireCoach = (coach) => {
     if (activeCoachId !== coach.id) {
-      addNotification("You do not currently have this coach active.", "warning");
+      addNotification(
+        "You do not currently have this coach active.",
+        "warning"
+      );
       return;
     }
 
     setActiveCoachId(null);
-    addNotification(`You fired ${coach.name}. You can request a new coach now.`, "info");
+    addNotification(
+      `You fired ${coach.name}. You can request a new coach now.`,
+      "info"
+    );
   };
 
   const reportCoach = (coach) => {
@@ -140,7 +181,10 @@ export default function BrowseCoaches() {
         row.id === coach.id ? { ...row, reports: (row.reports ?? 0) + 1 } : row
       )
     );
-    addNotification(`${coach.name} has been reported. Thank you for the feedback.`, "danger");
+    addNotification(
+      `${coach.name} has been reported. Thank you for the feedback.`,
+      "danger"
+    );
   };
 
   const openReview = (coach) => {
@@ -165,7 +209,8 @@ export default function BrowseCoaches() {
         };
 
         const allReviews = [...coach.reviews, newReview];
-        const avgRating = allReviews.reduce((sum, r) => sum + r.rating, 0) / allReviews.length;
+        const avgRating =
+          allReviews.reduce((sum, r) => sum + r.rating, 0) / allReviews.length;
 
         return {
           ...coach,
@@ -197,8 +242,9 @@ export default function BrowseCoaches() {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold">Browse Coaches</h1>
-        <p className="mt-1 text-muted-foreground">
-          Manage coaching requests, fire/replace coaches, report issues and leave reviews.
+        <p className="text-muted-foreground mt-1">
+          Manage coaching requests, fire/replace coaches, report issues and
+          leave reviews.
         </p>
       </div>
 
@@ -209,12 +255,12 @@ export default function BrowseCoaches() {
               key={note.id}
               className={`rounded-lg border px-4 py-2 text-sm ${
                 note.type === "success"
-                  ? "bg-emerald-100 text-emerald-900 border-emerald-300"
+                  ? "border-emerald-300 bg-emerald-100 text-emerald-900"
                   : note.type === "danger"
-                  ? "bg-rose-100 text-rose-900 border-rose-300"
-                  : note.type === "warning"
-                  ? "bg-amber-100 text-amber-900 border-amber-300"
-                  : "bg-slate-100 text-slate-900 border-slate-300"
+                    ? "border-rose-300 bg-rose-100 text-rose-900"
+                    : note.type === "warning"
+                      ? "border-amber-300 bg-amber-100 text-amber-900"
+                      : "border-slate-300 bg-slate-100 text-slate-900"
               }`}
             >
               {note.text}
@@ -223,7 +269,7 @@ export default function BrowseCoaches() {
         </div>
       )}
 
-      <section className="rounded-xl border border-border bg-card p-5 shadow-sm">
+      <section className="border-border bg-card rounded-xl border p-5 shadow-sm">
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <label className="col-span-1 flex flex-col gap-1">
             <span className="text-sm font-medium">Search by name</span>
@@ -232,7 +278,9 @@ export default function BrowseCoaches() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Enter coach name"
-              className="rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+              className="border-input bg-background focus:border-primary
+                focus:ring-primary/20 rounded-lg border px-3 py-2 text-sm
+                outline-none focus:ring-2"
             />
           </label>
 
@@ -243,10 +291,11 @@ export default function BrowseCoaches() {
                 <button
                   key={spec.key}
                   onClick={() => setSelectedSpecialization(spec.key)}
-                  className={`rounded-full px-3 py-1.5 text-sm font-medium transition ${
+                  className={`rounded-full px-3 py-1.5 text-sm font-medium
+                  transition ${
                     selectedSpecialization === spec.key
                       ? "bg-primary text-primary-foreground"
-                      : "border border-border text-foreground hover:bg-muted"
+                      : "border-border text-foreground hover:bg-muted border"
                   }`}
                 >
                   {spec.label}
@@ -256,7 +305,9 @@ export default function BrowseCoaches() {
           </div>
 
           <div className="col-span-1">
-            <span className="text-sm font-medium">Max cost per hour: ${maxPrice}</span>
+            <span className="text-sm font-medium">
+              Max cost per hour: ${maxPrice}
+            </span>
             <input
               type="range"
               min="40"
@@ -264,16 +315,22 @@ export default function BrowseCoaches() {
               step="5"
               value={maxPrice}
               onChange={(e) => setMaxPrice(Number(e.target.value))}
-              className="mt-2 h-2 w-full cursor-pointer appearance-none rounded-lg bg-muted accent-primary"
+              className="bg-muted accent-primary mt-2 h-2 w-full cursor-pointer
+                appearance-none rounded-lg"
             />
-            <div className="mt-1 flex justify-between text-xs text-muted-foreground">
+            <div
+              className="text-muted-foreground mt-1 flex justify-between
+                text-xs"
+            >
               <span>$40</span>
               <span>$150</span>
             </div>
           </div>
 
           <div className="col-span-1">
-            <span className="text-sm font-medium">Minimum rating: {minRating} ⭐</span>
+            <span className="text-sm font-medium">
+              Minimum rating: {minRating} ⭐
+            </span>
             <input
               type="range"
               min="0"
@@ -281,9 +338,13 @@ export default function BrowseCoaches() {
               step="0.5"
               value={minRating}
               onChange={(e) => setMinRating(Number(e.target.value))}
-              className="mt-2 h-2 w-full cursor-pointer appearance-none rounded-lg bg-muted accent-primary"
+              className="bg-muted accent-primary mt-2 h-2 w-full cursor-pointer
+                appearance-none rounded-lg"
             />
-            <div className="mt-1 flex justify-between text-xs text-muted-foreground">
+            <div
+              className="text-muted-foreground mt-1 flex justify-between
+                text-xs"
+            >
               <span>0</span>
               <span>5</span>
             </div>
@@ -291,18 +352,30 @@ export default function BrowseCoaches() {
         </div>
       </section>
 
-      <div className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
+      <div
+        className="border-border bg-card text-muted-foreground rounded-xl border
+          p-4 text-sm"
+      >
         <strong>Active coach:</strong> {activeCoach ? activeCoach.name : "None"}
         {activeCoach && (
-          <Button className="ml-3" variant="destructive" size="sm" onClick={() => fireCoach(activeCoach)}>
+          <Button
+            className="ml-3"
+            variant="destructive"
+            size="sm"
+            onClick={() => fireCoach(activeCoach)}
+          >
             Fire Coach
           </Button>
         )}
       </div>
 
       {reviewingCoach && (
-        <section className="rounded-xl border border-border bg-card p-5 shadow-sm">
-          <h2 className="text-xl font-bold">Leave a review for {reviewingCoach.name}</h2>
+        <section
+          className="border-border bg-card rounded-xl border p-5 shadow-sm"
+        >
+          <h2 className="text-xl font-bold">
+            Leave a review for {reviewingCoach.name}
+          </h2>
           <div className="mt-3 space-y-3">
             <div className="flex items-center gap-3">
               <span className="text-sm font-medium">Stars ({reviewStars})</span>
@@ -313,7 +386,8 @@ export default function BrowseCoaches() {
                 step="0.5"
                 value={reviewStars}
                 onChange={(e) => setReviewStars(Number(e.target.value))}
-                className="h-2 w-60 cursor-pointer appearance-none rounded-lg bg-muted accent-primary"
+                className="bg-muted accent-primary h-2 w-60 cursor-pointer
+                  appearance-none rounded-lg"
               />
             </div>
             <textarea
@@ -321,13 +395,19 @@ export default function BrowseCoaches() {
               value={reviewText}
               onChange={(e) => setReviewText(e.target.value)}
               placeholder="Write your review..."
-              className="w-full rounded-lg border border-input bg-background p-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+              className="border-input bg-background focus:border-primary
+                focus:ring-primary/20 w-full rounded-lg border p-2 text-sm
+                outline-none focus:ring-2"
             />
             <div className="flex gap-2">
               <Button variant="default" size="sm" onClick={submitReview}>
                 Submit Review
               </Button>
-              <Button variant="ghost" size="sm" onClick={() => setReviewingCoach(null)}>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setReviewingCoach(null)}
+              >
                 Cancel
               </Button>
             </div>
@@ -344,38 +424,72 @@ export default function BrowseCoaches() {
             return (
               <article
                 key={coach.id}
-                className="rounded-xl border border-border bg-card p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+                className="border-border bg-card rounded-xl border p-5 shadow-sm
+                  transition hover:-translate-y-0.5 hover:shadow-md"
               >
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <h2 className="text-xl font-semibold">{coach.name}</h2>
-                    <p className="mt-1 text-sm text-muted-foreground">{coach.bio}</p>
+                    <p className="text-muted-foreground mt-1 text-sm">
+                      {coach.bio}
+                    </p>
                   </div>
                   <div className="text-right">
-                    <span className="block rounded-full border border-primary px-3 py-1 text-xs font-semibold text-primary">
+                    <span
+                      className="border-primary text-primary block rounded-full
+                        border px-3 py-1 text-xs font-semibold"
+                    >
                       ${coach.costPerHour}/hr
                     </span>
-                    <span className="mt-1 inline-flex items-center gap-1 text-sm text-muted-foreground">
+                    <span
+                      className="text-muted-foreground mt-1 inline-flex
+                        items-center gap-1 text-sm"
+                    >
                       ⭐ {coach.rating.toFixed(1)}
                     </span>
                   </div>
                 </div>
 
                 <div className="mt-4 flex flex-wrap items-center gap-2 text-xs">
-                  {isActive && <span className="rounded-full bg-emerald-100 px-2 py-1 text-emerald-800">Active</span>}
-                  {isPending && <span className="rounded-full bg-amber-100 px-2 py-1 text-amber-800">Request Pending</span>}
-                  {coach.reports > 0 && <span className="rounded-full bg-rose-100 px-2 py-1 text-rose-800">Reported {coach.reports}</span>}
+                  {isActive && (
+                    <span
+                      className="rounded-full bg-emerald-100 px-2 py-1
+                        text-emerald-800"
+                    >
+                      Active
+                    </span>
+                  )}
+                  {isPending && (
+                    <span
+                      className="rounded-full bg-amber-100 px-2 py-1
+                        text-amber-800"
+                    >
+                      Request Pending
+                    </span>
+                  )}
+                  {coach.reports > 0 && (
+                    <span
+                      className="rounded-full bg-rose-100 px-2 py-1
+                        text-rose-800"
+                    >
+                      Reported {coach.reports}
+                    </span>
+                  )}
                 </div>
 
                 <div className="mt-4">
-                  <h3 className="text-sm font-semibold uppercase tracking-wider text-secondary-foreground">
+                  <h3
+                    className="text-secondary-foreground text-sm font-semibold
+                      tracking-wider uppercase"
+                  >
                     Specializations
                   </h3>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {coach.specializations.map((spec) => (
                       <span
                         key={spec}
-                        className="rounded-full border border-muted px-2 py-1 text-xs font-medium text-muted-foreground"
+                        className="border-muted text-muted-foreground
+                          rounded-full border px-2 py-1 text-xs font-medium"
                       >
                         {spec}
                       </span>
@@ -384,10 +498,16 @@ export default function BrowseCoaches() {
                 </div>
 
                 <div className="mt-4">
-                  <h3 className="text-sm font-semibold uppercase tracking-wider text-secondary-foreground">
+                  <h3
+                    className="text-secondary-foreground text-sm font-semibold
+                      tracking-wider uppercase"
+                  >
                     Certifications
                   </h3>
-                  <ul className="mt-2 list-disc pl-4 text-sm leading-relaxed text-muted-foreground">
+                  <ul
+                    className="text-muted-foreground mt-2 list-disc pl-4 text-sm
+                      leading-relaxed"
+                  >
                     {coach.certifications.map((cert) => (
                       <li key={cert}>{cert}</li>
                     ))}
@@ -395,32 +515,57 @@ export default function BrowseCoaches() {
                 </div>
 
                 <div className="mt-4">
-                  <h3 className="text-sm font-semibold uppercase tracking-wider text-secondary-foreground">
+                  <h3
+                    className="text-secondary-foreground text-sm font-semibold
+                      tracking-wider uppercase"
+                  >
                     Reviews
                   </h3>
-                  <ul className="mt-2 space-y-2 text-sm text-muted-foreground">
+                  <ul className="text-muted-foreground mt-2 space-y-2 text-sm">
                     {coach.reviews.slice(-2).map((rev) => (
-                      <li key={rev.id} className="rounded-lg bg-muted/20 p-2">
-                        <div className="text-xs text-muted-foreground">{rev.user} · ⭐ {rev.rating}</div>
+                      <li key={rev.id} className="bg-muted/20 rounded-lg p-2">
+                        <div className="text-muted-foreground text-xs">
+                          {rev.user} · ⭐ {rev.rating}
+                        </div>
                         <div>{rev.text}</div>
                       </li>
                     ))}
-                    {coach.reviews.length > 2 && <li className="text-xs text-muted-foreground">+ {coach.reviews.length - 2} more</li>}
+                    {coach.reviews.length > 2 && (
+                      <li className="text-muted-foreground text-xs">
+                        + {coach.reviews.length - 2} more
+                      </li>
+                    )}
                   </ul>
                 </div>
 
-                <div className="mt-5 flex flex-wrap items-center justify-end gap-2">
+                <div
+                  className="mt-5 flex flex-wrap items-center justify-end gap-2"
+                >
                   <Button
                     variant={isActive ? "ghost" : "secondary"}
                     size="sm"
-                    onClick={() => (isActive ? fireCoach(coach) : requestCoach(coach))}
+                    onClick={() =>
+                      isActive ? fireCoach(coach) : requestCoach(coach)
+                    }
                   >
-                    {isActive ? "Fire Coach" : isPending ? "Request Pending" : "Request Coach"}
+                    {isActive
+                      ? "Fire Coach"
+                      : isPending
+                        ? "Request Pending"
+                        : "Request Coach"}
                   </Button>
-                  <Button variant="ghost" size="sm" onClick={() => reportCoach(coach)}>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => reportCoach(coach)}
+                  >
                     Report Coach
                   </Button>
-                  <Button variant="outline" size="sm" onClick={() => openReview(coach)}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => openReview(coach)}
+                  >
                     Leave Review
                   </Button>
                 </div>
@@ -428,7 +573,10 @@ export default function BrowseCoaches() {
             );
           })
         ) : (
-          <div className="col-span-full rounded-xl border border-border bg-card p-6 text-center text-muted-foreground">
+          <div
+            className="border-border bg-card text-muted-foreground col-span-full
+              rounded-xl border p-6 text-center"
+          >
             No coaches match your filters. Try adjusting your search criteria.
           </div>
         )}

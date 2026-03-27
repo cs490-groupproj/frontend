@@ -85,7 +85,7 @@ const LogIn = () => {
           </Button>
         </form>
         <p className="text-muted-foreground mt-6 text-center text-sm">
-          Don't have an account?{" "}
+          {"Don't have an account? "}
           <Link
             to="/signup"
             className="text-primary font-medium underline-offset-4
