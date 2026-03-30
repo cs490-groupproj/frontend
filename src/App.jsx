@@ -1,44 +1,39 @@
 import React from "react";
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
-import SignIn from "./components/SignIn.jsx";
-import SignUp from "./components/SignUp.jsx";
-import ClientSurvey from "./components/ClientSurvey.jsx";
-import Sidebar from "./components/Sidebar.jsx";
-import ClientDashboard from "./components/ClientDashboard.jsx";
-import BrowseCoaches from "./components/BrowseCoaches.jsx";
+import { Routes, Route } from "react-router-dom";
+import BrowseCoaches from "./pages/ClientDashboard/components/BrowseCoaches.jsx";
+import ClientDashboard from "./pages/ClientDashboard/ClientDashboard.jsx";
+import ClientSurvey from "./pages/SignUp_Login/ClientSurvey.jsx";
+import LandingPage from "./pages/LandingPage/LandingPage.jsx";
 
+import LogIn from "./pages/SignUp_Login/LogIn.jsx";
+import SignUp from "./pages/SignUp_Login/SignUp.jsx";
 
+import DashboardLayout from "./components/layout/DashboardLayout.jsx";
+import PublicLayout from "./components/layout/PublicLayout.jsx";
+
+// ONLY PUT ROUTES IN HERE. DON'T STYLE. IF YOU WANT TO STYLE, GO TO THE LAYOUT
 const App = () => {
-  const location = useLocation();
-  const showNavbar = location.pathname === "/";
   return (
-   <BrowserRouter>
-      <div className="flex min-h-screen bg-background text-foreground">
-        
-      
-        <Sidebar />
-        
-  
-        <main className="flex-1 p-8 overflow-y-auto">
-      <Routes>
-        <Route path="/signin" element={<SignIn />} />
-        <Route path="/signup" element={<SignUp />} />
-        <Route path="/clientsurvey" element={<ClientSurvey />} />
-        <Route path="/pathname1" element={<div>Navigation component</div>} />
-        <Route path="/pathname2" element={<div>Navigation component</div>} />
-        <Route path="/" element={<ClientDashboard />} />
+    <Routes>
+      {/* Put things that need the navbar in here */}
+      <Route element={<PublicLayout />}>
+        <Route path="/" element={<LandingPage />} />
+      </Route>
+      {/* put things that need the sidebar in here */}
+      <Route element={<DashboardLayout />}>
+        <Route path="/clientDashboard" element={<ClientDashboard />} />
         <Route path="/coaches" element={<BrowseCoaches />} />
-        <Route path="/exercises" element={<div className="p-4">Exercises Content</div>} />
-        <Route path="/payment" element={<div className="p-4">Payment Content</div>} />
-        <Route path="/profile" element={<div className="p-4">Edit Profile Content</div>} />
-        <Route path="/chat" element={<div className="p-4">Chat Content</div>} /> 
-      </Routes>
-        </main>
-      </div>
-    </BrowserRouter>
+        <Route path="/exercises" element={<div>Exercises</div>} />
+        <Route path="/payment" element={<div>Payment</div>} />
+        <Route path="/profile" element={<div>profile</div>} />
+        <Route path="/chat" element={<div>Chat Content</div>} />
+      </Route>
+      {/* Put things that need neither here */}
+      <Route path="/login" element={<LogIn />} />
+      <Route path="/signup" element={<SignUp />} />
+      <Route path="/clientSurvey" element={<ClientSurvey />} />
+    </Routes>
   );
 };
-
-
 
 export default App;

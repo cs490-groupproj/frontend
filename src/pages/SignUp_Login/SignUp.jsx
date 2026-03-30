@@ -25,7 +25,6 @@ const SignUp = () => {
 
     console.log("sign up payload", payload);
 
-
     const signupEndpoint = "/api/signup";
     try {
       const res = await fetch(signupEndpoint, {
@@ -43,18 +42,27 @@ const SignUp = () => {
     }
 
     if (accountType === "client") {
-      navigate("/clientsurvey");
+      navigate("/clientSurvey");
     }
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="w-full max-w-sm rounded-xl border border-border bg-card p-8 shadow-sm">
-        <h1 className="mb-4 text-center text-xl font-semibold text-card-foreground">
+    <div
+      className="bg-background flex min-h-screen items-center justify-center
+        px-4"
+    >
+      <div
+        className="border-border bg-card w-full max-w-sm rounded-xl border p-8
+          shadow-sm"
+      >
+        <h1
+          className="text-card-foreground mb-4 text-center text-xl
+            font-semibold"
+        >
           Sign up
         </h1>
 
-        <div className="mb-6 grid grid-cols-2 border-b border-border">
+        <div className="border-border mb-6 grid grid-cols-2 border-b">
           <button
             type="button"
             onClick={() => setAccountType("client")}
@@ -62,7 +70,7 @@ const SignUp = () => {
               accountType === "client"
                 ? "border-primary text-primary"
                 : "border-border text-muted-foreground"
-            }`}
+              }`}
           >
             Client
           </button>
@@ -73,7 +81,7 @@ const SignUp = () => {
               accountType === "coach"
                 ? "border-primary text-primary"
                 : "border-border text-muted-foreground"
-            }`}
+              }`}
           >
             Coach
           </button>
@@ -81,7 +89,10 @@ const SignUp = () => {
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
-            <label htmlFor="fname" className="text-sm font-medium text-foreground">
+            <label
+              htmlFor="fname"
+              className="text-foreground text-sm font-medium"
+            >
               First Name
             </label>
             <input
@@ -92,13 +103,19 @@ const SignUp = () => {
               value={fname}
               onChange={(e) => setFname(e.target.value)}
               placeholder="Joe"
-              className="h-9 w-full rounded-lg border border-input bg-background px-3 text-sm text-foreground outline-none ring-ring/50 placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3"
+              className="border-input bg-background text-foreground ring-ring/50
+                placeholder:text-muted-foreground focus-visible:border-ring h-9
+                w-full rounded-lg border px-3 text-sm outline-none
+                focus-visible:ring-3"
               required
             />
           </div>
 
           <div className="flex flex-col gap-2">
-            <label htmlFor="lname" className="text-sm font-medium text-foreground">
+            <label
+              htmlFor="lname"
+              className="text-foreground text-sm font-medium"
+            >
               Last Name
             </label>
             <input
@@ -109,13 +126,19 @@ const SignUp = () => {
               value={lname}
               onChange={(e) => setLname(e.target.value)}
               placeholder="Michelangelo"
-              className="h-9 w-full rounded-lg border border-input bg-background px-3 text-sm text-foreground outline-none ring-ring/50 placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3"
+              className="border-input bg-background text-foreground ring-ring/50
+                placeholder:text-muted-foreground focus-visible:border-ring h-9
+                w-full rounded-lg border px-3 text-sm outline-none
+                focus-visible:ring-3"
               required
             />
           </div>
 
           <div className="flex flex-col gap-2">
-            <label htmlFor="signup-email" className="text-sm font-medium text-foreground">
+            <label
+              htmlFor="signup-email"
+              className="text-foreground text-sm font-medium"
+            >
               Email
             </label>
             <input
@@ -126,13 +149,19 @@ const SignUp = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Email Address"
-              className="h-9 w-full rounded-lg border border-input bg-background px-3 text-sm text-foreground outline-none ring-ring/50 placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3"
+              className="border-input bg-background text-foreground ring-ring/50
+                placeholder:text-muted-foreground focus-visible:border-ring h-9
+                w-full rounded-lg border px-3 text-sm outline-none
+                focus-visible:ring-3"
               required
             />
           </div>
 
           <div className="flex flex-col gap-2">
-            <label htmlFor="signup-password" className="text-sm font-medium text-foreground">
+            <label
+              htmlFor="signup-password"
+              className="text-foreground text-sm font-medium"
+            >
               Password
             </label>
             <input
@@ -143,7 +172,10 @@ const SignUp = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
-              className="h-9 w-full rounded-lg border border-input bg-background px-3 text-sm text-foreground outline-none ring-ring/50 placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3"
+              className="border-input bg-background text-foreground ring-ring/50
+                placeholder:text-muted-foreground focus-visible:border-ring h-9
+                w-full rounded-lg border px-3 text-sm outline-none
+                focus-visible:ring-3"
               required
             />
           </div>
@@ -152,7 +184,7 @@ const SignUp = () => {
             Create account
           </Button>
 
-          <hr className="my-4 border-t border-border" />
+          <hr className="border-border my-4 border-t" />
 
           <Button
             type="button"
@@ -164,13 +196,14 @@ const SignUp = () => {
           </Button>
         </form>
 
-        <p className="mt-6 text-center text-sm text-muted-foreground">
+        <p className="text-muted-foreground mt-6 text-center text-sm">
           Already have an account?{" "}
           <Link
-            to="/signin"
-            className="font-medium text-primary underline-offset-4 hover:underline"
+            to="/login"
+            className="text-primary font-medium underline-offset-4
+              hover:underline"
           >
-            Sign in
+            Log In
           </Link>
         </p>
       </div>
@@ -179,4 +212,3 @@ const SignUp = () => {
 };
 
 export default SignUp;
-
