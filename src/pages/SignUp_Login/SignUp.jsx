@@ -43,6 +43,8 @@ const SignUp = () => {
 
     if (accountType === "client") {
       navigate("/clientSurvey");
+    } else if (accountType === "coach") {
+      navigate("/coachSurvey");
     }
   };
 

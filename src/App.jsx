@@ -3,6 +3,7 @@ import { Routes, Route } from "react-router-dom";
 import BrowseCoaches from "./pages/ClientDashboard/components/BrowseCoaches.jsx";
 import ClientDashboard from "./pages/ClientDashboard/ClientDashboard.jsx";
 import ClientSurvey from "./pages/SignUp_Login/ClientSurvey.jsx";
+import CoachSurvey from "./pages/SignUp_Login/CoachSurvey.jsx";
 import LandingPage from "./pages/LandingPage/LandingPage.jsx";
 
 import LogIn from "./pages/SignUp_Login/LogIn.jsx";
@@ -32,6 +33,7 @@ const App = () => {
       <Route path="/login" element={<LogIn />} />
       <Route path="/signup" element={<SignUp />} />
       <Route path="/clientSurvey" element={<ClientSurvey />} />
+      <Route path="/coachSurvey" element={<CoachSurvey />} />
     </Routes>
   );
 };
