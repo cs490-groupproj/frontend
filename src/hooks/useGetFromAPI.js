@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { API_BASE_URL } from "../../config.js";
 
-function useGetFromAPI(requestURI, refreshTrigger) {
+function useGetFromAPI(requestURI, refreshTrigger, auth_token) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -21,6 +21,7 @@ function useGetFromAPI(requestURI, refreshTrigger) {
         const response = await fetch(`${API_BASE_URL}${requestURI}`, {
           method: "GET",
           signal: controller.signal,
+          Authorization: "Bearer " + auth_token,
         });
 
         if (!response.ok) {

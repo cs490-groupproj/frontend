@@ -6,7 +6,7 @@ function usePostToAPI() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const postFunction = useCallback(async (postURI, postData) => {
+  const postFunction = useCallback(async (postURI, postData, auth_token) => {
     setData(null);
     setLoading(true);
     setError(null);
@@ -17,6 +17,7 @@ function usePostToAPI() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(postData),
+        Authorization: "Bearer " + auth_token,
       });
 
       if (!response.ok) {
