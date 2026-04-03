@@ -21,7 +21,7 @@ function useGetFromAPI(requestURI, refreshTrigger, auth_token) {
         const response = await fetch(`${API_BASE_URL}${requestURI}`, {
           method: "GET",
           signal: controller.signal,
-          Authorization: "Bearer " + auth_token,
+          headers: { Authorization: "Bearer " + auth_token },
         });
 
         if (!response.ok) {

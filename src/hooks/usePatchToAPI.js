@@ -15,9 +15,9 @@ function usePatchToAPI() {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
+          Authorization: "Bearer " + auth_token,
         },
         body: JSON.stringify(patchData),
-        Authorization: "Bearer " + auth_token,
       });
 
       if (!response.ok) {

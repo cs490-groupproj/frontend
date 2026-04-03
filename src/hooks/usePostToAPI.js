@@ -15,9 +15,9 @@ function usePostToAPI() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: "Bearer " + auth_token,
         },
         body: JSON.stringify(postData),
-        Authorization: "Bearer " + auth_token,
       });
 
       if (!response.ok) {

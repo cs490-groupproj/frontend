@@ -15,8 +15,8 @@ function useDeleteFromAPI() {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
+          Authorization: "Bearer " + auth_token,
         },
-        Authorization: "Bearer " + auth_token,
       });
 
       if (!response.ok) {
