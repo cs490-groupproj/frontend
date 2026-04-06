@@ -1,6 +1,23 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { signInWithGooglePopup } from "@/lib/googleSignIn.js";
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { auth } from "@/firebase.js";
+
+function mapEmailPasswordError(err) {
+  const code = err?.code;
+  if (code === "auth/email-already-in-use") {
+    return "This email is already registered.";
+  }
+  if (code === "auth/invalid-email") {
+    return "Please enter a valid email address.";
+  }
+  if (code === "auth/weak-password") {
+    return "Password is too weak. Use at least 6 characters.";
+  }
+  return err?.message || "Unable to create your account right now.";
+}
 
 const SignUp = () => {
   const navigate = useNavigate();
@@ -11,9 +28,15 @@ const SignUp = () => {
   const [password, setPassword] = useState("");
   const [fname, setFname] = useState("");
   const [lname, setLname] = useState("");
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const [googleError, setGoogleError] = useState(null);
+  const [signupLoading, setSignupLoading] = useState(false);
+  const [signupError, setSignupError] = useState(null);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setSignupError(null);
+    setSignupLoading(true);
 
     const payload = {
       accountType,
@@ -23,26 +46,52 @@ const SignUp = () => {
       password,
     };
 
-    console.log("sign up payload", payload);
-
-    const signupEndpoint = "/api/signup";
     try {
+      // Create Firebase auth account and sign user in.
+      await createUserWithEmailAndPassword(auth, email, password);
+
+      const signupEndpoint = "/api/signup";
       const res = await fetch(signupEndpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-
+/* ADD SIGNUP ENDPOINT WITRH FIREBAWSE TOKEN + profile fields so your DB gets a matching user record.
       if (!res.ok) {
         const text = await res.text();
-        console.error("signup failed:", res.status, text);
+        throw new Error(
+          `Account created, but profile setup failed (${res.status}): ${text}`,
+        );
+      }
+*/
+      if (accountType === "client") {
+        navigate("/clientSurvey");
+      } else if (accountType === "coach") {
+        navigate("/coachSurvey");
       }
     } catch (err) {
-      console.error("signup request error:", err);
+      setSignupError(mapEmailPasswordError(err));
+    } finally {
+      setSignupLoading(false);
     }
+  };
 
-    if (accountType === "client") {
-      navigate("/clientSurvey");
+  const handleGoogleSignIn = async () => {
+    setGoogleError(null);
+    setGoogleLoading(true);
+    try {
+      await signInWithGooglePopup();
+      if (accountType === "client") {
+        navigate("/clientSurvey", { replace: true });
+      } else {
+        navigate("/coachSurvey", { replace: true });
+      }
+    } catch (err) {
+      if (err.code !== "auth/popup-closed-by-user") {
+        setGoogleError(err.message);
+      }
+    } finally {
+      setGoogleLoading(false);
     }
   };
 
@@ -180,19 +229,32 @@ const SignUp = () => {
             />
           </div>
 
-          <Button type="submit" className="mt-2 w-full" size="lg">
-            Create account
+          {signupError && (
+            <p className="text-destructive text-sm" role="alert">
+              {signupError}
+            </p>
+          )}
+
+          <Button type="submit" className="mt-2 w-full" size="lg" disabled={signupLoading}>
+            {signupLoading ? "Creating account..." : "Create account"}
           </Button>
 
           <hr className="border-border my-4 border-t" />
-
+          {googleError && (
+            <p className="text-destructive text-sm" role="alert">
+              {googleError}
+            </p>
+          )}
           <Button
             type="button"
             variant="outline"
             className="w-full"
-            onClick={() => console.log("google sso", { accountType })}
+            disabled={googleLoading}
+            onClick={handleGoogleSignIn}
+
           >
-            Continue with Google
+          {googleLoading ? "Opening Google…" : "Continue with Google"}
+          
           </Button>
         </form>
 
