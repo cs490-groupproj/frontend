@@ -6,7 +6,7 @@ function usePatchToAPI() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const patchFunction = useCallback(async (patchURI, patchData) => {
+  const patchFunction = useCallback(async (patchURI, patchData, auth_token) => {
     setData(null);
     setLoading(true);
     setError(null);
@@ -15,6 +15,7 @@ function usePatchToAPI() {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
+          Authorization: "Bearer " + auth_token,
         },
         body: JSON.stringify(patchData),
       });
