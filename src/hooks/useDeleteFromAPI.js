@@ -6,7 +6,7 @@ function useDeleteFromAPI() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const deleteFunction = useCallback(async (deleteURI) => {
+  const deleteFunction = useCallback(async (deleteURI, auth_token) => {
     setData(null);
     setLoading(true);
     setError(null);
@@ -15,6 +15,7 @@ function useDeleteFromAPI() {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
+          Authorization: "Bearer " + auth_token,
         },
       });
 
