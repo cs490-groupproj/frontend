@@ -34,9 +34,7 @@ const LogIn = () => {
     });
 
     if (!response.ok) {
-      throw new Error(
-        "Credentials valid, but user not found in the database. Ask your teammate if your email is in the SQL Users table!"
-      );
+      throw new Error("Credentials valid, but user not found in the database.");
     }
 
     const dbData = await response.json();
