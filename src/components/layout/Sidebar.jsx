@@ -5,6 +5,7 @@ import {
   Dumbbell,
   CreditCard,
   User,
+  Utensils,
   MessageSquare,
 } from "lucide-react";
 import React from "react";
@@ -12,6 +13,7 @@ import React from "react";
 export default function Sidebar() {
   const links = [
     { to: "/clientDashboard", icon: LayoutDashboard, label: "Dashboard" },
+    { to: "/nutrition", icon: Utensils, label: "Nutrition" },
     { to: "/coaches", icon: Users, label: "Browse Coaches" },
     { to: "/exercises", icon: Dumbbell, label: "Exercises" },
     { to: "/payment", icon: CreditCard, label: "Payment" },

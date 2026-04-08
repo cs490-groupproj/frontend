@@ -11,6 +11,9 @@ import SignUp from "./pages/SignUp_Login/SignUp.jsx";
 import DashboardLayout from "./components/layout/DashboardLayout.jsx";
 import PublicLayout from "./components/layout/PublicLayout.jsx";
 
+import PaymentPage from "./pages/Payment/PaymentPage.jsx";
+import Nutrition from "./pages/Nutrition/nutrition.jsx";
+
 // ONLY PUT ROUTES IN HERE. DON'T STYLE. IF YOU WANT TO STYLE, GO TO THE LAYOUT
 const App = () => {
   return (
@@ -24,7 +27,8 @@ const App = () => {
         <Route path="/clientDashboard" element={<ClientDashboard />} />
         <Route path="/coaches" element={<BrowseCoaches />} />
         <Route path="/exercises" element={<div>Exercises</div>} />
-        <Route path="/payment" element={<div>Payment</div>} />
+        <Route path="/nutrition" element={<Nutrition />} />
+        <Route path="/payment" element={<PaymentPage />} />
         <Route path="/profile" element={<div>profile</div>} />
         <Route path="/chat" element={<div>Chat Content</div>} />
       </Route>
