@@ -1,12 +1,13 @@
 import { useCallback, useState } from "react";
 import { API_BASE_URL } from "../../config.js";
+import { getAuthHeader } from "@/lib/authHeader";
 
 function usePostToAPI() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const postFunction = useCallback(async (postURI, postData) => {
+  const postFunction = useCallback(async (postURI, postData, auth_token) => {
     setData(null);
     setLoading(true);
     setError(null);
@@ -15,6 +16,7 @@ function usePostToAPI() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          ...(await getAuthHeader()),
         },
         body: JSON.stringify(postData),
       });

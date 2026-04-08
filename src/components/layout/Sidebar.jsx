@@ -22,7 +22,9 @@ export default function Sidebar() {
   ];
 
   return (
-    <aside className="bg-sidebar min-h-screen w-64 pt-10">
+    <aside
+      className="bg-card border-border fixed min-h-screen w-64 border-r pt-10"
+    >
       <nav className="space-y-2 px-6">
         {links.map(({ to, icon: Icon, label }) => (
           <NavLink

@@ -1,14 +1,88 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { signInWithGooglePopup } from "@/lib/googleSignIn.js";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { auth } from "@/firebase.js";
+
+function mapEmailPasswordError(err) {
+  const code = err?.code;
+  if (code === "auth/invalid-credential") return "Incorrect email or password.";
+  if (code === "auth/invalid-email")
+    return "Please enter a valid email address.";
+  if (code === "auth/too-many-requests")
+    return "Too many attempts. Please try again later.";
+  return err?.message || "Unable to sign in right now.";
+}
 
 const LogIn = () => {
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const [googleError, setGoogleError] = useState(null);
+  const [loginLoading, setLoginLoading] = useState(false);
+  const [loginError, setLoginError] = useState(null);
 
-  const handleSubmit = (e) => {
+  const syncWithBackend = async (idToken) => {
+    const response = await fetch("https://optimal-api.lambusta.me/users/me", {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${idToken}`,
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(
+        "Credentials valid, but user not found in the database. Ask your teammate if your email is in the SQL Users table!"
+      );
+    }
+
+    const dbData = await response.json();
+
+    localStorage.setItem("token", idToken);
+    localStorage.setItem("userId", dbData.user_id);
+
+    return dbData;
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("log in", { email, password });
+    setLoginError(null);
+    setLoginLoading(true);
+    try {
+      const result = await signInWithEmailAndPassword(auth, email, password);
+      const idToken = await result.user.getIdToken();
+
+      await syncWithBackend(idToken);
+
+      navigate("/clientDashboard", { replace: true });
+    } catch (err) {
+      setLoginError(mapEmailPasswordError(err));
+    } finally {
+      setLoginLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setGoogleError(null);
+    setGoogleLoading(true);
+    try {
+      // 1. Google Login
+      const { idToken } = await signInWithGooglePopup();
+
+      // 2. Handshake & Store
+      await syncWithBackend(idToken);
+
+      navigate("/clientDashboard", { replace: true });
+    } catch (err) {
+      if (err.code !== "auth/popup-closed-by-user") {
+        setGoogleError(err.message || "Failed to sync with backend.");
+      }
+    } finally {
+      setGoogleLoading(false);
+    }
   };
 
   return (
@@ -71,17 +145,33 @@ const LogIn = () => {
               required
             />
           </div>
-          <Button type="submit" className="mt-2 w-full" size="lg">
-            Continue
+          {loginError && (
+            <p className="text-destructive text-sm" role="alert">
+              {loginError}
+            </p>
+          )}
+          <Button
+            type="submit"
+            className="mt-2 w-full"
+            size="lg"
+            disabled={loginLoading}
+          >
+            {loginLoading ? "Signing in..." : "Continue"}
           </Button>
           <hr className="border-border my-4 border-t" />
+          {googleError && (
+            <p className="text-destructive text-sm" role="alert">
+              {googleError}
+            </p>
+          )}
           <Button
             type="button"
             variant="outline"
             className="w-full"
-            onClick={() => console.log("google sso")}
+            disabled={googleLoading}
+            onClick={handleGoogleSignIn}
           >
-            Continue with Google
+            {googleLoading ? "Opening Google…" : "Continue with Google"}
           </Button>
         </form>
         <p className="text-muted-foreground mt-6 text-center text-sm">

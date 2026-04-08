@@ -1,12 +1,12 @@
 import { useCallback, useState } from "react";
 import { API_BASE_URL } from "../../config.js";
-
+import { getAuthHeader } from "@/lib/authHeader";
 function usePatchToAPI() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const patchFunction = useCallback(async (patchURI, patchData) => {
+  const patchFunction = useCallback(async (patchURI, patchData, auth_token) => {
     setData(null);
     setLoading(true);
     setError(null);
@@ -15,6 +15,7 @@ function usePatchToAPI() {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
+          ...(await getAuthHeader()),
         },
         body: JSON.stringify(patchData),
       });
