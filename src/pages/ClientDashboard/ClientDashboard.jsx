@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import DailySurvey from "./components/DailySurvey";
 
+
 const MetricCard = ({ title, description }) => {
   const [timePeriod, setTimePeriod] = useState("7D");
 
@@ -52,6 +53,7 @@ const MetricCard = ({ title, description }) => {
 };
 
 export default function ClientDashboard() {
+
   const metrics = [
     {
       title: "Bodyweight Change",
@@ -119,6 +121,8 @@ export default function ClientDashboard() {
           description={metrics[4].description}
         />
       </div>
+
     </div>
+    
   );
 }

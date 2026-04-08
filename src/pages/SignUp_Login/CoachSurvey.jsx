@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-
+import {auth} from "@/firebase.js";
+import { API_BASE_URL } from "../../../config.js";
 const SPECIALIZATIONS = [
   { value: "fitness", label: "Fitness" },
   { value: "nutrition", label: "Nutrition" },
@@ -9,6 +10,8 @@ const SPECIALIZATIONS = [
 ];
 
 const CoachSurvey = () => {
+  const token = auth.currentUser?.getIdToken();
+  console.log("token exists?",  token);
   const navigate = useNavigate();
 
   const feetOptions = [3, 4, 5, 6, 7, 8, 9];

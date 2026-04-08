@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "react-router-dom";
-
+import usePostToAPI from "@/hooks/usePostToAPI";
+   
 const GOALS = [
   { id: 0, label: "Lose weight" },
   { id: 1, label: "Build muscle" },
@@ -11,7 +12,8 @@ const GOALS = [
   { id: 5, label: "Sports performance" },
 ];
 
-const ClientSurvey = ({ onClose, onSubmitted }) => {
+
+const ClientSurvey = ({ onSubmitted }) => {
   const location = useLocation();
   const navState = location.state || {};
 
@@ -35,7 +37,7 @@ const ClientSurvey = ({ onClose, onSubmitted }) => {
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
     );
   };
-
+  const { postFunction } = usePostToAPI();
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -44,36 +46,33 @@ const ClientSurvey = ({ onClose, onSubmitted }) => {
         ? null
         : Number(heightFeet) * 12 + Number(heightInches);
 
+    const primaryGoalsBinary = Array.from({ length: GOALS.length }, (_, idx) =>
+      selectedGoalIds.includes(idx) ? "1" : "0"
+    ).join("");
+    const totalExerciseMinutes =
+      (dailyExerciseHours === "" ? 0 : Number(dailyExerciseHours) * 60) +
+      (dailyExerciseMinutes === "" ? 0 : Number(dailyExerciseMinutes));
+
     const payload = {
-      heightFeet: heightFeet === "" ? null : Number(heightFeet),
-      heightInches: heightInches === "" ? null : Number(heightInches),
-      weightLbs: weightLbs === "" ? null : Number(weightLbs),
-      goalIds: selectedGoalIds,
-      otherGoalText: otherEnabled && otherText.trim() ? otherText.trim() : null,
-      weightGoalLbs: weightGoalLbs === "" ? null : Number(weightGoalLbs),
-      dailyExerciseMinutes:
-        dailyExerciseMinutes === "" ? null : Number(dailyExerciseMinutes),
+      primary_goals_binary: primaryGoalsBinary,
+      weight: weightLbs === "" ? null : Number(weightLbs),
+      weight_goal: weightGoalLbs === "" ? null : Number(weightGoalLbs),
+      exercise_minutes_goal: totalExerciseMinutes > 0 ? totalExerciseMinutes : null,
+      personal_goals: otherEnabled && otherText.trim() ? otherText.trim() : null,
+      heightInInches: heightInInches,
     };
 
     console.log("client survey payload", payload);
 
-    // TODO: replace with  backend endpoint.
-    const endpoint = "/api/client/survey";
+    const endpoint = "/users/onboarding/submit_client_survey";
     try {
-      const res = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) {
-        const text = await res.text();
-        console.error("survey failed:", res.status, text);
-      }
+      await postFunction(endpoint, payload);
+      onSubmitted?.();
+
     } catch (err) {
       console.error("survey request error:", err);
     }
 
-    onSubmitted?.();
   };
 
   return (

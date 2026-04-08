@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { signInWithGooglePopup } from "@/lib/googleSignIn.js";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { auth } from "@/firebase.js";
+import { API_BASE_URL } from "../../../config.js";
 
 function mapEmailPasswordError(err) {
   const code = err?.code;
@@ -38,32 +39,37 @@ const SignUp = () => {
     setSignupError(null);
     setSignupLoading(true);
 
-    const payload = {
-      accountType,
-      fname,
-      lname,
-      email,
-      password,
-    };
-
     try {
       // Create Firebase auth account and sign user in.
       await createUserWithEmailAndPassword(auth, email, password);
 
-      const signupEndpoint = "/api/signup";
+      const idToken = await auth.currentUser?.getIdToken();
+      if (!idToken) {
+        throw new Error("Account created, but no auth token was found.");
+      }
+
+      const signupEndpoint = `${API_BASE_URL}/users/register`;
       const res = await fetch(signupEndpoint, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({
+          first_name: fname,
+          last_name: lname,
+          email,
+          is_coach: accountType === "coach",
+        }),
       });
-/* ADD SIGNUP ENDPOINT WITRH FIREBAWSE TOKEN + profile fields so your DB gets a matching user record.
+
       if (!res.ok) {
         const text = await res.text();
         throw new Error(
           `Account created, but profile setup failed (${res.status}): ${text}`,
         );
       }
-*/
+
       if (accountType === "client") {
         navigate("/clientSurvey");
       } else if (accountType === "coach") {
