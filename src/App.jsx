@@ -3,6 +3,7 @@ import { Routes, Route } from "react-router-dom";
 import BrowseCoaches from "./pages/ClientDashboard/components/BrowseCoaches.jsx";
 import ClientDashboard from "./pages/ClientDashboard/ClientDashboard.jsx";
 import ClientSurvey from "./pages/SignUp_Login/ClientSurvey.jsx";
+import Chat from "./pages/Chat/Chat.jsx";
 import CoachSurvey from "./pages/SignUp_Login/CoachSurvey.jsx";
 import LandingPage from "./pages/LandingPage/LandingPage.jsx";
 
@@ -31,7 +32,7 @@ const App = () => {
         <Route path="/nutrition" element={<Nutrition />} />
         <Route path="/payment" element={<PaymentPage />} />
         <Route path="/profile" element={<div>profile</div>} />
-        <Route path="/chat" element={<div>Chat Content</div>} />
+        <Route path="/chat" element={<Chat />} />
       </Route>
       {/* Put things that need neither here */}
       <Route path="/login" element={<LogIn />} />

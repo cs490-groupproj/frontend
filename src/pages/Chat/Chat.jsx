@@ -1,0 +1,230 @@
+import React from "react";
+import { useEffect, useState, useRef, useLayoutEffect } from "react";
+import { Button } from "@/components/ui/button";
+import useGetFromAPI from "@/hooks/useGetFromAPI";
+import ChatCard from "./components/ChatCard";
+import { useOutletContext } from "react-router-dom";
+import MessageInput from "./components/MessageInput";
+import ChatContent from "./components/ChatContent";
+
+const Chat = () => {
+  const messageLoadLimit = 50;
+  const startOffset = 0;
+
+  const { socket, user } = useOutletContext();
+
+  const [chatHistory, setChatHistory] = useState(null);
+  const [messageText, setMessageText] = useState("");
+  const [selectedChatUserID, setSelectedChatUserID] = useState(null);
+  const [messageHistoryURI, setMessageHistoryURI] = useState(null);
+  const [hasMoreHistory, setHasMoreHistory] = useState(true);
+
+  const scrollRef = useRef(null);
+  const isNewMessageRef = useRef(false);
+  const isFirstLoadRef = useRef(true);
+  const isLoadingOlderMessagesRef = useRef(false);
+  const messageBufferRef = useRef([]); //stores messages that are received on page load
+  const chatMessageContainerRef = useRef(null);
+  const savedScrollHeightRef = useRef(null);
+
+  const {
+    data: userCoachesData,
+    loading: userCoachesLoading,
+    error: userCoachesError,
+  } = useGetFromAPI(`/clients/${user.user_id}/coaches`, null);
+
+  const {
+    data: messageHistoryData,
+    loading: messageHistoryLoading,
+    error: messageHistoryError,
+  } = useGetFromAPI(messageHistoryURI, null);
+
+  //handles changing the conversation
+  useEffect(() => {
+    if (!selectedChatUserID) {
+      //if not in a conversation, don't be in a conversation
+      setMessageHistoryURI(null);
+      setChatHistory(null);
+      return;
+    }
+
+    if (!socket) {
+      setMessageHistoryURI(null);
+      setChatHistory(null);
+      console.log("no socket somehow");
+      return;
+    }
+
+    isFirstLoadRef.current = true;
+    messageBufferRef.current = [];
+    setChatHistory(null);
+    setHasMoreHistory(true);
+
+    //this joins the room and listens for incoming messages
+    socket.emit("join", { other_id: selectedChatUserID });
+
+    socket.on("new_message", (newMessage) => {
+      setChatHistory((prevHistory) => {
+        if (Array.isArray(prevHistory)) {
+          isNewMessageRef.current = true; //set this so we get smooth scroll on load
+          return [...prevHistory, newMessage];
+        } else {
+          //do this if our messages are still loading from backend
+          messageBufferRef.current.push(newMessage);
+          return null;
+        }
+      });
+    });
+
+    setMessageHistoryURI(
+      `/messages/history?limit=${messageLoadLimit}&offset=${startOffset}&other_party_user_id=${selectedChatUserID}`
+    );
+
+    return () => {
+      socket.off("new_message");
+    };
+  }, [selectedChatUserID]);
+
+  //ensures that a message has content and is not just whitespace
+  const handleSendMessage = () => {
+    if (messageText.trim() === "") {
+      return;
+    }
+    socket.emit("send_message", {
+      message: messageText,
+    });
+    setMessageText("");
+  };
+
+  //loads more messages when the user triggers it
+  const loadMessageHistory = () => {
+    if (messageHistoryLoading) {
+      return;
+    }
+
+    isLoadingOlderMessagesRef.current = true;
+
+    const currOffset = (chatHistory || []).length;
+    setMessageHistoryURI(
+      `/messages/history?limit=${messageLoadLimit}&offset=${currOffset}&other_party_user_id=${selectedChatUserID}`
+    );
+  };
+
+  // this adds messages from backend message history to chatHistory
+  useEffect(() => {
+    if (!messageHistoryData) {
+      return;
+    }
+
+    const reformattedMessageHistoryData = messageHistoryData.messages.map(
+      //^^^^^ RIGHT HERE OFFICER (messages.)
+      (msg) => ({
+        sender_id: msg.message_sender,
+        message: msg.message_body,
+        sent_date: msg.sent_date,
+      })
+    );
+
+    // messages are stored from newest to oldest, so we reverse the order so
+    // the oldest are at the lower indexes, which will be higher up on the screen
+    reformattedMessageHistoryData.reverse();
+
+    if (reformattedMessageHistoryData.length < messageLoadLimit) {
+      setHasMoreHistory(false);
+    }
+
+    //get any messages out of the message buffer to be loaded
+    const temp = [...messageBufferRef.current];
+    messageBufferRef.current = [];
+    savedScrollHeightRef.current =
+      chatMessageContainerRef.current?.scrollHeight || 0;
+    setChatHistory((prevHistory) => {
+      return [
+        ...reformattedMessageHistoryData,
+        ...(prevHistory || []),
+        ...temp,
+      ];
+    });
+  }, [messageHistoryData]);
+
+  useLayoutEffect(() => {
+    //this scrolls to the bottom of the chat when chat is loaded on page load
+    if (isFirstLoadRef.current && messageHistoryData) {
+      scrollRef.current?.scrollIntoView();
+      isFirstLoadRef.current = false;
+    }
+
+    //this scrolls to the relative last scroll position after loading older
+    // messages from the backend
+    else if (isLoadingOlderMessagesRef.current) {
+      const chatMessageContainer = chatMessageContainerRef.current;
+      const changeInScrollHeight =
+        chatMessageContainer.scrollHeight - savedScrollHeightRef.current;
+      chatMessageContainer.scrollTop = changeInScrollHeight;
+      isLoadingOlderMessagesRef.current = false;
+    }
+  }, [chatHistory]);
+
+  useEffect(() => {
+    //this scrolls to the bottom of the chat when a new message is sent
+    if (isNewMessageRef.current) {
+      scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+      isNewMessageRef.current = false;
+    }
+  }, [chatHistory]);
+  return (
+    <div className="flex h-[calc(100vh-4rem)] w-full gap-8">
+      <div
+        id="Chat Selection"
+        className="bg-card flex h-full w-60 flex-col rounded-xl"
+      >
+        <div className="m-4 flex items-center justify-between">
+          <div className="text-xl">Chats</div>
+          <Button asChild>
+            <div className="text-xl">+</div>
+          </Button>
+        </div>
+        <div
+          className="no-scrollbar mx-2 my-4 flex flex-1 flex-col items-center
+            gap-4 overflow-x-hidden overflow-y-auto"
+        >
+          {userCoachesError ? (
+            <p>error: {userCoachesError}</p>
+          ) : userCoachesLoading ? (
+            <p>Loading Contacts</p>
+          ) : (
+            userCoachesData?.coaches.map((coach) => (
+              <ChatCard
+                key={coach.id}
+                coach={coach}
+                setSelectedChatUserID={setSelectedChatUserID}
+                selectedChatUserID={selectedChatUserID}
+              />
+            ))
+          )}
+        </div>
+      </div>
+      <div className="flex w-full flex-col gap-8 overflow-hidden">
+        <ChatContent
+          chatMessageContainerRef={chatMessageContainerRef}
+          scrollRef={scrollRef}
+          messageHistoryLoading={messageHistoryLoading}
+          messageHistoryError={messageHistoryError}
+          loadMessageHistory={loadMessageHistory}
+          chatHistory={chatHistory}
+          selectedChatUserID={selectedChatUserID}
+          hasMoreHistory={hasMoreHistory}
+        />
+        {selectedChatUserID && (
+          <MessageInput
+            messageText={messageText}
+            setMessageText={setMessageText}
+            handleSendMessage={handleSendMessage}
+          />
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default Chat;

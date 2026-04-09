@@ -7,7 +7,7 @@ function usePostToAPI() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const postFunction = useCallback(async (postURI, postData, auth_token) => {
+  const postFunction = useCallback(async (postURI, postData) => {
     setData(null);
     setLoading(true);
     setError(null);
