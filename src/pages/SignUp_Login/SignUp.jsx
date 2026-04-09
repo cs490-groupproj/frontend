@@ -7,68 +7,94 @@ import { auth } from "@/firebase.js";
 
 function mapEmailPasswordError(err) {
   const code = err?.code;
-  if (code === "auth/email-already-in-use") {
+  if (code === "auth/email-already-in-use")
     return "This email is already registered.";
-  }
-  if (code === "auth/invalid-email") {
+  if (code === "auth/invalid-email")
     return "Please enter a valid email address.";
-  }
-  if (code === "auth/weak-password") {
+  if (code === "auth/weak-password")
     return "Password is too weak. Use at least 6 characters.";
-  }
   return err?.message || "Unable to create your account right now.";
 }
 
 const SignUp = () => {
   const navigate = useNavigate();
 
+  // --- STATE ---
   const [accountType, setAccountType] = useState("client");
-
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fname, setFname] = useState("");
   const [lname, setLname] = useState("");
+
   const [googleLoading, setGoogleLoading] = useState(false);
   const [googleError, setGoogleError] = useState(null);
   const [signupLoading, setSignupLoading] = useState(false);
   const [signupError, setSignupError] = useState(null);
 
+  /**
+   * REUSABLE SYNC FUNCTION
+   * This is the bridge that gets the REAL database UUID
+   */
+  const syncWithBackend = async (idToken) => {
+    const response = await fetch("https://optimal-api.lambusta.me/users/me", {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${idToken}`,
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(
+        "Account created, but database sync failed. Check if backend is live."
+      );
+    }
+
+    const dbData = await response.json();
+
+    // --- STORAGE ---
+    localStorage.setItem("token", idToken);
+    localStorage.setItem("userId", dbData.user_id); // The real UUID (550e...)
+
+    return dbData;
+  };
+
+  // --- HANDLERS ---
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSignupError(null);
     setSignupLoading(true);
 
-    const payload = {
-      accountType,
-      fname,
-      lname,
-      email,
-      password,
-    };
-
     try {
-      // Create Firebase auth account and sign user in.
-      await createUserWithEmailAndPassword(auth, email, password);
+      // 1. Create Firebase Auth account
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+      const idToken = await userCredential.user.getIdToken();
 
-      const signupEndpoint = "/api/signup";
+      // 2. Register user in your SQL Database
+      const payload = { accountType, fname, lname, email, password };
+      const signupEndpoint = "https://optimal-api.lambusta.me/api/signup";
+
       const res = await fetch(signupEndpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-/* ADD SIGNUP ENDPOINT WITRH FIREBAWSE TOKEN + profile fields so your DB gets a matching user record.
+
       if (!res.ok) {
-        const text = await res.text();
         throw new Error(
-          `Account created, but profile setup failed (${res.status}): ${text}`,
+          "Firebase account created, but backend registration failed."
         );
       }
-*/
-      if (accountType === "client") {
-        navigate("/clientSurvey");
-      } else if (accountType === "coach") {
-        navigate("/coachSurvey");
-      }
+
+      // 3. Handshake: Get the real database ID
+      await syncWithBackend(idToken);
+
+      // 4. Redirect
+      navigate(accountType === "client" ? "/clientSurvey" : "/coachSurvey");
     } catch (err) {
       setSignupError(mapEmailPasswordError(err));
     } finally {
@@ -80,21 +106,25 @@ const SignUp = () => {
     setGoogleError(null);
     setGoogleLoading(true);
     try {
-      await signInWithGooglePopup();
-      if (accountType === "client") {
-        navigate("/clientSurvey", { replace: true });
-      } else {
-        navigate("/coachSurvey", { replace: true });
-      }
+      // 1. Google Login
+      const { idToken } = await signInWithGooglePopup();
+
+      // 2. Handshake & Store
+      await syncWithBackend(idToken);
+
+      navigate(accountType === "client" ? "/clientSurvey" : "/coachSurvey", {
+        replace: true,
+      });
     } catch (err) {
       if (err.code !== "auth/popup-closed-by-user") {
-        setGoogleError(err.message);
+        setGoogleError(err.message || "Google sync failed.");
       }
     } finally {
       setGoogleLoading(false);
     }
   };
 
+  // --- RENDER ---
   return (
     <div
       className="bg-background flex min-h-screen items-center justify-center
@@ -111,6 +141,7 @@ const SignUp = () => {
           Sign up
         </h1>
 
+        {/* Account Type Toggle */}
         <div className="border-border mb-6 grid grid-cols-2 border-b">
           <button
             type="button"
@@ -146,9 +177,7 @@ const SignUp = () => {
             </label>
             <input
               id="fname"
-              name="fname"
               type="text"
-              autoComplete="given-name"
               value={fname}
               onChange={(e) => setFname(e.target.value)}
               placeholder="Joe"
@@ -169,9 +198,7 @@ const SignUp = () => {
             </label>
             <input
               id="lname"
-              name="lname"
               type="text"
-              autoComplete="family-name"
               value={lname}
               onChange={(e) => setLname(e.target.value)}
               placeholder="Michelangelo"
@@ -192,9 +219,7 @@ const SignUp = () => {
             </label>
             <input
               id="signup-email"
-              name="email"
               type="email"
-              autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Email Address"
@@ -215,9 +240,7 @@ const SignUp = () => {
             </label>
             <input
               id="signup-password"
-              name="password"
               type="password"
-              autoComplete="new-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
@@ -235,26 +258,31 @@ const SignUp = () => {
             </p>
           )}
 
-          <Button type="submit" className="mt-2 w-full" size="lg" disabled={signupLoading}>
+          <Button
+            type="submit"
+            className="mt-2 w-full"
+            size="lg"
+            disabled={signupLoading}
+          >
             {signupLoading ? "Creating account..." : "Create account"}
           </Button>
 
           <hr className="border-border my-4 border-t" />
+
           {googleError && (
             <p className="text-destructive text-sm" role="alert">
               {googleError}
             </p>
           )}
+
           <Button
             type="button"
             variant="outline"
             className="w-full"
             disabled={googleLoading}
             onClick={handleGoogleSignIn}
-
           >
-          {googleLoading ? "Opening Google…" : "Continue with Google"}
-          
+            {googleLoading ? "Opening Google…" : "Continue with Google"}
           </Button>
         </form>
 

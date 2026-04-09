@@ -7,15 +7,11 @@ import { auth } from "@/firebase.js";
 
 function mapEmailPasswordError(err) {
   const code = err?.code;
-  if (code === "auth/invalid-credential") {
-    return "Incorrect email or password.";
-  }
-  if (code === "auth/invalid-email") {
+  if (code === "auth/invalid-credential") return "Incorrect email or password.";
+  if (code === "auth/invalid-email")
     return "Please enter a valid email address.";
-  }
-  if (code === "auth/too-many-requests") {
+  if (code === "auth/too-many-requests")
     return "Too many attempts. Please try again later.";
-  }
   return err?.message || "Unable to sign in right now.";
 }
 
@@ -28,12 +24,37 @@ const LogIn = () => {
   const [loginLoading, setLoginLoading] = useState(false);
   const [loginError, setLoginError] = useState(null);
 
+  const syncWithBackend = async (idToken) => {
+    const response = await fetch("https://optimal-api.lambusta.me/users/me", {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${idToken}`,
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error("Credentials valid, but user not found in the database.");
+    }
+
+    const dbData = await response.json();
+
+    localStorage.setItem("token", idToken);
+    localStorage.setItem("userId", dbData.user_id);
+
+    return dbData;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoginError(null);
     setLoginLoading(true);
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      const result = await signInWithEmailAndPassword(auth, email, password);
+      const idToken = await result.user.getIdToken();
+
+      await syncWithBackend(idToken);
+
       navigate("/clientDashboard", { replace: true });
     } catch (err) {
       setLoginError(mapEmailPasswordError(err));
@@ -41,15 +62,21 @@ const LogIn = () => {
       setLoginLoading(false);
     }
   };
+
   const handleGoogleSignIn = async () => {
     setGoogleError(null);
     setGoogleLoading(true);
     try {
-      await signInWithGooglePopup();
+      // 1. Google Login
+      const { idToken } = await signInWithGooglePopup();
+
+      // 2. Handshake & Store
+      await syncWithBackend(idToken);
+
       navigate("/clientDashboard", { replace: true });
     } catch (err) {
       if (err.code !== "auth/popup-closed-by-user") {
-        setGoogleError(err.message);
+        setGoogleError(err.message || "Failed to sync with backend.");
       }
     } finally {
       setGoogleLoading(false);
@@ -121,7 +148,12 @@ const LogIn = () => {
               {loginError}
             </p>
           )}
-          <Button type="submit" className="mt-2 w-full" size="lg" disabled={loginLoading}>
+          <Button
+            type="submit"
+            className="mt-2 w-full"
+            size="lg"
+            disabled={loginLoading}
+          >
             {loginLoading ? "Signing in..." : "Continue"}
           </Button>
           <hr className="border-border my-4 border-t" />
@@ -130,7 +162,6 @@ const LogIn = () => {
               {googleError}
             </p>
           )}
-
           <Button
             type="button"
             variant="outline"
@@ -139,7 +170,6 @@ const LogIn = () => {
             onClick={handleGoogleSignIn}
           >
             {googleLoading ? "Opening Google…" : "Continue with Google"}
-          
           </Button>
         </form>
         <p className="text-muted-foreground mt-6 text-center text-sm">
