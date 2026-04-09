@@ -34,12 +34,14 @@ const LogIn = () => {
     });
 
     if (!response.ok) {
+      console.error("Backend sync failed:", await response.text());
       throw new Error("Credentials valid, but user not found in the database.");
     }
 
     const dbData = await response.json();
 
     localStorage.setItem("token", idToken);
+
     localStorage.setItem("userId", dbData.user_id);
 
     return dbData;
