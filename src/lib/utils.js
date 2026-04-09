@@ -1,15 +1,11 @@
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
-<<<<<<< HEAD
 import { auth } from "@/firebase.js";
-=======
->>>>>>> origin/master
 
 export function cn(...inputs) {
   return twMerge(clsx(inputs));
 }
 
-<<<<<<< HEAD
 const currentUserId = localStorage.getItem("userId");
 
 export const apiFetch = async (url, options = {}) => {
@@ -18,6 +14,8 @@ export const apiFetch = async (url, options = {}) => {
   const cleanUrl = url.replace(/^\//, "");
   const finalUrl = `${cleanBase}/${cleanUrl}`;
 
+
+  // generally, want to use the api hooks in the hooks folder. However, some of this auth logic would be good for the authHeader.js function. Will handle after demo
   // Get fresh token from Firebase (automatically refreshes if expired)
   let token = null;
   if (auth.currentUser) {
@@ -47,11 +45,10 @@ export const apiFetch = async (url, options = {}) => {
     throw error;
   }
 };
-=======
+
 function toTitleCase(string) {
   return string.replace(/\w\S*/g, (match) => {
     return match.charAt(0).toUpperCase() + match.substring(1).toLowerCase();
   });
 }
 export default toTitleCase;
->>>>>>> origin/master
