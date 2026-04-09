@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { API_BASE_URL } from "../../config.js";
-
+import { getAuthHeader } from "@/lib/authHeader";
 function useGetFromAPI(requestURI, refreshTrigger) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -21,6 +21,7 @@ function useGetFromAPI(requestURI, refreshTrigger) {
         const response = await fetch(`${API_BASE_URL}${requestURI}`, {
           method: "GET",
           signal: controller.signal,
+          headers: { ...(await getAuthHeader()) },
         });
 
         if (!response.ok) {

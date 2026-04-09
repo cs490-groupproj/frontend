@@ -1,5 +1,6 @@
 import { useCallback, useState } from "react";
 import { API_BASE_URL } from "../../config.js";
+import { getAuthHeader } from "@/lib/authHeader";
 
 function useDeleteFromAPI() {
   const [data, setData] = useState(null);
@@ -15,6 +16,7 @@ function useDeleteFromAPI() {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
+          ...(await getAuthHeader()),
         },
       });
 
