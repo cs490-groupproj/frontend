@@ -3,21 +3,25 @@ import { Card, CardContent } from "../../components/ui/card";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { Progress } from "../../components/ui/progress";
-import { Loader2, Activity, Plus, Check, Flame } from "lucide-react";
+import { Loader2, Activity, Plus, Check, Flame, Search } from "lucide-react";
 
 const NutritionPage = () => {
   const currentUserId = localStorage.getItem("userId");
   const dailyCalorieGoal = 2500;
-  const MEAL_TYPE_MAP = { Breakfast: 1, Lunch: 2, Dinner: 3 };
 
-  /**
-   * REUSABLE API HELPER
-   */
+  // Mapping backend IDs to frontend keys
+  const MEAL_TYPE_MAP = { Breakfast: 1, Lunch: 2, Dinner: 3, Snack: 4 };
+  const REVERSE_MEAL_MAP = {
+    1: "Breakfast",
+    2: "Lunch",
+    3: "Dinner",
+    4: "Snack",
+  };
+
   const apiFetch = async (url, options = {}) => {
     const BASE_URL = "https://optimal-api.lambusta.me";
-    const cleanBase = BASE_URL.replace(/\/$/, "");
     const cleanUrl = url.replace(/^\//, "");
-    const finalUrl = `${cleanBase}/${cleanUrl}`;
+    const finalUrl = `${BASE_URL}/${cleanUrl}`;
     const token = localStorage.getItem("token");
 
     const headers = {
@@ -26,27 +30,16 @@ const NutritionPage = () => {
       ...options.headers,
     };
 
-    try {
-      const response = await fetch(finalUrl, { ...options, headers });
-
-      let data = null;
-      const contentType = response.headers.get("content-type");
-      if (contentType && contentType.includes("application/json")) {
-        data = await response.json();
-      } else {
-        const textError = await response.text();
-        if (!response.ok) console.warn("Raw Server Response:", textError);
-      }
-
-      return { ok: response.ok, status: response.status, data };
-    } catch (err) {
-      console.error("Network Error:", err);
-      throw err;
-    }
+    const response = await fetch(finalUrl, { ...options, headers });
+    const contentType = response.headers.get("content-type");
+    const data = contentType?.includes("application/json")
+      ? await response.json()
+      : null;
+    return { ok: response.ok, status: response.status, data };
   };
 
   // --- STATE ---
-  const [mealPlanId, setMealPlanId] = useState(null);
+  const [activePlanIds, setActivePlanIds] = useState({});
   const [dailyLog, setDailyLog] = useState({
     Breakfast: [],
     Lunch: [],
@@ -58,117 +51,137 @@ const NutritionPage = () => {
     Lunch: "",
     Dinner: "",
   });
+  const [searchResults, setSearchResults] = useState({
+    Breakfast: [],
+    Lunch: [],
+    Dinner: [],
+  });
   const [loading, setLoading] = useState(false);
 
   // INITIAL SYNC
   useEffect(() => {
     if (!currentUserId) return;
-
-    const fetchExistingPlan = async () => {
-      try {
-        const { ok, data } = await apiFetch(
-          `/nutrition/plans/plans_by_user?user_id=${currentUserId}`
-        );
-        if (ok && data?.meal_plans?.length > 0) {
-          setMealPlanId(data.meal_plans[0].meal_plan_id);
-        }
-      } catch (e) {
-        console.log("Initial Sync Error: Server unreachable or no plan.");
-      }
-    };
-    fetchExistingPlan();
+    fetchAndSyncPlans();
   }, [currentUserId]);
 
-  // --- HANDLERS ---
-
-  /**
-   * FIXED: Key changed to 'meal_datetime' based on console error
-   */
-  const handleStartNewPlan = async () => {
-    if (!currentUserId) return alert("Please log in to track nutrition.");
-    setLoading(true);
-
-    // Format: YYYY-MM-DDTHH:MM:SS
-    const timestamp = new Date().toISOString().split(".")[0];
-
+  const fetchAndSyncPlans = async () => {
     try {
-      const { ok, status, data } = await apiFetch("/nutrition/plans/create", {
-        method: "POST",
-        body: JSON.stringify({
-          user_id: String(currentUserId).trim(),
-          meal_datetime: timestamp, // <-- Exact key required by your backend
-        }),
-      });
+      setLoading(true);
+      const { ok, data } = await apiFetch(
+        `/nutrition/plans/plans_by_user?user_id=${currentUserId}`
+      );
 
-      if (ok && data) {
-        setMealPlanId(data.meal_plan_id);
-        setDailyLog({ Breakfast: [], Lunch: [], Dinner: [] });
-        setLoggedCalories(0);
-        console.log("Success! New Plan ID:", data.meal_plan_id);
-      } else {
-        console.error(
-          `Backend Status ${status}:`,
-          data?.error || "Plan creation failed."
-        );
-        alert(`Error: ${data?.error || "Check console for details."}`);
+      if (ok && data.meal_plans) {
+        const newDailyLog = { Breakfast: [], Lunch: [], Dinner: [] };
+        const newPlanIds = {};
+
+        data.meal_plans.forEach((plan) => {
+          const typeName = REVERSE_MEAL_MAP[plan.meal_type_id];
+          if (typeName) {
+            newPlanIds[typeName] = plan.meal_plan_id;
+            newDailyLog[typeName] = plan.meal_plan_foods.map((f) => ({
+              fdc_id: f.fdc_id,
+              name: `Food ID: ${f.fdc_id}`,
+              calories: 0,
+            }));
+          }
+        });
+
+        setActivePlanIds(newPlanIds);
+        setDailyLog(newDailyLog);
       }
-    } catch (error) {
-      console.error("Critical Failure:", error);
+    } catch (err) {
+      console.error("Sync Error:", err);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleAddFood = async (mealType) => {
-    const name = searchInputs[mealType];
-    if (!name.trim()) return;
+  const handleSearch = async (mealType) => {
+    const query = searchInputs[mealType];
+    if (!query || query.length < 2) return;
 
-    const testFdcId = 1103374;
-    setDailyLog((prev) => ({
-      ...prev,
-      [mealType]: [
-        ...prev[mealType],
-        { name, calories: 450, fdc_id: testFdcId },
-      ],
-    }));
-    setSearchInputs((prev) => ({ ...prev, [mealType]: "" }));
-
-    if (mealPlanId) {
-      await apiFetch(`/nutrition/plans/${mealPlanId}/add_food`, {
+    try {
+      const { ok, data } = await apiFetch("/proxy/usda/foods/search", {
         method: "POST",
-        body: JSON.stringify({
-          meal_type_id: MEAL_TYPE_MAP[mealType],
-          fdc_id: testFdcId,
-        }),
+        body: JSON.stringify({ query, pageSize: 5 }),
       });
+
+      if (ok && data.foods) {
+        setSearchResults((prev) => ({ ...prev, [mealType]: data.foods }));
+      }
+    } catch (err) {
+      console.error("Search failed", err);
+    }
+  };
+
+  const ensurePlanExists = async (mealType) => {
+    if (activePlanIds[mealType]) return activePlanIds[mealType];
+
+    const timestamp = new Date().toISOString();
+    const { ok, data } = await apiFetch("/nutrition/plans/create", {
+      method: "POST",
+      body: JSON.stringify({
+        user_id: currentUserId,
+        meal_type_id: MEAL_TYPE_MAP[mealType],
+        meal_datetime: timestamp,
+      }),
+    });
+
+    if (ok) {
+      setActivePlanIds((prev) => ({ ...prev, [mealType]: data.meal_plan_id }));
+      return data.meal_plan_id;
+    }
+    return null;
+  };
+
+  const handleAddFood = async (mealType, foodItem) => {
+    const planId = await ensurePlanExists(mealType);
+    if (!planId) return alert("Could not create/find a meal plan.");
+
+    const kcalNutrient = foodItem.foodNutrients.find(
+      (n) => n.nutrientId === 1008 || n.unitName === "KCAL"
+    );
+    const calories = kcalNutrient ? kcalNutrient.value : 0;
+
+    try {
+      const { ok } = await apiFetch(`/nutrition/plans/${planId}/add_food`, {
+        method: "POST",
+        body: JSON.stringify({ fdc_id: foodItem.fdcId }),
+      });
+
+      if (ok) {
+        setDailyLog((prev) => ({
+          ...prev,
+          [mealType]: [
+            ...prev[mealType],
+            { name: foodItem.description, calories, fdc_id: foodItem.fdcId },
+          ],
+        }));
+        setSearchInputs((p) => ({ ...p, [mealType]: "" }));
+        setSearchResults((p) => ({ ...p, [mealType]: [] }));
+      }
+    } catch (err) {
+      console.error(err);
     }
   };
 
   const handleLogAsEaten = async (mealType, index) => {
     const item = dailyLog[mealType][index];
-    if (mealPlanId) {
-      const { ok } = await apiFetch(
-        `/nutrition/plans/${mealPlanId}/log_eaten`,
-        {
-          method: "POST",
-          body: JSON.stringify({
-            meal_type_id: MEAL_TYPE_MAP[mealType],
-            fdc_id: item.fdc_id,
-          }),
-        }
-      );
+    const planId = activePlanIds[mealType];
 
-      if (ok) {
-        setLoggedCalories((prev) => prev + item.calories);
-        setDailyLog((prev) => ({
-          ...prev,
-          [mealType]: prev[mealType].filter((_, i) => i !== index),
-        }));
-      }
+    const { ok } = await apiFetch(`/nutrition/plans/${planId}/log_eaten`, {
+      method: "POST",
+    });
+
+    if (ok) {
+      setLoggedCalories((prev) => prev + (item.calories || 0));
+      setDailyLog((prev) => ({ ...prev, [mealType]: [] }));
+      alert(`${mealType} logged successfully!`);
     }
   };
 
-  const progress = (loggedCalories / dailyCalorieGoal) * 100;
+  const progress = Math.min((loggedCalories / dailyCalorieGoal) * 100, 100);
 
   return (
     <div
@@ -190,39 +203,32 @@ const NutritionPage = () => {
             </div>
             <div>
               <h1
-                className="text-4xl leading-none font-black tracking-tighter
-                  uppercase italic md:text-5xl"
+                className="text-4xl font-black tracking-tighter uppercase italic
+                  md:text-5xl"
               >
                 Fuel Tracker
               </h1>
               <p
-                className="mt-1 text-[10px] font-bold tracking-widest
-                  text-slate-500 uppercase"
+                className="text-[10px] font-bold tracking-widest text-slate-500
+                  uppercase"
               >
-                User:{" "}
-                {currentUserId ? currentUserId.slice(0, 8) : "LOG_IN_REQUIRED"}
-                ...
+                User: {currentUserId?.slice(0, 8) || "Offline"}
               </p>
             </div>
           </div>
-          <div className="pb-1 text-right">
+          <div className="text-right">
             <p
               className="text-[10px] font-black tracking-widest text-rose-500
                 uppercase"
             >
               Daily Target
             </p>
-            <p className="text-3xl leading-none font-black">
-              {dailyCalorieGoal} KCAL
-            </p>
+            <p className="text-3xl font-black">{dailyCalorieGoal} KCAL</p>
           </div>
         </div>
 
-        {/* Progress Card */}
-        <Card
-          className="mb-8 border-none bg-slate-900 shadow-2xl ring-1
-            ring-slate-800"
-        >
+        {/* Progress Display */}
+        <Card className="mb-8 border-none bg-slate-900 ring-1 ring-slate-800">
           <CardContent className="pt-8 pb-8">
             <div className="mb-6 flex items-center justify-between">
               <div className="flex items-center gap-4">
@@ -249,98 +255,98 @@ const NutritionPage = () => {
             </div>
             <Progress
               value={progress}
-              className="h-4 rounded-full bg-slate-800 [&>div]:bg-rose-600"
+              className="h-4 bg-slate-800 [&>div]:bg-rose-600"
             />
           </CardContent>
         </Card>
 
-        {/* Reset Button */}
-        <Button
-          onClick={handleStartNewPlan}
-          disabled={loading || !currentUserId}
-          className="mb-12 h-20 w-full bg-rose-600 text-xl font-black
-            tracking-widest uppercase transition-all hover:bg-rose-700
-            active:scale-95"
-        >
-          {loading ? <Loader2 className="animate-spin" /> : "Reset Daily Plan"}
-        </Button>
-
         {/* Meal Sections */}
-        <div className="grid grid-cols-1 gap-8">
+        <div className="grid grid-cols-1 gap-12">
           {["Breakfast", "Lunch", "Dinner"].map((meal) => (
             <div key={meal} className="space-y-4">
               <div
                 className="flex items-center px-2 text-sm font-black
                   tracking-[0.3em] text-slate-500 uppercase"
               >
-                <span className="mr-2 text-rose-500">//</span>
-                <span>{meal}</span>
+                <span className="mr-2 text-rose-500">//</span> {meal}
                 <div className="ml-4 h-[1px] flex-grow bg-slate-800" />
               </div>
 
-              <Card
-                className="overflow-hidden border-slate-800 bg-slate-900/40
-                  shadow-xl backdrop-blur-md"
-              >
+              <Card className="overflow-hidden border-slate-800 bg-slate-900/40">
                 <div
-                  className="flex items-center border-b border-slate-800
-                    bg-slate-900/80 px-2"
+                  className="flex items-center border-b border-slate-800 pr-4"
                 >
                   <Input
                     placeholder={`Search ${meal}...`}
-                    className="focus:visible:ring-0 h-16 border-none
-                      bg-transparent text-lg font-medium text-slate-50
-                      placeholder:text-slate-600"
+                    className="h-16 border-none bg-transparent text-lg
+                      text-slate-50 focus-visible:ring-0
+                      focus-visible:ring-offset-0"
                     value={searchInputs[meal]}
                     onChange={(e) =>
                       setSearchInputs((p) => ({ ...p, [meal]: e.target.value }))
                     }
+                    onKeyDown={(e) => e.key === "Enter" && handleSearch(meal)}
                   />
                   <Button
                     variant="ghost"
-                    className="mr-2 h-12 w-12 text-rose-500 transition-colors
-                      hover:bg-rose-600 hover:text-white"
-                    onClick={() => handleAddFood(meal)}
+                    onClick={() => handleSearch(meal)}
+                    className="text-rose-500 hover:bg-transparent
+                      hover:text-rose-400"
                   >
-                    <Plus size={24} strokeWidth={3} />
+                    <Search size={24} />
                   </Button>
                 </div>
+
+                {/* Search Results Dropdown */}
+                {searchResults[meal].length > 0 && (
+                  <div className="divide-y divide-slate-700 bg-slate-800/50 p-2">
+                    {searchResults[meal].map((food) => (
+                      <div
+                        key={food.fdcId}
+                        className="flex items-center justify-between p-4
+                          hover:bg-slate-700/50"
+                      >
+                        <span className="max-w-[70%] truncate text-sm font-bold">
+                          {food.description}
+                        </span>
+                        <Button
+                          size="sm"
+                          onClick={() => handleAddFood(meal, food)}
+                          className="bg-rose-600"
+                        >
+                          <Plus size={16} />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
                 <CardContent className="p-0">
                   <div className="divide-y divide-slate-800/50">
                     {dailyLog[meal].map((f, i) => (
                       <div
                         key={i}
-                        className="flex items-center justify-between p-6
-                          hover:bg-slate-800/20"
+                        className="flex items-center justify-between p-6"
                       >
-                        <div className="flex flex-col">
-                          <span className="text-xl font-bold">{f.name}</span>
-                          <span
-                            className="text-[11px] font-black text-slate-500
+                        <div>
+                          <p className="text-xl font-bold">{f.name}</p>
+                          <p
+                            className="text-xs font-black text-slate-500
                               uppercase"
                           >
-                            ~{f.calories} KCAL
-                          </span>
+                            {f.calories} KCAL
+                          </p>
                         </div>
-                        <Button
-                          size="lg"
-                          onClick={() => handleLogAsEaten(meal, i)}
-                          className="bg-emerald-600 px-6 font-black
-                            hover:bg-emerald-500"
-                        >
-                          <Check size={18} className="mr-2" strokeWidth={3} />{" "}
-                          LOG
-                        </Button>
+                        {i === dailyLog[meal].length - 1 && (
+                          <Button
+                            onClick={() => handleLogAsEaten(meal, i)}
+                            className="bg-emerald-600 hover:bg-emerald-500"
+                          >
+                            <Check size={18} className="mr-2" /> LOG MEAL
+                          </Button>
+                        )}
                       </div>
                     ))}
-                    {dailyLog[meal].length === 0 && (
-                      <div
-                        className="p-16 text-center text-xs font-black
-                          tracking-widest uppercase italic opacity-20"
-                      >
-                        No Items Logged
-                      </div>
-                    )}
                   </div>
                 </CardContent>
               </Card>
