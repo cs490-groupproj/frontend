@@ -1,5 +1,5 @@
 import React from "react";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useLayoutEffect } from "react";
 import { Button } from "@/components/ui/button";
 import useGetFromAPI from "@/hooks/useGetFromAPI";
 import ChatCard from "./components/ChatCard";
@@ -8,18 +8,16 @@ import MessageInput from "./components/MessageInput";
 import ChatContent from "./components/ChatContent";
 
 const Chat = () => {
-  let sendToID = "985FF7C5-BE2E-49F8-8F13-E33E2257BEC8";
+  const messageLoadLimit = 50;
+  const startOffset = 0;
 
-  let limit = 50;
-  let offset = 0;
-
-  const { socket, testToken } = useOutletContext();
+  const { socket, user } = useOutletContext();
 
   const [chatHistory, setChatHistory] = useState(null);
   const [messageText, setMessageText] = useState("");
-  const [messageHistoryURI, setMessageHistoryURI] = useState(
-    `/messages/history?limit=${limit}&offset=${offset}&other_party_user_id=${sendToID}`
-  );
+  const [selectedChatUserID, setSelectedChatUserID] = useState(null);
+  const [messageHistoryURI, setMessageHistoryURI] = useState(null);
+  const [hasMoreHistory, setHasMoreHistory] = useState(true);
 
   const scrollRef = useRef(null);
   const isNewMessageRef = useRef(false);
@@ -30,10 +28,62 @@ const Chat = () => {
   const savedScrollHeightRef = useRef(null);
 
   const {
+    data: userCoachesData,
+    loading: userCoachesLoading,
+    error: userCoachesError,
+  } = useGetFromAPI(`/clients/${user.user_id}/coaches`, null);
+
+  const {
     data: messageHistoryData,
     loading: messageHistoryLoading,
     error: messageHistoryError,
-  } = useGetFromAPI(messageHistoryURI, null, testToken);
+  } = useGetFromAPI(messageHistoryURI, null);
+
+  //handles changing the conversation
+  useEffect(() => {
+    if (!selectedChatUserID) {
+      //if not in a conversation, don't be in a conversation
+      setMessageHistoryURI(null);
+      setChatHistory(null);
+      return;
+    }
+
+    if (!socket) {
+      setMessageHistoryURI(null);
+      setChatHistory(null);
+      console.log("no socket somehow");
+      return;
+    }
+
+    isFirstLoadRef.current = true;
+    messageBufferRef.current = [];
+    setChatHistory(null);
+    setHasMoreHistory(true);
+
+    //this joins the room and listens for incoming messages
+    socket.emit("join", { other_id: selectedChatUserID });
+
+    socket.on("new_message", (newMessage) => {
+      setChatHistory((prevHistory) => {
+        if (Array.isArray(prevHistory)) {
+          isNewMessageRef.current = true; //set this so we get smooth scroll on load
+          return [...prevHistory, newMessage];
+        } else {
+          //do this if our messages are still loading from backend
+          messageBufferRef.current.push(newMessage);
+          return null;
+        }
+      });
+    });
+
+    setMessageHistoryURI(
+      `/messages/history?limit=${messageLoadLimit}&offset=${startOffset}&other_party_user_id=${selectedChatUserID}`
+    );
+
+    return () => {
+      socket.off("new_message");
+    };
+  }, [selectedChatUserID]);
 
   //ensures that a message has content and is not just whitespace
   const handleSendMessage = () => {
@@ -56,43 +106,9 @@ const Chat = () => {
 
     const currOffset = (chatHistory || []).length;
     setMessageHistoryURI(
-      `/messages/history?limit=${limit}&offset=${currOffset}&other_party_user_id=${sendToID}`
+      `/messages/history?limit=${messageLoadLimit}&offset=${currOffset}&other_party_user_id=${selectedChatUserID}`
     );
   };
-
-  // const { data: data } = useGetFromAPI(
-  //   `/clients/91AABB6B-CFD0-4E88-8423-DCB0839B31C4/coaches`,
-  //   null,
-  //   testToken
-  // );
-  // if (data) console.log(data);
-
-  //this joins the chat room with sendee_id gets new messages from the socket
-  //and adds them to the prevHistory so they display
-  useEffect(() => {
-    //this joins the room and listens for incoming messages
-    if (!socket) return;
-
-    //the other id will eventually have to be gotten
-    socket.emit("join", { other_id: sendToID });
-
-    socket.on("new_message", (newMessage) => {
-      setChatHistory((prevHistory) => {
-        if (Array.isArray(prevHistory)) {
-          isNewMessageRef.current = true; //set this so we get smooth scroll on load
-          return [...prevHistory, newMessage];
-        } else {
-          //do this if our messages are still loading from backend
-          messageBufferRef.current.push(newMessage);
-          return null;
-        }
-      });
-    });
-
-    return () => {
-      socket.off("new_message");
-    };
-  }, [socket]);
 
   // this adds messages from backend message history to chatHistory
   useEffect(() => {
@@ -113,8 +129,11 @@ const Chat = () => {
     // the oldest are at the lower indexes, which will be higher up on the screen
     reformattedMessageHistoryData.reverse();
 
-    //get any messages out of the message buffer to be loaded
+    if (reformattedMessageHistoryData.length < messageLoadLimit) {
+      setHasMoreHistory(false);
+    }
 
+    //get any messages out of the message buffer to be loaded
     const temp = [...messageBufferRef.current];
     messageBufferRef.current = [];
     savedScrollHeightRef.current =
@@ -128,17 +147,11 @@ const Chat = () => {
     });
   }, [messageHistoryData]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     //this scrolls to the bottom of the chat when chat is loaded on page load
     if (isFirstLoadRef.current && messageHistoryData) {
       scrollRef.current?.scrollIntoView();
       isFirstLoadRef.current = false;
-    }
-
-    //this scrolls to the bottom of the chat when a new message is sent
-    else if (isNewMessageRef.current) {
-      scrollRef.current?.scrollIntoView({ behavior: "smooth" });
-      isNewMessageRef.current = false;
     }
 
     //this scrolls to the relative last scroll position after loading older
@@ -152,19 +165,44 @@ const Chat = () => {
     }
   }, [chatHistory]);
 
+  useEffect(() => {
+    //this scrolls to the bottom of the chat when a new message is sent
+    if (isNewMessageRef.current) {
+      scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+      isNewMessageRef.current = false;
+    }
+  }, [chatHistory]);
   return (
     <div className="flex h-[calc(100vh-4rem)] w-full gap-8">
-      <div id="Chat Selection" className="bg-card h-full w-60 rounded-xl p-4">
-        <div className="flex items-center justify-between pb-4">
+      <div
+        id="Chat Selection"
+        className="bg-card flex h-full w-60 flex-col rounded-xl"
+      >
+        <div className="m-4 flex items-center justify-between">
           <div className="text-xl">Chats</div>
           <Button asChild>
             <div className="text-xl">+</div>
           </Button>
         </div>
-        <ChatCard />
-        <ChatCard />
-        <ChatCard />
-        <ChatCard />
+        <div
+          className="no-scrollbar mx-2 my-4 flex flex-1 flex-col items-center
+            gap-4 overflow-x-hidden overflow-y-auto"
+        >
+          {userCoachesError ? (
+            <p>error: {userCoachesError}</p>
+          ) : userCoachesLoading ? (
+            <p>Loading Contacts</p>
+          ) : (
+            userCoachesData?.coaches.map((coach) => (
+              <ChatCard
+                key={coach.id}
+                coach={coach}
+                setSelectedChatUserID={setSelectedChatUserID}
+                selectedChatUserID={selectedChatUserID}
+              />
+            ))
+          )}
+        </div>
       </div>
       <div className="flex w-full flex-col gap-8 overflow-hidden">
         <ChatContent
@@ -174,13 +212,16 @@ const Chat = () => {
           messageHistoryError={messageHistoryError}
           loadMessageHistory={loadMessageHistory}
           chatHistory={chatHistory}
-          sendToID={sendToID}
+          selectedChatUserID={selectedChatUserID}
+          hasMoreHistory={hasMoreHistory}
         />
-        <MessageInput
-          messageText={messageText}
-          setMessageText={setMessageText}
-          handleSendMessage={handleSendMessage}
-        />
+        {selectedChatUserID && (
+          <MessageInput
+            messageText={messageText}
+            setMessageText={setMessageText}
+            handleSendMessage={handleSendMessage}
+          />
+        )}
       </div>
     </div>
   );
