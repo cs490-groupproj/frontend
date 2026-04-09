@@ -36,7 +36,9 @@ const SignUp = () => {
    * This is the bridge that gets the REAL database UUID
    */
   const syncWithBackend = async (idToken) => {
-    const response = await fetch("https://optimal-api.lambusta.me/users/me", {
+    // First try to get user data
+    // This will likely eventually be passed down through outlet context
+    let response = await fetch("https://optimal-api.lambusta.me/users/me", {
       method: "GET",
       headers: {
         Authorization: `Bearer ${idToken}`,
@@ -44,7 +46,35 @@ const SignUp = () => {
       },
     });
 
+    // if this works how i think it does, we may eventually want to modularize it to be set up in our hooks or in the layout idk, havent thought that far
     if (!response.ok) {
+      if (response.status === 400) {
+        const errorData = await response.json();
+        if (errorData.hint && errorData.hint.includes('POST /users/register')) {
+          // User needs to register
+          const registerResponse = await fetch("https://optimal-api.lambusta.me/users/register", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${idToken}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              first_name: fname,
+              last_name: lname,
+              is_coach: false, // Could be improved to ask user
+            }),
+          });
+          
+          if (!registerResponse.ok) {
+            throw new Error("Failed to register user");
+          }
+          
+          const registerData = await registerResponse.json();
+          localStorage.setItem("token", idToken);
+          localStorage.setItem("userId", registerData.user_id);
+          return registerData;
+        }
+      }
       throw new Error(
         "Account created, but database sync failed. Check if backend is live."
       );
