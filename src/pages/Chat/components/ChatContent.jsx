@@ -70,4 +70,4 @@ const ChatContent = ({
   );
 };
 
-export default ChatContent;
+export default React.memo(ChatContent);
