@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { signInWithGooglePopup } from "@/lib/googleSignIn.js";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { auth } from "@/firebase.js";
-import { API_BASE_URL } from "../../../config.js";
+import usePostToAPI from "@/hooks/usePostToAPI";
 
 function mapEmailPasswordError(err) {
   const code = err?.code;
@@ -20,8 +20,20 @@ function mapEmailPasswordError(err) {
   return err?.message || "Unable to create your account right now.";
 }
 
+function mapRegisterError(err) {
+  const msg = err?.message || "";
+  if (msg.includes("409")) {
+    return "This Firebase account is already registered.";
+  }
+  if (msg.includes("400")) {
+    return "Invalid signup data. Check all fields and try again.";
+  }
+  return msg || "Account was created, but saving your profile failed.";
+}
+
 const SignUp = () => {
   const navigate = useNavigate();
+  const { postFunction } = usePostToAPI();
 
   const [accountType, setAccountType] = useState("client");
 
@@ -38,37 +50,27 @@ const SignUp = () => {
     e.preventDefault();
     setSignupError(null);
     setSignupLoading(true);
-
     try {
       // Create Firebase auth account and sign user in.
       await createUserWithEmailAndPassword(auth, email, password);
 
-      const idToken = await auth.currentUser?.getIdToken();
-      if (!idToken) {
-        throw new Error("Account created, but no auth token was found.");
+      if (!auth.currentUser) {
+        throw new Error("Account created, but no auth session was found.");
       }
 
-      const signupEndpoint = `${API_BASE_URL}/users/register`;
-      const res = await fetch(signupEndpoint, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${idToken}`,
+      const isCoach = accountType === "coach";
+      const isClient = accountType === "client";
+
+      await postFunction(
+        "/users/register",
+        {
+          first_name: fname.trim(),
+          last_name: lname.trim(),
+          email: email.trim(),
+          is_coach: isCoach,
+          is_client: isClient,
         },
-        body: JSON.stringify({
-          first_name: fname,
-          last_name: lname,
-          email,
-          is_coach: accountType === "coach",
-        }),
-      });
-
-      if (!res.ok) {
-        const text = await res.text();
-        throw new Error(
-          `Account created, but profile setup failed (${res.status}): ${text}`,
-        );
-      }
+      );
 
       if (accountType === "client") {
         navigate("/clientSurvey");
@@ -76,7 +78,11 @@ const SignUp = () => {
         navigate("/coachSurvey");
       }
     } catch (err) {
-      setSignupError(mapEmailPasswordError(err));
+      const mapped =
+        err?.code != null
+          ? mapEmailPasswordError(err)
+          : mapRegisterError(err);
+      setSignupError(mapped);
     } finally {
       setSignupLoading(false);
     }

@@ -72,7 +72,7 @@ const ClientSurvey = ({ onSubmitted }) => {
     } catch (err) {
       console.error("survey request error:", err);
     }
-
+    navigate("/ClientDashboard", { replace: true });
   };
 
   return (

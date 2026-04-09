@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import {auth} from "@/firebase.js";
-import { API_BASE_URL } from "../../../config.js";
+import usePostToAPI from "@/hooks/usePostToAPI";
+
 const SPECIALIZATIONS = [
   { value: "fitness", label: "Fitness" },
   { value: "nutrition", label: "Nutrition" },
@@ -10,8 +10,6 @@ const SPECIALIZATIONS = [
 ];
 
 const CoachSurvey = () => {
-  const token = auth.currentUser?.getIdToken();
-  console.log("token exists?",  token);
   const navigate = useNavigate();
 
   const feetOptions = [3, 4, 5, 6, 7, 8, 9];
@@ -38,37 +36,23 @@ const CoachSurvey = () => {
     e.preventDefault();
 
     const payload = {
-      heightFeet: heightFeet === "" ? null : Number(heightFeet),
-      heightInches: heightInches === "" ? null : Number(heightInches),
-      heightInInches:
-        heightFeet === "" || heightInches === ""
-          ? null
-          : Number(heightFeet) * 12 + Number(heightInches),
-      weightLbs: weightLbs === "" ? null : Number(weightLbs),
       specialization,
-      qualifications: qualifications.trim() || null,
+ //     qualifications: qualifications.trim() || null,
       costPerHour: costPerHour === "" ? null : Number(costPerHour),
     };
 
     console.log("coach survey payload", payload);
 
     // TODO: replace with backend endpoint + Authorization header
-    const endpoint = "/api/coach/survey";
+    const endpoint = "/users/onboarding/submit_coach_survey";
     try {
-      const res = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) {
-        const text = await res.text();
-        console.error("coach survey failed:", res.status, text);
-      }
+      await postFunction(endpoint, payload);
+      onSubmitted?.();
     } catch (err) {
       console.error("coach survey request error:", err);
     }
 
-    navigate("/", { replace: true });
+    navigate("/ClientDashboard", { replace: true });
   };
 
   return (
@@ -90,73 +74,6 @@ const CoachSurvey = () => {
         </div>
 
         <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4">
-          <div className="flex flex-col gap-2">
-            <label className="text-foreground text-sm font-medium">
-              Height
-            </label>
-            <div className="flex gap-3">
-              <div className="flex-1">
-                <select
-                  id="coach-survey-height-feet"
-                  name="heightFeet"
-                  value={heightFeet}
-                  onChange={(e) => setHeightFeet(e.target.value)}
-                  className={selectClass}
-                  required
-                >
-                  <option value="" disabled>
-                    ft
-                  </option>
-                  {feetOptions.map((ft) => (
-                    <option key={ft} value={ft}>
-                      {ft} ft
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="flex-1">
-                <select
-                  id="coach-survey-height-inches"
-                  name="heightInches"
-                  value={heightInches}
-                  onChange={(e) => setHeightInches(e.target.value)}
-                  className={selectClass}
-                  required
-                >
-                  <option value="" disabled>
-                    in
-                  </option>
-                  {inchOptions.map((inch) => (
-                    <option key={inch} value={inch}>
-                      {inch} in
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <label
-              htmlFor="coach-survey-weight"
-              className="text-foreground text-sm font-medium"
-            >
-              Weight (lbs)
-            </label>
-            <input
-              id="coach-survey-weight"
-              name="weightLbs"
-              type="number"
-              inputMode="numeric"
-              min={1}
-              step={1}
-              value={weightLbs}
-              onChange={(e) => setWeightLbs(e.target.value)}
-              placeholder="180"
-              className={inputClass}
-              required
-            />
-          </div>
 
           <div className="flex flex-col gap-2">
             <span className="text-foreground text-sm font-medium">
