@@ -6,7 +6,7 @@ function usePatchToAPI() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const patchFunction = useCallback(async (patchURI, patchData, auth_token) => {
+  const patchFunction = useCallback(async (patchURI, patchData) => {
     setData(null);
     setLoading(true);
     setError(null);
