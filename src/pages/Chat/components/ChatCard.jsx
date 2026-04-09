@@ -19,4 +19,4 @@ const ChatCard = ({ coach, setSelectedChatUserID, selectedChatUserID }) => {
   );
 };
 
-export default ChatCard;
+export default React.memo(ChatCard);

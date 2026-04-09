@@ -1,5 +1,11 @@
 import React from "react";
-import { useEffect, useState, useRef, useLayoutEffect } from "react";
+import {
+  useEffect,
+  useState,
+  useRef,
+  useLayoutEffect,
+  useCallback,
+} from "react";
 import { Button } from "@/components/ui/button";
 import useGetFromAPI from "@/hooks/useGetFromAPI";
 import ChatCard from "./components/ChatCard";
@@ -20,11 +26,12 @@ const Chat = () => {
   const [hasMoreHistory, setHasMoreHistory] = useState(true);
 
   const scrollRef = useRef(null);
+  const chatMessageContainerRef = useRef(null);
+
   const isNewMessageRef = useRef(false);
   const isFirstLoadRef = useRef(true);
   const isLoadingOlderMessagesRef = useRef(false);
   const messageBufferRef = useRef([]); //stores messages that are received on page load
-  const chatMessageContainerRef = useRef(null);
   const savedScrollHeightRef = useRef(null);
 
   const {
@@ -97,7 +104,7 @@ const Chat = () => {
   };
 
   //loads more messages when the user triggers it
-  const loadMessageHistory = () => {
+  const loadMessageHistory = useCallback(() => {
     if (messageHistoryLoading) {
       return;
     }
@@ -108,7 +115,7 @@ const Chat = () => {
     setMessageHistoryURI(
       `/messages/history?limit=${messageLoadLimit}&offset=${currOffset}&other_party_user_id=${selectedChatUserID}`
     );
-  };
+  }, [messageHistoryLoading, chatHistory, selectedChatUserID]);
 
   // this adds messages from backend message history to chatHistory
   useEffect(() => {
@@ -149,7 +156,7 @@ const Chat = () => {
 
   useLayoutEffect(() => {
     //this scrolls to the bottom of the chat when chat is loaded on page load
-    if (isFirstLoadRef.current && messageHistoryData) {
+    if (isFirstLoadRef.current && chatHistory !== null) {
       scrollRef.current?.scrollIntoView();
       isFirstLoadRef.current = false;
     }
@@ -172,6 +179,8 @@ const Chat = () => {
       isNewMessageRef.current = false;
     }
   }, [chatHistory]);
+
+  //modularize the chat sidebar eventually <<<<<<<<<<<<<
   return (
     <div className="flex h-[calc(100vh-4rem)] w-full gap-8">
       <div
