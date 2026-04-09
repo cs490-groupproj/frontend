@@ -1,11 +1,15 @@
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
+<<<<<<< HEAD
 import { auth } from "@/firebase.js";
+=======
+>>>>>>> origin/master
 
 export function cn(...inputs) {
   return twMerge(clsx(inputs));
 }
 
+<<<<<<< HEAD
 const currentUserId = localStorage.getItem("userId");
 
 export const apiFetch = async (url, options = {}) => {
@@ -43,3 +47,11 @@ export const apiFetch = async (url, options = {}) => {
     throw error;
   }
 };
+=======
+function toTitleCase(string) {
+  return string.replace(/\w\S*/g, (match) => {
+    return match.charAt(0).toUpperCase() + match.substring(1).toLowerCase();
+  });
+}
+export default toTitleCase;
+>>>>>>> origin/master

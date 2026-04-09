@@ -103,12 +103,20 @@ const SignUp = () => {
       const idToken = await userCredential.user.getIdToken();
 
       // 2. Register user in your SQL Database
-      const payload = { accountType, fname, lname, email, password };
-      const signupEndpoint = "https://optimal-api.lambusta.me/api/signup";
+      const payload = {
+        first_name: fname,
+        last_name: lname,
+        email,
+        is_coach: accountType === "coach",
+      };
+      const signupEndpoint = "https://optimal-api.lambusta.me/users/register";
 
       const res = await fetch(signupEndpoint, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${idToken}`,
+        },
         body: JSON.stringify(payload),
       });
 
