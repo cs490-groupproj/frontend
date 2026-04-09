@@ -16,7 +16,7 @@ function useDeleteFromAPI() {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
-          ...API_BASE_URL(await getAuthHeader()),
+          ...(await getAuthHeader()),
         },
       });
 
