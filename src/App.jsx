@@ -14,6 +14,7 @@ import PublicLayout from "./components/layout/PublicLayout.jsx";
 
 import PaymentPage from "./pages/Payment/PaymentPage.jsx";
 import Nutrition from "./pages/Nutrition/nutrition.jsx";
+import EditClientProfile from "./pages/Profile/EditClientProfile.jsx";
 
 // ONLY PUT ROUTES IN HERE. DON'T STYLE. IF YOU WANT TO STYLE, GO TO THE LAYOUT
 const App = () => {
@@ -30,7 +31,7 @@ const App = () => {
         <Route path="/exercises" element={<div>Exercises</div>} />
         <Route path="/nutrition" element={<Nutrition />} />
         <Route path="/payment" element={<PaymentPage />} />
-        <Route path="/profile" element={<div>profile</div>} />
+        <Route path="/profile" element={<EditClientProfile />} />
         <Route path="/chat" element={<div>Chat Content</div>} />
       </Route>
       {/* Put things that need neither here */}
