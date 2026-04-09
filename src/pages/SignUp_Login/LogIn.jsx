@@ -25,7 +25,8 @@ const LogIn = () => {
   const [loginError, setLoginError] = useState(null);
 
   const syncWithBackend = async (idToken) => {
-    const response = await fetch("https://optimal-api.lambusta.me/users/me", {
+    // First try to get user data
+    let response = await fetch("https://optimal-api.lambusta.me/users/me", {
       method: "GET",
       headers: {
         Authorization: `Bearer ${idToken}`,
@@ -34,14 +35,39 @@ const LogIn = () => {
     });
 
     if (!response.ok) {
+      if (response.status === 400) {
+        const errorData = await response.json();
+        if (errorData.hint && errorData.hint.includes('POST /users/register')) {
+          // User needs to register
+          const registerResponse = await fetch("https://optimal-api.lambusta.me/users/register", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${idToken}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              first_name: "User",
+              last_name: "",
+              is_coach: false,
+            }),
+          });
+          
+          if (!registerResponse.ok) {
+            throw new Error("Failed to register user");
+          }
+          
+          const registerData = await registerResponse.json();
+          localStorage.setItem("token", idToken);
+          localStorage.setItem("userId", registerData.user_id);
+          return registerData;
+        }
+      }
       throw new Error("Credentials valid, but user not found in the database.");
     }
 
     const dbData = await response.json();
-
     localStorage.setItem("token", idToken);
     localStorage.setItem("userId", dbData.user_id);
-
     return dbData;
   };
 
