@@ -1,7 +1,12 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { apiFetch } from "@/lib/utils.js";
 import SessionExerciseCard from "./components/SessionExerciseCard.jsx";
+import {
+  enrichWorkoutExerciseRows,
+  getDefaultFieldsForMetricType,
+  getMetricType,
+} from "./lib/exerciseCategoryMetrics.js";
 
 // TEMPORARY MOCK DATA - Remove when API is ready
 const MOCK_WORKOUT_DATA = {
@@ -52,13 +57,13 @@ const MOCK_WORKOUT_DATA = {
 };
 
 const MOCK_EXERCISES = [
-  { id: 1, name: "Bench Press", category: "strength" },
-  { id: 2, name: "Incline Dumbbell Press", category: "strength" },
-  { id: 3, name: "Tricep Rope Pushdown", category: "strength" },
-  { id: 4, name: "Dumbbell Curl", category: "strength" },
-  { id: 5, name: "Barbell Squat", category: "strength" },
-  { id: 6, name: "Treadmill Run", category: "cardio" },
-  { id: 7, name: "Rowing Machine", category: "cardio" },
+  { exercise_id: 1, name: "Bench Press", category: "Barbell" },
+  { exercise_id: 2, name: "Incline Dumbbell Press", category: "Dumbbell" },
+  { exercise_id: 3, name: "Tricep Rope Pushdown", category: "Machine/Other" },
+  { exercise_id: 4, name: "Dumbbell Curl", category: "Dumbbell" },
+  { exercise_id: 5, name: "Barbell Squat", category: "Barbell" },
+  { exercise_id: 6, name: "Treadmill Run", category: "Cardio" },
+  { exercise_id: 7, name: "Rowing Machine", category: "Cardio" },
 ];
 
 export function groupSetsByExercise(workout_exercises = []) {
@@ -70,7 +75,7 @@ export function groupSetsByExercise(workout_exercises = []) {
         exercise_id: set.exercise_id,
         name: set.name || set.exercise_name || set.exercise?.name || "Unknown Exercise",
         position: set.position || 0,
-        category: set.category || set.exercise?.category || "strength",
+        category: set.category || set.exercise?.category || "",
         sets: [],
       };
     }
@@ -96,13 +101,13 @@ function AddExerciseModal({ open, onClose, exercises, onSelectExercise, loading 
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4">
-      <div className="w-full max-w-2xl rounded-3xl border border-fuchsia-500/70 bg-slate-950 p-6 shadow-2xl shadow-black/40">
+      <div className="w-full max-w-2xl rounded-3xl border border-[#f61b59]/70 bg-slate-950 p-6 shadow-2xl shadow-black/40">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-xl font-bold text-white">Add Exercise</h2>
             <p className="text-sm text-slate-400">Select an exercise to add to this workout.</p>
           </div>
-          <button type="button" onClick={onClose} className="rounded-full border border-slate-700 bg-slate-900 px-4 py-2 text-sm text-slate-200 hover:border-fuchsia-500">
+          <button type="button" onClick={onClose} className="rounded-full border border-slate-700 bg-slate-900 px-4 py-2 text-sm text-slate-200 hover:border-[#f61b59]">
             Close
           </button>
         </div>
@@ -126,7 +131,7 @@ function AddExerciseModal({ open, onClose, exercises, onSelectExercise, loading 
               <button
                 key={exercise.exercise_id}
                 onClick={() => onSelectExercise(exercise)}
-                className="flex w-full items-center justify-between rounded-2xl border border-slate-800 bg-slate-900 px-4 py-4 text-left transition hover:border-fuchsia-500/80 hover:bg-slate-900/95"
+                className="flex w-full items-center justify-between rounded-2xl border border-slate-800 bg-slate-900 px-4 py-4 text-left transition hover:border-[#f61b59]/80 hover:bg-slate-900/95"
               >
                 <div>
                   <div className="font-semibold text-white">{exercise.name}</div>
@@ -144,6 +149,7 @@ function AddExerciseModal({ open, onClose, exercises, onSelectExercise, loading 
 
 export default function WorkoutSessionPage() {
   const { workoutId } = useParams();
+  const navigate = useNavigate();
   const useMockData = workoutId === "demo"; // Use mock data when workoutId is "demo"
 
   const [workoutData, setWorkoutData] = useState(null);
@@ -158,13 +164,18 @@ export default function WorkoutSessionPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [apiError, setApiError] = useState(null);
+  const [deletingWorkout, setDeletingWorkout] = useState(false);
 
   useEffect(() => {
     const dataToUse = useMockData ? MOCK_WORKOUT_DATA : workoutData;
     if (!dataToUse) return;
-    setWorkout(dataToUse);
-    setGroupedExercises(groupSetsByExercise(dataToUse.workout_exercises || dataToUse.exercises || []));
-  }, [workoutData, useMockData]);
+    const raw = dataToUse.workout_exercises || dataToUse.exercises || [];
+    const catalog = useMockData ? MOCK_EXERCISES : exercisesData;
+    const enriched = enrichWorkoutExerciseRows(raw, catalog);
+    const next = { ...dataToUse, workout_exercises: enriched };
+    setWorkout(next);
+    setGroupedExercises(groupSetsByExercise(enriched));
+  }, [workoutData, useMockData, exercisesData]);
 
   useEffect(() => {
     if (useMockData || !workoutId) return;
@@ -266,9 +277,8 @@ export default function WorkoutSessionPage() {
     setApiError(null);
 
     const position = groupedExercises.length > 0 ? Math.max(...groupedExercises.map((item) => item.position)) + 1 : 1;
-    const templateSet = exercise.category === "cardio"
-      ? { duration_sec: 0, distance_m: 0, pace_sec_per_km: 0 }
-      : { weight: 0, reps: 0, rpe: 0 };
+    const metricType = getMetricType(exercise);
+    const templateSet = getDefaultFieldsForMetricType(metricType);
 
     try {
       const response = await apiFetch(`workouts/${workoutId}/exercises`, {
@@ -276,7 +286,7 @@ export default function WorkoutSessionPage() {
         body: JSON.stringify({
           exercise_id: exercise.exercise_id,
           position,
-          category: exercise.category || "strength",
+          category: exercise.category || "",
           ...templateSet,
         }),
       });
@@ -295,7 +305,7 @@ export default function WorkoutSessionPage() {
         exercise_id: exercise.exercise_id,
         name: exercise.name,
         position,
-        category: exercise.category || "strength",
+        category: exercise.category || "",
       };
 
       const grouped = groupSetsByExercise([...(workout?.workout_exercises || []), newWorkoutExercise]);
@@ -317,9 +327,8 @@ export default function WorkoutSessionPage() {
     setSaving(true);
     setApiError(null);
 
-    const baseSet = exercise.category === "cardio"
-      ? { duration_sec: 0, distance_m: 0, pace_sec_per_km: 0 }
-      : { weight: 0, reps: 0, rpe: 0 };
+    const metricType = getMetricType(exercise);
+    const baseSet = getDefaultFieldsForMetricType(metricType);
 
     try {
       const response = await apiFetch(`workouts/${workoutId}/exercises`, {
@@ -327,7 +336,7 @@ export default function WorkoutSessionPage() {
         body: JSON.stringify({
           exercise_id: exercise.exercise_id,
           position: exercise.position,
-          category: exercise.category,
+          category: exercise.category || "",
           ...baseSet,
         }),
       });
@@ -384,6 +393,69 @@ export default function WorkoutSessionPage() {
     }
   };
 
+  const handleDeleteSet = async (setId) => {
+    if (!setId) return;
+    setSaving(true);
+    setApiError(null);
+
+    try {
+      const response = await apiFetch(`workout-exercises/${setId}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) {
+        throw new Error("Unable to delete set.");
+      }
+
+      setGroupedExercises((current) =>
+        current
+          .map((exercise) => ({
+            ...exercise,
+            sets: exercise.sets.filter((setItem) => (setItem.id ?? setItem.workout_exercise_id) !== setId),
+          }))
+          .filter((exercise) => exercise.sets.length > 0)
+      );
+
+      setWorkout((current) => ({
+        ...current,
+        workout_exercises: (current?.workout_exercises || []).filter(
+          (setItem) => (setItem.id ?? setItem.workout_exercise_id) !== setId
+        ),
+      }));
+    } catch {
+      setApiError("Unable to delete set.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleFinishWorkout = () => {
+    // Navigate back to exercises page
+    navigate("/exercises");
+  };
+
+  const handleDeleteWorkout = async (targetWorkoutId) => {
+    if (useMockData || !targetWorkoutId) return;
+    const confirmed = window.confirm("Delete this entire workout session? This cannot be undone.");
+    if (!confirmed) return;
+
+    setDeletingWorkout(true);
+    setApiError(null);
+    try {
+      const response = await apiFetch(`/workouts/${targetWorkoutId}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) {
+        const errorBody = await response.json().catch(() => ({}));
+        throw new Error(errorBody.error || `Unable to delete workout (${response.status}).`);
+      }
+      navigate("/exercises");
+    } catch (error) {
+      setApiError(error.message || "Unable to delete workout.");
+    } finally {
+      setDeletingWorkout(false);
+    }
+  };
+
   const groupedDisplay = useMemo(
     () => [...groupedExercises].sort((a, b) => a.position - b.position),
     [groupedExercises]
@@ -392,7 +464,7 @@ export default function WorkoutSessionPage() {
   return (
     <div className="min-h-screen bg-slate-950 px-4 py-8 text-slate-100 sm:px-8">
       <div className="mx-auto w-full max-w-6xl space-y-6">
-        <header className="rounded-[2rem] border border-fuchsia-500/70 bg-slate-950/80 p-6 shadow-2xl shadow-black/20">
+        <header className="rounded-[2rem] border border-[#f61b59]/70 bg-slate-950/80 p-6 shadow-2xl shadow-black/20">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-sm uppercase tracking-[0.3em] text-slate-500">
@@ -406,17 +478,28 @@ export default function WorkoutSessionPage() {
                 type="button"
                 onClick={() => setIsModalOpen(true)}
                 disabled={saving}
-                className="rounded-full bg-fuchsia-500 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-fuchsia-400 disabled:cursor-not-allowed disabled:bg-fuchsia-400/60"
+                className="rounded-full bg-[#f61b59] px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-[#f61b59]/90 disabled:cursor-not-allowed disabled:bg-[#f61b59]/60"
               >
                 Add Exercise
               </button>
               <button
                 type="button"
-                disabled={saving}
-                className="rounded-full border border-slate-700 bg-slate-900 px-5 py-3 text-sm font-semibold text-slate-100 transition hover:border-fuchsia-500 disabled:cursor-not-allowed disabled:border-slate-700/50 disabled:text-slate-500"
+                onClick={handleFinishWorkout}
+                disabled={saving || deletingWorkout}
+                className="rounded-full border border-slate-700 bg-slate-900 px-5 py-3 text-sm font-semibold text-slate-100 transition hover:border-[#f61b59] disabled:cursor-not-allowed disabled:border-slate-700/50 disabled:text-slate-500"
               >
                 Finish Workout
               </button>
+              {!useMockData && (
+                <button
+                  type="button"
+                  onClick={() => handleDeleteWorkout(workoutId)}
+                  disabled={saving || deletingWorkout}
+                  className="rounded-full border border-red-500/60 bg-red-500/10 px-5 py-3 text-sm font-semibold text-red-200 transition hover:bg-red-500/20 disabled:cursor-not-allowed disabled:border-red-500/30 disabled:text-red-200/50"
+                >
+                  {deletingWorkout ? "Deleting..." : "Delete Workout"}
+                </button>
+              )}
             </div>
           </div>
         </header>
@@ -440,6 +523,7 @@ export default function WorkoutSessionPage() {
                   onSetUpdate={updateSetField}
                   onAddSet={handleAddSet}
                   onDeleteExercise={handleDeleteExercise}
+                  onDeleteSet={handleDeleteSet}
                 />
               ))
             )}

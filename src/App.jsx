@@ -8,6 +8,7 @@ import ClientSurvey from "./pages/SignUp_Login/ClientSurvey.jsx";
 import CoachSurvey from "./pages/SignUp_Login/CoachSurvey.jsx";
 import LandingPage from "./pages/LandingPage/LandingPage.jsx";
 import Exercises from "./pages/ClientDashboard/Exercises.jsx";
+import WorkoutSessionPage from "./pages/ClientDashboard/WorkoutSessionPage.jsx";
 
 import LogIn from "./pages/SignUp_Login/LogIn.jsx";
 import SignUp from "./pages/SignUp_Login/SignUp.jsx";
@@ -55,6 +56,7 @@ const App = () => {
         <Route path="/clientDashboard" element={<ClientDashboard />} />
         <Route path="/coaches" element={<BrowseCoaches />} />
         <Route path="/exercises" element={<Exercises />} />
+        <Route path="/workout-session/:workoutId" element={<WorkoutSessionPage />} />
         <Route path="/nutrition" element={<Nutrition />} />
         <Route path="/payment" element={<PaymentPage />} />
         <Route path="/profile" element={<div>profile</div>} />
