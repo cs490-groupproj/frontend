@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import usePostToAPI from "@/hooks/usePostToAPI";
-import { useNavigate } from "react-router-dom";
+   import { useNavigate } from "react-router-dom";
    
 const GOALS = [
   { id: 0, label: "Lose weight" },
@@ -11,11 +11,11 @@ const GOALS = [
   { id: 4, label: "General fitness / stay active" },
   { id: 5, label: "Sports performance" },
 ];
-const HEIGHT_STORAGE_KEY = "client_height_inches";
 
 
 const ClientSurvey = ({ onSubmitted }) => {
-  const navigate = useNavigate();
+    const navigate = useNavigate();
+  
 
   const feetOptions = [3, 4, 5, 6, 7, 8, 9];
   const inchOptions = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
@@ -53,27 +53,26 @@ const ClientSurvey = ({ onSubmitted }) => {
       (dailyExerciseHours === "" ? 0 : Number(dailyExerciseHours) * 60) +
       (dailyExerciseMinutes === "" ? 0 : Number(dailyExerciseMinutes));
 
-   
     const payload = {
       primary_goals_binary: primaryGoalsBinary,
-      weight: weightGoalLbs === "" ? null : Number(weightGoalLbs),
-      exercise_minutes:
-        totalExerciseMinutes > 0 ? totalExerciseMinutes : null,
-      personal_goals:
-        otherEnabled && otherText.trim() ? otherText.trim() : null,
+      weight: weightLbs === "" ? null : Number(weightLbs),
+      weight_goal: weightGoalLbs === "" ? null : Number(weightGoalLbs),
+      exercise_minutes_goal: totalExerciseMinutes > 0 ? totalExerciseMinutes : null,
+      personal_goals: otherEnabled && otherText.trim() ? otherText.trim() : null,
+      heightInInches: heightInInches,
     };
 
-    const endpoint = `/clients/${localStorage.getItem("userId")}/initial_goal_survey`;
+    console.log("client survey payload", payload);
+
+    const endpoint = "/users/onboarding/submit_client_survey";
     try {
       await postFunction(endpoint, payload);
-      if (heightInInches !== null) {
-        localStorage.setItem(HEIGHT_STORAGE_KEY, String(heightInInches));
-      }
       onSubmitted?.();
-      navigate("/ClientDashboard", { replace: true });
+
     } catch (err) {
       console.error("survey request error:", err);
     }
+    navigate("/ClientDashboard", { replace: true });
   };
 
   return (
@@ -158,7 +157,7 @@ const ClientSurvey = ({ onSubmitted }) => {
               htmlFor="survey-weight-lbs"
               className="text-foreground text-sm font-medium"
             >
-              Current weight (lbs, optional)
+              Weight (lbs)
             </label>
             <input
               id="survey-weight-lbs"
@@ -174,6 +173,7 @@ const ClientSurvey = ({ onSubmitted }) => {
                 placeholder:text-muted-foreground focus-visible:border-ring h-9
                 w-full rounded-lg border px-3 text-sm outline-none
                 focus-visible:ring-3"
+              required
             />
           </div>
 
