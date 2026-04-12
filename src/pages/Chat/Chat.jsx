@@ -70,30 +70,36 @@ const Chat = () => {
     //this joins the room and listens for incoming messages
     socket.emit("join", { other_id: selectedChatUserID });
 
-    socket.on("new_message", (newMessage) => {
-      setChatHistory((prevHistory) => {
-        if (Array.isArray(prevHistory)) {
-          isNewMessageRef.current = true; //set this so we get smooth scroll on load
-          return [...prevHistory, newMessage];
-        } else {
-          //do this if our messages are still loading from backend
-          messageBufferRef.current.push(newMessage);
-          return null;
-        }
-      });
-    });
+    socket.on("new_message", handleNewMessage);
 
     setMessageHistoryURI(
       `/messages/history?limit=${messageLoadLimit}&offset=${startOffset}&other_party_user_id=${selectedChatUserID}`
     );
 
     return () => {
-      socket.off("new_message");
+      socket.emit("leave", { other_id: selectedChatUserID });
+      socket.off("new_message", handleNewMessage);
     };
-  }, [selectedChatUserID]);
+  }, [selectedChatUserID, socket]);
+
+  const handleNewMessage = useCallback((newMessage) => {
+    setChatHistory((prevHistory) => {
+      if (Array.isArray(prevHistory)) {
+        isNewMessageRef.current = true; //set this so we get smooth scroll on load
+        return [...prevHistory, newMessage];
+      } else {
+        //do this if our messages are still loading from backend
+        messageBufferRef.current.push(newMessage);
+        return null;
+      }
+    });
+  }, []);
 
   //ensures that a message has content and is not just whitespace
-  const handleSendMessage = () => {
+  const handleSendMessage = useCallback(() => {
+    if (!socket) {
+      return;
+    }
     if (messageText.trim() === "") {
       return;
     }
@@ -101,7 +107,7 @@ const Chat = () => {
       message: messageText,
     });
     setMessageText("");
-  };
+  }, [socket, messageText]);
 
   //loads more messages when the user triggers it
   const loadMessageHistory = useCallback(() => {
@@ -124,7 +130,6 @@ const Chat = () => {
     }
 
     const reformattedMessageHistoryData = messageHistoryData.messages.map(
-      //^^^^^ RIGHT HERE OFFICER (messages.)
       (msg) => ({
         sender_id: msg.message_sender,
         message: msg.message_body,
