@@ -17,7 +17,8 @@ const Chat = () => {
   const messageLoadLimit = 50;
   const startOffset = 0;
 
-  const { socket, user } = useOutletContext();
+  const { socket, user, unreadChatNotifications, setUnreadChatNotifications } =
+    useOutletContext();
 
   const [chatHistory, setChatHistory] = useState(null);
   const [messageText, setMessageText] = useState("");
@@ -45,6 +46,19 @@ const Chat = () => {
     loading: messageHistoryLoading,
     error: messageHistoryError,
   } = useGetFromAPI(messageHistoryURI, null);
+
+  const handleNewMessage = useCallback((newMessage) => {
+    setChatHistory((prevHistory) => {
+      if (Array.isArray(prevHistory)) {
+        isNewMessageRef.current = true; //set this so we get smooth scroll on load
+        return [...prevHistory, newMessage];
+      } else {
+        //do this if our messages are still loading from backend
+        messageBufferRef.current.push(newMessage);
+        return null;
+      }
+    });
+  }, []);
 
   //handles changing the conversation
   useEffect(() => {
@@ -80,20 +94,7 @@ const Chat = () => {
       socket.emit("leave", { other_id: selectedChatUserID });
       socket.off("new_message", handleNewMessage);
     };
-  }, [selectedChatUserID, socket]);
-
-  const handleNewMessage = useCallback((newMessage) => {
-    setChatHistory((prevHistory) => {
-      if (Array.isArray(prevHistory)) {
-        isNewMessageRef.current = true; //set this so we get smooth scroll on load
-        return [...prevHistory, newMessage];
-      } else {
-        //do this if our messages are still loading from backend
-        messageBufferRef.current.push(newMessage);
-        return null;
-      }
-    });
-  }, []);
+  }, [selectedChatUserID, socket, handleNewMessage]);
 
   //ensures that a message has content and is not just whitespace
   const handleSendMessage = useCallback(() => {
@@ -190,7 +191,7 @@ const Chat = () => {
     <div className="flex h-[calc(100vh-4rem)] w-full gap-8">
       <div
         id="Chat Selection"
-        className="bg-card flex h-full w-60 flex-col rounded-xl"
+        className="bg-card flex h-full w-72 flex-col rounded-xl"
       >
         <div className="m-4 flex items-center justify-between">
           <div className="text-xl">Chats</div>
@@ -207,14 +208,18 @@ const Chat = () => {
           ) : userCoachesLoading ? (
             <p>Loading Contacts</p>
           ) : (
-            userCoachesData?.coaches.map((coach) => (
-              <ChatCard
-                key={coach.id}
-                coach={coach}
-                setSelectedChatUserID={setSelectedChatUserID}
-                selectedChatUserID={selectedChatUserID}
-              />
-            ))
+            userCoachesData?.coaches.map((coach) => {
+              return (
+                <ChatCard
+                  key={coach.id}
+                  coach={coach}
+                  setSelectedChatUserID={setSelectedChatUserID}
+                  selectedChatUserID={selectedChatUserID}
+                  unreadChatNotifications={unreadChatNotifications}
+                  setUnreadChatNotifications={setUnreadChatNotifications}
+                />
+              );
+            })
           )}
         </div>
       </div>
