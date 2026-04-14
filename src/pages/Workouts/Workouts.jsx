@@ -11,7 +11,6 @@ import WorkoutHistoryTab from "@/pages/Workouts/tabs/WorkoutHistoryTab";
 import LogWorkoutTab from "@/pages/Workouts/tabs/LogWorkoutTab";
 import { API_BASE_URL } from "../../../config.js";
 import { getAuthHeader } from "@/lib/authHeader";
-import { auth } from "@/firebase";
 
 const TABS = {
   PLANS: "plans",
@@ -97,22 +96,6 @@ const Workouts = () => {
     userId ? `/workouts?user_id=${userId}` : null,
     `${userId || ""}-${workoutsRefreshKey}`
   );
-
-  useEffect(() => {
-    const logWorkoutDebugIdentity = async () => {
-      const firebaseUser = auth.currentUser;
-      const firebaseUid = firebaseUser?.uid || user?.firebase_uid || user?.uid || null;
-      const authToken = firebaseUser ? await firebaseUser.getIdToken() : null;
-
-      console.log("[Workouts Debug] Auth Token:", authToken);
-      console.log("[Workouts Debug] Firebase UID:", firebaseUid);
-      console.log("[Workouts Debug] /users/me DB user_id:", user?.user_id || null);
-    };
-
-    logWorkoutDebugIdentity().catch((error) => {
-      console.log("[Workouts Debug] Failed to log identity info:", error);
-    });
-  }, [user]);
 
   useEffect(() => {
     if (!userId) return;
