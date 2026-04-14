@@ -6,6 +6,7 @@ import ClientSurvey from "./pages/SignUp_Login/ClientSurvey.jsx";
 import Chat from "./pages/Chat/Chat.jsx";
 import CoachSurvey from "./pages/SignUp_Login/CoachSurvey.jsx";
 import LandingPage from "./pages/LandingPage/LandingPage.jsx";
+import EditProfile from "./pages/Profile/EditClientProfile.jsx";
 
 import LogIn from "./pages/SignUp_Login/LogIn.jsx";
 import SignUp from "./pages/SignUp_Login/SignUp.jsx";
@@ -33,7 +34,7 @@ const App = () => {
         <Route path="/nutrition" element={<Nutrition />} />
         <Route path="/workouts" element={<Workouts />} />
         <Route path="/payment" element={<PaymentPage />} />
-        <Route path="/profile" element={<div>profile</div>} />
+        <Route path="/profile" element={<EditProfile />} />
         <Route path="/chat" element={<Chat />} />
       </Route>
       {/* Put things that need neither here */}
