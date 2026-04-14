@@ -14,8 +14,8 @@ export default function Sidebar() {
   const links = [
     { to: "/clientDashboard", icon: LayoutDashboard, label: "Dashboard" },
     { to: "/nutrition", icon: Utensils, label: "Nutrition" },
+    { to: "/workouts", icon: Dumbbell, label: "Workouts" },
     { to: "/coaches", icon: Users, label: "Browse Coaches" },
-    { to: "/exercises", icon: Dumbbell, label: "Exercises" },
     { to: "/payment", icon: CreditCard, label: "Payment" },
     { to: "/profile", icon: User, label: "Edit Profile" },
     { to: "/chat", icon: MessageSquare, label: "Chat" },
