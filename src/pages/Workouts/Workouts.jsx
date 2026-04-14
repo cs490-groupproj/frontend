@@ -28,11 +28,39 @@ const DAYS_OF_WEEK = [
   "Sunday",
 ];
 
+const CATEGORY_KEYS = {
+  DURATION: "duration",
+  CARDIO: "cardio",
+  REPS_ONLY: "repsOnly",
+  OTHER: "other",
+};
+
+const normalizeCategoryName = (value) =>
+  String(value || "")
+    .toLowerCase()
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+const resolveCategoryKey = (exercise, categoryNameById) => {
+  const categoryName = normalizeCategoryName(
+    exercise?.category || categoryNameById?.[exercise?.category_id]
+  );
+
+  if (categoryName === "duration") return CATEGORY_KEYS.DURATION;
+  if (categoryName === "cardio") return CATEGORY_KEYS.CARDIO;
+  if (categoryName === "reps only") return CATEGORY_KEYS.REPS_ONLY;
+  return CATEGORY_KEYS.OTHER;
+};
+
 const emptyExerciseRow = {
   workout_plan_exercise_id: null,
   exercise_id: "",
   sets: "",
   reps: "",
+  duration_sec: "",
+  distance_m: "",
+  pace_sec_per_km: "",
 };
 
 const emptyLogRow = {
@@ -41,6 +69,9 @@ const emptyLogRow = {
   sets: "",
   reps: "",
   lbs: "",
+  duration_sec: "",
+  distance_m: "",
+  pace_sec_per_km: "",
 };
 
 const Workouts = () => {
@@ -72,9 +103,7 @@ const Workouts = () => {
   const [logSaveError, setLogSaveError] = useState("");
   const [logSaveSuccess, setLogSaveSuccess] = useState("");
   const [logMetaByWorkoutId, setLogMetaByWorkoutId] = useState({});
-  const [logRows, setLogRows] = useState([
-    { exercise_id: "", exercise: "Bench Press", sets: "3", reps: "10", lbs: "135" },
-  ]);
+  const [logRows, setLogRows] = useState([{ ...emptyLogRow }]);
   const [logDuration, setLogDuration] = useState("");
   const [mood, setMood] = useState("");
   const [sessionNotes, setSessionNotes] = useState("");
@@ -164,6 +193,14 @@ const Workouts = () => {
       return acc;
     }, {});
   }, [workoutTypes]);
+
+  const categoryKeyByExerciseId = useMemo(() => {
+    if (!Array.isArray(exercisesCatalog)) return {};
+    return exercisesCatalog.reduce((acc, exercise) => {
+      acc[exercise.exercise_id] = resolveCategoryKey(exercise, categoryNameById);
+      return acc;
+    }, {});
+  }, [exercisesCatalog, categoryNameById]);
 
   const bodyPartOptions = useMemo(() => {
     const options = (exercisesCatalog || [])
@@ -257,6 +294,36 @@ const Workouts = () => {
     );
   };
 
+  const parseNumberOrUndefined = (value) => {
+    if (value === null || value === undefined || value === "") return undefined;
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : undefined;
+  };
+
+  const buildMetricPayload = (row, exerciseMeta, { includeWeight = false } = {}) => {
+    const categoryKey = resolveCategoryKey(exerciseMeta, categoryNameById);
+    const payload = {};
+
+    if (categoryKey === CATEGORY_KEYS.DURATION) {
+      payload.duration_sec = parseNumberOrUndefined(row.duration_sec);
+    } else if (categoryKey === CATEGORY_KEYS.CARDIO) {
+      payload.distance_m = parseNumberOrUndefined(row.distance_m);
+      payload.pace_sec_per_km = parseNumberOrUndefined(row.pace_sec_per_km);
+    } else if (categoryKey === CATEGORY_KEYS.REPS_ONLY) {
+      payload.reps = parseNumberOrUndefined(row.reps);
+    } else {
+      payload.sets = parseNumberOrUndefined(row.sets);
+      payload.reps = parseNumberOrUndefined(row.reps);
+      if (includeWeight) {
+        payload.weight = parseNumberOrUndefined(row.lbs);
+      }
+    }
+
+    return Object.fromEntries(
+      Object.entries(payload).filter(([, value]) => value !== undefined)
+    );
+  };
+
   const addLogRow = () => {
     setLogRows((prev) => [...prev, { ...emptyLogRow }]);
   };
@@ -277,6 +344,18 @@ const Workouts = () => {
       sets: exercise.sets ? String(exercise.sets) : "",
       reps: exercise.reps ? String(exercise.reps) : "",
       lbs: exercise.weight ? String(exercise.weight) : "",
+      duration_sec:
+        exercise.duration_sec === 0 || exercise.duration_sec
+          ? String(exercise.duration_sec)
+          : "",
+      distance_m:
+        exercise.distance_m === 0 || exercise.distance_m
+          ? String(exercise.distance_m)
+          : "",
+      pace_sec_per_km:
+        exercise.pace_sec_per_km === 0 || exercise.pace_sec_per_km
+          ? String(exercise.pace_sec_per_km)
+          : "",
     }));
     setLogRows(mappedRows.length > 0 ? mappedRows : [{ ...emptyLogRow }]);
     setLogDuration(
@@ -359,6 +438,18 @@ const Workouts = () => {
               exercise.sets === 0 || exercise.sets ? String(exercise.sets) : "",
             reps:
               exercise.reps === 0 || exercise.reps ? String(exercise.reps) : "",
+            duration_sec:
+              exercise.duration_sec === 0 || exercise.duration_sec
+                ? String(exercise.duration_sec)
+                : "",
+            distance_m:
+              exercise.distance_m === 0 || exercise.distance_m
+                ? String(exercise.distance_m)
+                : "",
+            pace_sec_per_km:
+              exercise.pace_sec_per_km === 0 || exercise.pace_sec_per_km
+                ? String(exercise.pace_sec_per_km)
+                : "",
           }))
         : [{ ...emptyExerciseRow }]
     );
@@ -416,8 +507,7 @@ const Workouts = () => {
             exercises: cleanedRows.map((row, index) => ({
               exercise_id: Number(row.exercise_id),
               position: index,
-              sets: row.sets ? Number(row.sets) : undefined,
-              reps: row.reps ? Number(row.reps) : undefined,
+              ...buildMetricPayload(row, exerciseById[row.exercise_id]),
             })),
           });
         }
@@ -440,8 +530,7 @@ const Workouts = () => {
             putFunction(`/workout-plan-exercises/${row.workout_plan_exercise_id}`, {
               exercise_id: Number(row.exercise_id),
               position: index,
-              sets: row.sets ? Number(row.sets) : undefined,
-              reps: row.reps ? Number(row.reps) : undefined,
+              ...buildMetricPayload(row, exerciseById[row.exercise_id]),
             })
           )
         );
@@ -451,8 +540,7 @@ const Workouts = () => {
             exercises: newRows.map((row, index) => ({
               exercise_id: Number(row.exercise_id),
               position: existingRows.length + index,
-              sets: row.sets ? Number(row.sets) : undefined,
-              reps: row.reps ? Number(row.reps) : undefined,
+              ...buildMetricPayload(row, exerciseById[row.exercise_id]),
             })),
           });
         }
@@ -493,13 +581,23 @@ const Workouts = () => {
     const rowsWithExerciseIds = logRows
       .map((row) => {
         const directId = row.exercise_id ? Number(row.exercise_id) : null;
-        if (directId) return { ...row, resolved_exercise_id: directId };
+        if (directId) {
+          return {
+            ...row,
+            resolved_exercise_id: directId,
+            resolved_exercise_meta: exerciseById[directId],
+          };
+        }
         const byName = (exercisesCatalog || []).find(
           (exercise) => exercise.name?.toLowerCase() === row.exercise?.trim()?.toLowerCase()
         );
         return byName
-          ? { ...row, resolved_exercise_id: Number(byName.exercise_id) }
-          : { ...row, resolved_exercise_id: null };
+          ? {
+              ...row,
+              resolved_exercise_id: Number(byName.exercise_id),
+              resolved_exercise_meta: byName,
+            }
+          : { ...row, resolved_exercise_id: null, resolved_exercise_meta: null };
       })
       .filter((row) => row.resolved_exercise_id);
 
@@ -529,9 +627,7 @@ const Workouts = () => {
         exercises: rowsWithExerciseIds.map((row, index) => ({
           exercise_id: row.resolved_exercise_id,
           position: index,
-          sets: row.sets ? Number(row.sets) : undefined,
-          reps: row.reps ? Number(row.reps) : undefined,
-          weight: row.lbs ? Number(row.lbs) : undefined,
+          ...buildMetricPayload(row, row.resolved_exercise_meta, { includeWeight: true }),
         })),
       });
 
@@ -676,6 +772,7 @@ const Workouts = () => {
           exercisesCatalog={exercisesCatalog}
           updateExerciseRow={updateExerciseRow}
           removeExerciseRow={removeExerciseRow}
+          categoryKeyByExerciseId={categoryKeyByExerciseId}
           bodyPartNameById={bodyPartNameById}
           categoryNameById={categoryNameById}
           addExerciseRow={addExerciseRow}
@@ -723,6 +820,7 @@ const Workouts = () => {
           historyWorkoutLoadingById={historyWorkoutLoadingById}
           historyWorkoutDetailsById={historyWorkoutDetailsById}
           logMetaByWorkoutId={logMetaByWorkoutId}
+          categoryKeyByExerciseId={categoryKeyByExerciseId}
         />
       )}
 
@@ -739,6 +837,7 @@ const Workouts = () => {
           updateLogRow={updateLogRow}
           removeLogRow={removeLogRow}
           addLogRow={addLogRow}
+          categoryKeyByExerciseId={categoryKeyByExerciseId}
           logDuration={logDuration}
           setLogDuration={setLogDuration}
           mood={mood}

@@ -4,6 +4,13 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Trash2 } from "lucide-react";
 
+const MetricField = ({ label, className = "", children }) => (
+  <div className={className}>
+    <p className="text-muted-foreground mb-1 text-[11px] font-medium">{label}</p>
+    {children}
+  </div>
+);
+
 const LogWorkoutTab = ({
   hasWorkoutScheduledToday,
   todayWeekday,
@@ -15,6 +22,8 @@ const LogWorkoutTab = ({
   logRows,
   updateLogRow,
   removeLogRow,
+  addLogRow,
+  categoryKeyByExerciseId,
   logDuration,
   setLogDuration,
   mood,
@@ -107,36 +116,92 @@ const LogWorkoutTab = ({
                 </div>
               </div>
 
-              <div className="grid grid-cols-12 gap-3 text-muted-foreground text-xs">
-                <span className="col-span-5">Exercise</span>
-                <span className="col-span-2">Sets</span>
-                <span className="col-span-2">Reps</span>
-                <span className="col-span-2">lbs</span>
-                <span className="col-span-1" />
-              </div>
-
               {logRows.map((row, index) => (
                 <div key={`${index}-${row.exercise}`} className="grid grid-cols-12 gap-3">
-                  <Input
-                    className="col-span-5"
-                    value={row.exercise}
-                    onChange={(event) => updateLogRow(index, "exercise", event.target.value)}
-                  />
-                  <Input
-                    className="col-span-2"
-                    value={row.sets}
-                    onChange={(event) => updateLogRow(index, "sets", event.target.value)}
-                  />
-                  <Input
-                    className="col-span-2"
-                    value={row.reps}
-                    onChange={(event) => updateLogRow(index, "reps", event.target.value)}
-                  />
-                  <Input
-                    className="col-span-2"
-                    value={row.lbs}
-                    onChange={(event) => updateLogRow(index, "lbs", event.target.value)}
-                  />
+                  <MetricField label="Exercise" className="col-span-4">
+                    <Input
+                      value={row.exercise}
+                      onChange={(event) => updateLogRow(index, "exercise", event.target.value)}
+                    />
+                  </MetricField>
+                  <div className="col-span-7 grid grid-cols-7 gap-2">
+                    {(() => {
+                      const categoryKey = categoryKeyByExerciseId?.[Number(row.exercise_id)] || "other";
+                      if (categoryKey === "duration") {
+                        return (
+                          <MetricField label="Duration (sec)" className="col-span-7">
+                            <Input
+                              placeholder="e.g. 1800"
+                              value={row.duration_sec}
+                              onChange={(event) =>
+                                updateLogRow(index, "duration_sec", event.target.value)
+                              }
+                            />
+                          </MetricField>
+                        );
+                      }
+                      if (categoryKey === "cardio") {
+                        return (
+                          <>
+                            <MetricField label="Distance (miles)" className="col-span-4">
+                              <Input
+                                placeholder="e.g. 5000"
+                                value={row.distance_m}
+                                onChange={(event) =>
+                                  updateLogRow(index, "distance_m", event.target.value)
+                                }
+                              />
+                            </MetricField>
+                            <MetricField label="Pace (sec/mile)" className="col-span-3">
+                              <Input
+                                placeholder="e.g. 300"
+                                value={row.pace_sec_per_km}
+                                onChange={(event) =>
+                                  updateLogRow(index, "pace_sec_per_km", event.target.value)
+                                }
+                              />
+                            </MetricField>
+                          </>
+                        );
+                      }
+                      if (categoryKey === "repsOnly") {
+                        return (
+                          <MetricField label="Reps" className="col-span-7">
+                            <Input
+                              placeholder="e.g. 20"
+                              value={row.reps}
+                              onChange={(event) => updateLogRow(index, "reps", event.target.value)}
+                            />
+                          </MetricField>
+                        );
+                      }
+                      return (
+                        <>
+                          <MetricField label="Sets" className="col-span-2">
+                            <Input
+                              placeholder="e.g. 4"
+                              value={row.sets}
+                              onChange={(event) => updateLogRow(index, "sets", event.target.value)}
+                            />
+                          </MetricField>
+                          <MetricField label="Reps" className="col-span-2">
+                            <Input
+                              placeholder="e.g. 10"
+                              value={row.reps}
+                              onChange={(event) => updateLogRow(index, "reps", event.target.value)}
+                            />
+                          </MetricField>
+                          <MetricField label="Weight (lbs)" className="col-span-3">
+                            <Input
+                              placeholder="e.g. 135"
+                              value={row.lbs}
+                              onChange={(event) => updateLogRow(index, "lbs", event.target.value)}
+                            />
+                          </MetricField>
+                        </>
+                      );
+                    })()}
+                  </div>
                   <button
                     type="button"
                     className="text-muted-foreground hover:text-destructive col-span-1 inline-flex items-center justify-center"
@@ -146,6 +211,9 @@ const LogWorkoutTab = ({
                   </button>
                 </div>
               ))}
+              <Button variant="outline" onClick={addLogRow}>
+                Add Exercise Row
+              </Button>
 
             </CardContent>
           </Card>

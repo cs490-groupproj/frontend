@@ -4,6 +4,13 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Plus, Trash2 } from "lucide-react";
 
+const MetricField = ({ label, className = "", children }) => (
+  <div className={className}>
+    <p className="text-muted-foreground mb-1 text-[11px] font-medium">{label}</p>
+    {children}
+  </div>
+);
+
 const WorkoutPlansTab = ({
   openCreateForm,
   isFormOpen,
@@ -21,6 +28,7 @@ const WorkoutPlansTab = ({
   exercisesCatalog,
   updateExerciseRow,
   removeExerciseRow,
+  categoryKeyByExerciseId,
   bodyPartNameById,
   categoryNameById,
   addExerciseRow,
@@ -105,50 +113,103 @@ const WorkoutPlansTab = ({
               <p className="text-sm font-medium">Exercises</p>
               {planExercises.map((row, index) => {
                 const selectedExercise = exerciseById[row.exercise_id];
+                const categoryKey =
+                  categoryKeyByExerciseId?.[Number(row.exercise_id)] || "other";
                 return (
                   <div
                     key={`${index}-${row.workout_plan_exercise_id || "new"}`}
                     className="space-y-2 rounded-md border p-3"
                   >
                     <div className="grid grid-cols-12 gap-2">
-                      <select
-                        className="border-input bg-background col-span-5 h-10 rounded-md border px-3 text-sm"
-                        value={row.exercise_id}
-                        onChange={(event) =>
-                          updateExerciseRow(index, "exercise_id", event.target.value)
-                        }
-                      >
-                        <option value="">Select exercise</option>
-                        {(exercisesCatalog || []).map((exercise) => (
-                          <option key={exercise.exercise_id} value={exercise.exercise_id}>
-                            {exercise.name}
-                          </option>
-                        ))}
-                      </select>
-                      <Input
-                        className="col-span-2"
-                        value={row.sets}
-                        placeholder="Sets"
-                        onChange={(event) =>
-                          updateExerciseRow(index, "sets", event.target.value)
-                        }
-                      />
-                      <Input
-                        className="col-span-2"
-                        value={row.reps}
-                        placeholder="Reps"
-                        onChange={(event) =>
-                          updateExerciseRow(index, "reps", event.target.value)
-                        }
-                      />
-                      <button
-                        type="button"
-                        className="text-muted-foreground hover:text-destructive col-span-3 inline-flex items-center justify-center rounded-md border text-sm transition-colors"
-                        onClick={() => removeExerciseRow(index)}
-                      >
-                        <Trash2 className="mr-1 h-3.5 w-3.5" />
-                        Remove
-                      </button>
+                      <MetricField label="Exercise" className="col-span-5">
+                        <select
+                          className="border-input bg-background text-foreground h-10 w-full rounded-md border px-3 text-sm"
+                          value={row.exercise_id}
+                          onChange={(event) =>
+                            updateExerciseRow(index, "exercise_id", event.target.value)
+                          }
+                        >
+                          <option value="">Select exercise</option>
+                          {(exercisesCatalog || []).map((exercise) => (
+                            <option key={exercise.exercise_id} value={exercise.exercise_id}>
+                              {exercise.name}
+                            </option>
+                          ))}
+                        </select>
+                      </MetricField>
+                      {categoryKey === "duration" ? (
+                        <MetricField label="Duration (sec)" className="col-span-2">
+                          <Input
+                            value={row.duration_sec}
+                            placeholder="e.g. 1200"
+                            onChange={(event) =>
+                              updateExerciseRow(index, "duration_sec", event.target.value)
+                            }
+                          />
+                        </MetricField>
+                      ) : categoryKey === "cardio" ? (
+                        <>
+                          <MetricField label="Distance (miles)" className="col-span-1">
+                            <Input
+                              value={row.distance_m}
+                              placeholder="e.g. 5000"
+                              onChange={(event) =>
+                                updateExerciseRow(index, "distance_m", event.target.value)
+                              }
+                            />
+                          </MetricField>
+                          <MetricField label="Pace (sec/mile)" className="col-span-1">
+                            <Input
+                              value={row.pace_sec_per_km}
+                              placeholder="e.g. 300"
+                              onChange={(event) =>
+                                updateExerciseRow(index, "pace_sec_per_km", event.target.value)
+                              }
+                            />
+                          </MetricField>
+                        </>
+                      ) : categoryKey === "repsOnly" ? (
+                        <MetricField label="Reps" className="col-span-2">
+                          <Input
+                            value={row.reps}
+                            placeholder="e.g. 20"
+                            onChange={(event) =>
+                              updateExerciseRow(index, "reps", event.target.value)
+                            }
+                          />
+                        </MetricField>
+                      ) : (
+                        <>
+                          <MetricField label="Sets" className="col-span-1">
+                            <Input
+                              value={row.sets}
+                              placeholder="e.g. 4"
+                              onChange={(event) =>
+                                updateExerciseRow(index, "sets", event.target.value)
+                              }
+                            />
+                          </MetricField>
+                          <MetricField label="Reps" className="col-span-1">
+                            <Input
+                              value={row.reps}
+                              placeholder="e.g. 10"
+                              onChange={(event) =>
+                                updateExerciseRow(index, "reps", event.target.value)
+                              }
+                            />
+                          </MetricField>
+                        </>
+                      )}
+                      <MetricField label="Action" className="col-span-3">
+                        <button
+                          type="button"
+                          className="text-muted-foreground hover:text-destructive inline-flex h-10 w-full items-center justify-center rounded-md border text-sm transition-colors"
+                          onClick={() => removeExerciseRow(index)}
+                        >
+                          <Trash2 className="mr-1 h-3.5 w-3.5" />
+                          Remove
+                        </button>
+                      </MetricField>
                     </div>
                     {selectedExercise && (
                       <p className="text-muted-foreground text-xs">
@@ -350,7 +411,23 @@ const WorkoutPlansTab = ({
                         <span className="font-medium">{exercise.name}</span>
                         <span className="text-muted-foreground">
                           {" "}
-                          • sets: {exercise.sets ?? "-"} • reps: {exercise.reps ?? "-"}
+                          •{" "}
+                          {(() => {
+                            const categoryKey =
+                              categoryKeyByExerciseId?.[Number(exercise.exercise_id)] || "other";
+                            if (categoryKey === "duration") {
+                              return `duration: ${exercise.duration_sec ?? "-"} sec`;
+                            }
+                            if (categoryKey === "cardio") {
+                              return `distance: ${exercise.distance_m ?? "-"} miles • pace: ${
+                                exercise.pace_sec_per_km ?? "-"
+                              } sec/mile`;
+                            }
+                            if (categoryKey === "repsOnly") {
+                              return `reps: ${exercise.reps ?? "-"}`;
+                            }
+                            return `sets: ${exercise.sets ?? "-"} • reps: ${exercise.reps ?? "-"}`;
+                          })()}
                         </span>
                       </div>
                     ))
