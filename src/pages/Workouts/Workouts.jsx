@@ -37,6 +37,7 @@ const emptyExerciseRow = {
 };
 
 const emptyLogRow = {
+  exercise_id: "",
   exercise: "",
   sets: "",
   reps: "",
@@ -68,8 +69,12 @@ const Workouts = () => {
   const [expandedHistoryWorkoutId, setExpandedHistoryWorkoutId] = useState(null);
   const [historyWorkoutDetailsById, setHistoryWorkoutDetailsById] = useState({});
   const [historyWorkoutLoadingById, setHistoryWorkoutLoadingById] = useState({});
+  const [workoutsRefreshKey, setWorkoutsRefreshKey] = useState(0);
+  const [logSaveError, setLogSaveError] = useState("");
+  const [logSaveSuccess, setLogSaveSuccess] = useState("");
+  const [logMetaByWorkoutId, setLogMetaByWorkoutId] = useState({});
   const [logRows, setLogRows] = useState([
-    { exercise: "Bench Press", sets: "3", reps: "10", lbs: "135" },
+    { exercise_id: "", exercise: "Bench Press", sets: "3", reps: "10", lbs: "135" },
   ]);
   const [logDuration, setLogDuration] = useState("");
   const [mood, setMood] = useState("");
@@ -90,7 +95,7 @@ const Workouts = () => {
   );
   const { data: workoutsData } = useGetFromAPI(
     userId ? `/workouts?user_id=${userId}` : null,
-    userId || null
+    `${userId || ""}-${workoutsRefreshKey}`
   );
 
   useEffect(() => {
@@ -108,6 +113,16 @@ const Workouts = () => {
       console.log("[Workouts Debug] Failed to log identity info:", error);
     });
   }, [user]);
+
+  useEffect(() => {
+    if (!userId) return;
+    try {
+      const raw = localStorage.getItem(`workoutLogMeta:${userId}`);
+      setLogMetaByWorkoutId(raw ? JSON.parse(raw) : {});
+    } catch {
+      setLogMetaByWorkoutId({});
+    }
+  }, [userId]);
 
   const [planDetailsById, setPlanDetailsById] = useState({});
 
@@ -274,6 +289,7 @@ const Workouts = () => {
     );
     if (!selectedPlan) return;
     const mappedRows = (selectedPlan.exercises || []).map((exercise) => ({
+      exercise_id: exercise.exercise_id ? String(exercise.exercise_id) : "",
       exercise: exercise.name || "",
       sets: exercise.sets ? String(exercise.sets) : "",
       reps: exercise.reps ? String(exercise.reps) : "",
@@ -480,6 +496,96 @@ const Workouts = () => {
     }
   };
 
+  const saveWorkoutLog = async () => {
+    if (!userId) {
+      setLogSaveError("Unable to log workout: missing user.");
+      return;
+    }
+
+    const selectedPlan = plans.find(
+      (plan) => String(plan.workout_plan_id) === String(selectedPlanToLoad)
+    );
+    const title = selectedPlan?.title || `Workout ${new Date().toLocaleDateString("en-US")}`;
+
+    const rowsWithExerciseIds = logRows
+      .map((row) => {
+        const directId = row.exercise_id ? Number(row.exercise_id) : null;
+        if (directId) return { ...row, resolved_exercise_id: directId };
+        const byName = (exercisesCatalog || []).find(
+          (exercise) => exercise.name?.toLowerCase() === row.exercise?.trim()?.toLowerCase()
+        );
+        return byName
+          ? { ...row, resolved_exercise_id: Number(byName.exercise_id) }
+          : { ...row, resolved_exercise_id: null };
+      })
+      .filter((row) => row.resolved_exercise_id);
+
+    if (rowsWithExerciseIds.length === 0) {
+      setLogSaveError("Add at least one valid exercise before saving.");
+      return;
+    }
+
+    setLogSaveError("");
+    setLogSaveSuccess("");
+
+    try {
+      const createdWorkout = await postFunction("/workouts", {
+        user_id: userId,
+        title,
+        workout_type_id: selectedPlan?.workout_type_id ?? null,
+        workout_plan_id: selectedPlan?.workout_plan_id ?? null,
+        completion_date: new Date().toISOString(),
+      });
+
+      const workoutId = createdWorkout?.workout_id;
+      if (!workoutId) {
+        throw new Error("Workout was created without an id.");
+      }
+
+      await postFunction(`/workouts/${workoutId}/exercises`, {
+        exercises: rowsWithExerciseIds.map((row, index) => ({
+          exercise_id: row.resolved_exercise_id,
+          position: index,
+          sets: row.sets ? Number(row.sets) : undefined,
+          reps: row.reps ? Number(row.reps) : undefined,
+          weight: row.lbs ? Number(row.lbs) : undefined,
+        })),
+      });
+
+      const moodNumberByKey = {
+        tired: 1,
+        ok: 2,
+        good: 3,
+        great: 4,
+        beast: 5,
+      };
+      const moodNumber = moodNumberByKey[mood] || null;
+      const logMeta = {
+        mood: moodNumber,
+        duration_min: logDuration ? Number(logDuration) : null,
+        notes: sessionNotes?.trim() || "",
+      };
+
+      setLogMetaByWorkoutId((prev) => {
+        const next = { ...prev, [workoutId]: logMeta };
+        if (userId) {
+          localStorage.setItem(`workoutLogMeta:${userId}`, JSON.stringify(next));
+        }
+        return next;
+      });
+
+      setWorkoutsRefreshKey((prev) => prev + 1);
+      setLogSaveSuccess("Workout logged successfully.");
+      setSelectedPlanToLoad("");
+      setLogRows([{ ...emptyLogRow }]);
+      setLogDuration("");
+      setMood("");
+      setSessionNotes("");
+    } catch (error) {
+      setLogSaveError(error?.message || "Failed to save workout log.");
+    }
+  };
+
   const toggleHistoryWorkout = async (workoutId) => {
     if (expandedHistoryWorkoutId === workoutId) {
       setExpandedHistoryWorkoutId(null);
@@ -633,6 +739,7 @@ const Workouts = () => {
           expandedHistoryWorkoutId={expandedHistoryWorkoutId}
           historyWorkoutLoadingById={historyWorkoutLoadingById}
           historyWorkoutDetailsById={historyWorkoutDetailsById}
+          logMetaByWorkoutId={logMetaByWorkoutId}
         />
       )}
 
@@ -655,6 +762,9 @@ const Workouts = () => {
           setMood={setMood}
           sessionNotes={sessionNotes}
           setSessionNotes={setSessionNotes}
+          saveWorkoutLog={saveWorkoutLog}
+          logSaveError={logSaveError}
+          logSaveSuccess={logSaveSuccess}
         />
       )}
     </div>

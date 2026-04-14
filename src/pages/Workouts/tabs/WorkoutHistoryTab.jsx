@@ -6,38 +6,51 @@ const WorkoutHistoryTab = ({
   expandedHistoryWorkoutId,
   historyWorkoutLoadingById,
   historyWorkoutDetailsById,
+  logMetaByWorkoutId,
 }) => {
   return (
     <div className="space-y-5">
       <div>
         <h1 className="text-3xl font-bold">Workout History</h1>
       </div>
-      <Card>
-        <CardContent className="space-y-3 p-4">
+      <Card className="mx-auto w-full max-w-4xl">
+        <CardContent className="space-y-4 p-5">
           {(workoutsData || []).map((workout) => (
-            <div key={workout.workout_id} className="space-y-3 rounded-md border p-3">
+            <div key={workout.workout_id} className="space-y-3 rounded-md border p-4">
               <button
                 type="button"
-                className="flex w-full flex-wrap items-center gap-3 text-left"
+                className="flex w-full flex-wrap items-center gap-4 text-left"
                 onClick={() => toggleHistoryWorkout(workout.workout_id)}
               >
                 <div className="min-w-[220px] flex-1">
-                  <p className="font-semibold">{workout.title}</p>
-                  <p className="text-muted-foreground text-sm">
-                    {workout.schedule_weekday || "Unscheduled"} •{" "}
-                    {workout.schedule_time || "Time TBD"}
+                  <p className="text-xl font-semibold">{workout.title}</p>
+                  <p className="text-muted-foreground text-base">
+                    Completed:{" "}
+                    {workout.completion_date
+                      ? new Date(workout.completion_date).toLocaleString()
+                      : "Not completed"}
                   </p>
                 </div>
-                <span className="text-muted-foreground text-sm">#{workout.workout_id}</span>
-                <span className="text-muted-foreground text-xs">
+                <span className="rounded-md border px-3 py-2 text-sm font-medium">
                   {expandedHistoryWorkoutId === workout.workout_id
-                    ? "Hide exercises"
-                    : "Show exercises"}
+                    ? "Hide Details"
+                    : "View Details"}
                 </span>
               </button>
 
               {expandedHistoryWorkoutId === workout.workout_id && (
-                <div className="space-y-2 border-t pt-3">
+                <div className="space-y-3 border-t pt-4">
+                  <div className="bg-muted/30 rounded-md px-3 py-2 text-base">
+                    <span className="font-medium">Mood:</span>{" "}
+                    {logMetaByWorkoutId?.[workout.workout_id]?.mood ?? "-"} •{" "}
+                    <span className="font-medium">Duration:</span>{" "}
+                    {logMetaByWorkoutId?.[workout.workout_id]?.duration_min ?? "-"} min
+                    {logMetaByWorkoutId?.[workout.workout_id]?.notes ? (
+                      <p className="text-muted-foreground mt-1 text-sm">
+                        Notes: {logMetaByWorkoutId[workout.workout_id].notes}
+                      </p>
+                    ) : null}
+                  </div>
                   {historyWorkoutLoadingById[workout.workout_id] && (
                     <p className="text-muted-foreground text-sm">Loading exercises...</p>
                   )}
@@ -53,7 +66,7 @@ const WorkoutHistoryTab = ({
                       (exercise, index) => (
                         <div
                           key={`${workout.workout_id}-${exercise.workout_exercise_id || index}`}
-                          className="bg-muted/40 rounded-md px-3 py-2 text-sm"
+                          className="bg-muted/40 rounded-md px-3 py-2 text-base"
                         >
                           <span className="font-medium">
                             {exercise.name || `Exercise #${exercise.exercise_id || index + 1}`}
@@ -63,6 +76,13 @@ const WorkoutHistoryTab = ({
                             • sets: {exercise.sets ?? "-"} • reps: {exercise.reps ?? "-"} • lbs:{" "}
                             {exercise.weight ?? "-"}
                           </span>
+                          <div className="text-muted-foreground mt-1 text-sm">
+                            {exercise.exercise_duration_mins
+                              ? `Duration: ${exercise.exercise_duration_mins} min • `
+                              : ""}
+                            {exercise.exercise_mood ? `Mood: ${exercise.exercise_mood}` : ""}
+                            {exercise.exercise_notes ? ` • Notes: ${exercise.exercise_notes}` : ""}
+                          </div>
                         </div>
                       )
                     )}

@@ -15,13 +15,15 @@ const LogWorkoutTab = ({
   logRows,
   updateLogRow,
   removeLogRow,
-  addLogRow,
   logDuration,
   setLogDuration,
   mood,
   setMood,
   sessionNotes,
   setSessionNotes,
+  saveWorkoutLog,
+  logSaveError,
+  logSaveSuccess,
 }) => {
   return (
     <div className="space-y-6">
@@ -145,9 +147,6 @@ const LogWorkoutTab = ({
                 </div>
               ))}
 
-              <Button variant="link" className="px-0" onClick={addLogRow}>
-                + Add exercise
-              </Button>
             </CardContent>
           </Card>
 
@@ -205,7 +204,17 @@ const LogWorkoutTab = ({
         </div>
 
         <div className="mt-5 flex justify-end">
-          <Button className="min-w-72">Save Workout Log</Button>
+          <div className="space-y-2 text-right">
+            {logSaveError ? (
+              <p className="text-destructive text-sm">{logSaveError}</p>
+            ) : null}
+            {logSaveSuccess ? (
+              <p className="text-emerald-600 text-sm">{logSaveSuccess}</p>
+            ) : null}
+            <Button className="min-w-72" onClick={saveWorkoutLog}>
+              Save Workout Log
+            </Button>
+          </div>
         </div>
       </div>
     </div>
