@@ -6,7 +6,7 @@ import ChatContent from "./components/ChatContent";
 import ChatSidebar from "./components/ChatSidebar";
 
 const Chat = () => {
-  const { socket, user, unreadChatNotifications, handleMarkMessagesAsRead } =
+  const { socket, user, notifications, handleMarkMessagesAsRead } =
     useOutletContext();
 
   const { chat_sidebar, chat_content, message_input } = useChatRoom(
@@ -17,7 +17,7 @@ const Chat = () => {
     <div className="flex h-[calc(100vh-4rem)] w-full gap-8">
       <ChatSidebar
         {...chat_sidebar}
-        unreadChatNotifications={unreadChatNotifications}
+        unreadChatNotifications={notifications.chat}
         handleMarkMessagesAsRead={handleMarkMessagesAsRead}
       />
       <div className="flex w-full flex-col gap-8 overflow-hidden">

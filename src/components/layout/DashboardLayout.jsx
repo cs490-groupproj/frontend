@@ -4,30 +4,27 @@ import { Outlet } from "react-router-dom";
 import { useSocketNotifications } from "@/hooks/useSocketNotifications";
 
 const DashboardLayout = () => {
-  const {
-    authToken,
-    socket,
-    user,
-    unreadChatNotifications,
-    handleMarkMessagesAsRead,
-  } = useSocketNotifications();
+  const { authToken, socket, user, notifications, handleMarkMessagesAsRead } =
+    useSocketNotifications();
 
   return (
     <div className="bg-background text-foreground min-h-screen">
-      <Sidebar />
+      <Sidebar notifications={notifications} />
       {authToken && user ? (
         <main className="flex min-h-screen overflow-y-auto p-8 pl-72">
           <Outlet
             context={{
               socket,
               user,
-              unreadChatNotifications,
+              notifications,
               handleMarkMessagesAsRead,
             }}
           />
         </main>
       ) : (
-        <p>content loading</p>
+        <p className="flex min-h-screen items-center justify-center p-8 pl-72">
+          content loading
+        </p>
       )}
     </div>
   );

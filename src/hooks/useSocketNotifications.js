@@ -9,12 +9,18 @@ import usePostToAPI from "@/hooks/usePostToAPI";
 export const useSocketNotifications = () => {
   const [socket, setSocket] = useState(null);
   const [authToken, setAuthToken] = useState(null);
+
   const [userRequestURI, setUserRequestURI] = useState(null);
   const [chatNotificationsRequestURI, setChatNotificationsRequestURI] =
     useState(null);
-
-  const [unreadChatNotifications, setUnreadChatNotifications] = useState({});
   const { postFunction } = usePostToAPI();
+
+  const [notifications, setNotifications] = useState({
+    chat: {},
+    requests: [],
+    workouts: [],
+    system: [],
+  });
 
   //gets the userID, requestURI will be null until the auth token is gotten
   const { data: user } = useGetFromAPI(userRequestURI, null);
@@ -23,34 +29,44 @@ export const useSocketNotifications = () => {
     null
   );
 
-  const handleMarkMessagesAsRead = useCallback(async (other_party_user_id) => {
-    setUnreadChatNotifications((prev) => {
-      const { [other_party_user_id]: _, ...rest } = prev;
-      return rest;
-    });
-    try {
-      await postFunction("/messages/mark_received", {
-        other_party_user_id: other_party_user_id,
+  //removes read messages from notifications and marks as read in backend
+  const handleMarkMessagesAsRead = useCallback(
+    async (other_party_user_id) => {
+      setNotifications((prev) => {
+        const chatNotifications = { ...prev.chat };
+        delete chatNotifications[other_party_user_id];
+        return { ...prev, chat: chatNotifications };
       });
-    } catch (err) {
-      console.error("Failed to mark messages as read:", err);
-    }
-  });
+      try {
+        await postFunction("/messages/mark_received", {
+          other_party_user_id: other_party_user_id,
+        });
+      } catch (err) {
+        console.error("Failed to mark messages as read:", err);
+      }
+    },
+    [postFunction]
+  );
 
-  //handles notifications from backend on load
+  //handles chat notifications from backend on load
   useEffect(() => {
     if (storedUnreadChatNotifications?.unread_message_counts) {
-      setUnreadChatNotifications((prev) => {
-        return storedUnreadChatNotifications.unread_message_counts.reduce(
-          (accumulator, item) => {
-            accumulator[item.message_sender_id] = {
-              count:
-                item.unread_count + (prev[item.message_sender_id]?.count || 0),
-            };
-            return accumulator;
-          },
-          { ...prev }
-        );
+      setNotifications((prev) => {
+        const initialChatNotifications =
+          storedUnreadChatNotifications.unread_message_counts.reduce(
+            (accumulator, item) => {
+              accumulator[item.message_sender_id] = {
+                type: "chat_message",
+                name: item.message_sender_name,
+                count:
+                  item.unread_count +
+                  (prev.chat[item.message_sender_id]?.count || 0),
+              };
+              return accumulator;
+            },
+            { ...prev.chat }
+          );
+        return { ...prev, chat: initialChatNotifications };
       });
     }
   }, [storedUnreadChatNotifications]);
@@ -58,15 +74,27 @@ export const useSocketNotifications = () => {
   //socket notification handler
   const handleNewNotification = useCallback((data) => {
     const notification_type = data.notification_type;
-    if (notification_type === "chat_message") {
-      const sender_id = data.sender_id;
-      setUnreadChatNotifications((prev) => ({
-        ...prev,
-        [sender_id]: {
-          count: prev[sender_id]?.count ? prev[sender_id].count + 1 : 1,
-        },
-      }));
-    }
+    setNotifications((prev) => {
+      if (notification_type === "chat_message") {
+        const sender_id = data.sender_id;
+        return {
+          ...prev,
+          chat: {
+            ...prev.chat,
+            [sender_id]: {
+              type: notification_type,
+              name: data.sender_name,
+              count: prev.chat[sender_id]?.count
+                ? prev.chat[sender_id].count + 1
+                : 1,
+            },
+          },
+        };
+      }
+
+      //handle other live socket notifications here
+      return prev;
+    });
   }, []);
 
   //Paused until auth loads to prevent 401 errors
@@ -117,7 +145,7 @@ export const useSocketNotifications = () => {
     authToken,
     socket,
     user,
-    unreadChatNotifications,
+    notifications,
     handleMarkMessagesAsRead,
   };
 };
