@@ -102,7 +102,6 @@ const Workouts = () => {
   const [workoutsRefreshKey, setWorkoutsRefreshKey] = useState(0);
   const [logSaveError, setLogSaveError] = useState("");
   const [logSaveSuccess, setLogSaveSuccess] = useState("");
-  const [logMetaByWorkoutId, setLogMetaByWorkoutId] = useState({});
   const [logRows, setLogRows] = useState([{ ...emptyLogRow }]);
   const [logDuration, setLogDuration] = useState("");
   const [mood, setMood] = useState("");
@@ -125,16 +124,6 @@ const Workouts = () => {
     userId ? `/workouts?user_id=${userId}` : null,
     `${userId || ""}-${workoutsRefreshKey}`
   );
-
-  useEffect(() => {
-    if (!userId) return;
-    try {
-      const raw = localStorage.getItem(`workoutLogMeta:${userId}`);
-      setLogMetaByWorkoutId(raw ? JSON.parse(raw) : {});
-    } catch {
-      setLogMetaByWorkoutId({});
-    }
-  }, [userId]);
 
   const [planDetailsById, setPlanDetailsById] = useState({});
 
@@ -610,11 +599,23 @@ const Workouts = () => {
     setLogSaveSuccess("");
 
     try {
+      const moodNumberByKey = {
+        tired: 1,
+        ok: 2,
+        good: 3,
+        great: 4,
+        beast: 5,
+      };
+      const moodNumber = moodNumberByKey[mood] || null;
+
       const createdWorkout = await postFunction("/workouts", {
         user_id: userId,
         title,
         workout_type_id: selectedPlan?.workout_type_id ?? null,
         workout_plan_id: selectedPlan?.workout_plan_id ?? null,
+        notes: sessionNotes?.trim() || "",
+        mood: moodNumber,
+        duration_mins: logDuration ? Number(logDuration) : null,
         completion_date: new Date().toISOString(),
       });
 
@@ -629,28 +630,6 @@ const Workouts = () => {
           position: index,
           ...buildMetricPayload(row, row.resolved_exercise_meta, { includeWeight: true }),
         })),
-      });
-
-      const moodNumberByKey = {
-        tired: 1,
-        ok: 2,
-        good: 3,
-        great: 4,
-        beast: 5,
-      };
-      const moodNumber = moodNumberByKey[mood] || null;
-      const logMeta = {
-        mood: moodNumber,
-        duration_min: logDuration ? Number(logDuration) : null,
-        notes: sessionNotes?.trim() || "",
-      };
-
-      setLogMetaByWorkoutId((prev) => {
-        const next = { ...prev, [workoutId]: logMeta };
-        if (userId) {
-          localStorage.setItem(`workoutLogMeta:${userId}`, JSON.stringify(next));
-        }
-        return next;
       });
 
       setWorkoutsRefreshKey((prev) => prev + 1);
@@ -819,7 +798,6 @@ const Workouts = () => {
           expandedHistoryWorkoutId={expandedHistoryWorkoutId}
           historyWorkoutLoadingById={historyWorkoutLoadingById}
           historyWorkoutDetailsById={historyWorkoutDetailsById}
-          logMetaByWorkoutId={logMetaByWorkoutId}
           categoryKeyByExerciseId={categoryKeyByExerciseId}
         />
       )}

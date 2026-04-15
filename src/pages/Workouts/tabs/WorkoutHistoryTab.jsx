@@ -6,7 +6,6 @@ const WorkoutHistoryTab = ({
   expandedHistoryWorkoutId,
   historyWorkoutLoadingById,
   historyWorkoutDetailsById,
-  logMetaByWorkoutId,
   categoryKeyByExerciseId,
 }) => {
   return (
@@ -43,12 +42,12 @@ const WorkoutHistoryTab = ({
                 <div className="space-y-3 border-t pt-4">
                   <div className="bg-muted/30 rounded-md px-3 py-2 text-base">
                     <span className="font-medium">Mood:</span>{" "}
-                    {logMetaByWorkoutId?.[workout.workout_id]?.mood ?? "-"} •{" "}
+                    {workout.mood ?? "-"} •{" "}
                     <span className="font-medium">Duration:</span>{" "}
-                    {logMetaByWorkoutId?.[workout.workout_id]?.duration_min ?? "-"} min
-                    {logMetaByWorkoutId?.[workout.workout_id]?.notes ? (
+                    {workout.duration_mins ?? "-"} min
+                    {workout.notes ? (
                       <p className="text-muted-foreground mt-1 text-sm">
-                        Notes: {logMetaByWorkoutId[workout.workout_id].notes}
+                        Notes: {workout.notes}
                       </p>
                     ) : null}
                   </div>
@@ -111,13 +110,6 @@ const WorkoutHistoryTab = ({
                               </>
                             );
                           })()}
-                          <div className="text-muted-foreground mt-1 text-sm">
-                            {exercise.exercise_duration_mins
-                              ? `Duration: ${exercise.exercise_duration_mins} min • `
-                              : ""}
-                            {exercise.exercise_mood ? `Mood: ${exercise.exercise_mood}` : ""}
-                            {exercise.exercise_notes ? ` • Notes: ${exercise.exercise_notes}` : ""}
-                          </div>
                         </div>
                       )
                     )}
