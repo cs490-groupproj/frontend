@@ -17,7 +17,7 @@ const Chat = () => {
   const messageLoadLimit = 50;
   const startOffset = 0;
 
-  const { socket, user, unreadChatNotifications, setUnreadChatNotifications } =
+  const { socket, user, unreadChatNotifications, handleMarkMessagesAsRead } =
     useOutletContext();
 
   const [chatHistory, setChatHistory] = useState(null);
@@ -216,7 +216,7 @@ const Chat = () => {
                   setSelectedChatUserID={setSelectedChatUserID}
                   selectedChatUserID={selectedChatUserID}
                   unreadChatNotifications={unreadChatNotifications}
-                  setUnreadChatNotifications={setUnreadChatNotifications}
+                  handleMarkMessagesAsRead={handleMarkMessagesAsRead}
                 />
               );
             })

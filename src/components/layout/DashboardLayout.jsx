@@ -7,27 +7,65 @@ import { API_BASE_URL } from "../../../config.js";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "@/firebase";
 import useGetFromAPI from "@/hooks/useGetFromAPI";
+import usePostToAPI from "@/hooks/usePostToAPI";
 
 const DashboardLayout = () => {
   const [socket, setSocket] = useState(null);
   const [authToken, setAuthToken] = useState(null);
-  const [requestURI, setRequestURI] = useState(null);
+  const [userRequestURI, setUserRequestURI] = useState(null);
+  const [chatNotificationsRequestURI, setChatNotificationsRequestURI] =
+    useState(null);
 
   const [unreadChatNotifications, setUnreadChatNotifications] = useState({});
+  const { postFunction } = usePostToAPI();
 
   //gets the userID, requestURI will be null until the auth token is gotten
-  const { data: user } = useGetFromAPI(requestURI, null);
+  const { data: user } = useGetFromAPI(userRequestURI, null);
+  const { data: storedUnreadChatNotifications } = useGetFromAPI(
+    chatNotificationsRequestURI,
+    null
+  );
 
-  //notification handler
+  const handleMarkMessagesAsRead = async (other_party_user_id) => {
+    setUnreadChatNotifications((prev) => {
+      const { [other_party_user_id]: _, ...rest } = prev;
+      return rest;
+    });
+    try {
+      await postFunction("/messages/mark_received", {
+        other_party_user_id: other_party_user_id,
+      });
+    } catch (err) {
+      console.error("Failed to mark messages as read:", err);
+    }
+  };
+
+  //handles notifications from backend on load
+  useEffect(() => {
+    if (storedUnreadChatNotifications?.unread_message_counts) {
+      setUnreadChatNotifications((prev) => {
+        return storedUnreadChatNotifications.unread_message_counts.reduce(
+          (accumulator, item) => {
+            accumulator[item.message_sender_id] = {
+              count:
+                item.unread_count + (prev[item.message_sender_id]?.count || 0),
+            };
+            return accumulator;
+          },
+          { ...prev }
+        );
+      });
+    }
+  }, [storedUnreadChatNotifications]);
+
+  //socket notification handler
   const handleNewNotification = useCallback((data) => {
     const notification_type = data.notification_type;
     if (notification_type === "chat_message") {
       const sender_id = data.sender_id;
-      const sender_name = data.sender_name;
       setUnreadChatNotifications((prev) => ({
         ...prev,
         [sender_id]: {
-          name: sender_name,
           count: prev?.[sender_id]?.count ? prev?.[sender_id].count + 1 : 1,
         },
       }));
@@ -41,7 +79,8 @@ const DashboardLayout = () => {
         const token = await user.getIdToken();
         setAuthToken(token);
         //since we have auth, we can change the requestURI to the one to fetch the user id
-        setRequestURI("/users/me");
+        setUserRequestURI("/users/me");
+        setChatNotificationsRequestURI("/messages/unread_message_count");
       }
     });
     return () => unsubscribe();
@@ -87,7 +126,7 @@ const DashboardLayout = () => {
               socket,
               user,
               unreadChatNotifications,
-              setUnreadChatNotifications,
+              handleMarkMessagesAsRead,
             }}
           />
         </main>

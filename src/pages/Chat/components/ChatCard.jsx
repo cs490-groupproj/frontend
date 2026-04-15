@@ -5,16 +5,13 @@ const ChatCard = ({
   setSelectedChatUserID,
   selectedChatUserID,
   unreadChatNotifications,
-  setUnreadChatNotifications,
+  handleMarkMessagesAsRead,
 }) => {
   return (
     <div
       onClick={() => {
         setSelectedChatUserID(coach.id);
-        setUnreadChatNotifications((prev) => {
-          const { [coach.id]: _, ...rest } = prev;
-          return rest;
-        });
+        handleMarkMessagesAsRead(coach.id);
       }}
       className={`hover:bg-accent hover:ring-ring border-border flex w-full
         flex-nowrap items-center justify-between gap-2 rounded-lg border-1 p-2
