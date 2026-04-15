@@ -50,7 +50,7 @@ const DashboardLayout = () => {
       <Sidebar />
       {authToken && user ? (
         <main className="flex min-h-screen overflow-y-auto p-8 pl-72">
-          <Outlet context={{ socket, user }} />
+          <Outlet context={{ socket, user, authToken }} />
         </main>
       ) : (
         <p>content loading</p>
