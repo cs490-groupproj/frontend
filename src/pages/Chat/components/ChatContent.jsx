@@ -24,16 +24,12 @@ const ChatContent = ({
       }}
     >
       <div className="flex flex-1 items-center justify-center">
-        {messageHistoryError ? (
-          <p>error: {messageHistoryError}</p>
-        ) : !chatHistory ? (
-          !selectedChatUserID ? (
-            <p>Select a Chat</p>
-          ) : (
-            <p>Loading Messages</p>
-          )
-        ) : (
-          <></>
+        {messageHistoryError && <p>error: {messageHistoryError}</p>}
+        {!messageHistoryError && !chatHistory && !selectedChatUserID && (
+          <p>Select a Chat</p>
+        )}
+        {!messageHistoryError && !chatHistory && selectedChatUserID && (
+          <p>Loading Messages</p>
         )}
       </div>
       {!messageHistoryError && chatHistory && (
