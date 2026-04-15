@@ -13,7 +13,6 @@ const Chat = () => {
     socket,
     user
   );
-  //modularize the chat sidebar eventually <<<<<<<<<<<<<
   return (
     <div className="flex h-[calc(100vh-4rem)] w-full gap-8">
       <ChatSidebar
