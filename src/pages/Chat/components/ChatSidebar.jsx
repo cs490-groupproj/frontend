@@ -6,7 +6,7 @@ const ChatSidebar = ({
   userCoachesError,
   userCoachesLoading,
   userCoachesData,
-  setSelectedChatUserID,
+  handleSwitchConversation,
   selectedChatUserID,
   unreadChatNotifications,
   handleMarkMessagesAsRead,
@@ -36,7 +36,7 @@ const ChatSidebar = ({
               <ChatCard
                 key={coach.id}
                 coach={coach}
-                setSelectedChatUserID={setSelectedChatUserID}
+                handleSwitchConversation={handleSwitchConversation}
                 selectedChatUserID={selectedChatUserID}
                 unreadChatNotifications={unreadChatNotifications}
                 handleMarkMessagesAsRead={handleMarkMessagesAsRead}

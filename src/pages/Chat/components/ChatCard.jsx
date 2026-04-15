@@ -2,7 +2,7 @@ import React from "react";
 
 const ChatCard = ({
   coach,
-  setSelectedChatUserID,
+  handleSwitchConversation,
   selectedChatUserID,
   unreadChatNotifications,
   handleMarkMessagesAsRead,
@@ -10,7 +10,7 @@ const ChatCard = ({
   return (
     <div
       onClick={() => {
-        setSelectedChatUserID(coach.id);
+        handleSwitchConversation(coach.id);
         handleMarkMessagesAsRead(coach.id);
       }}
       className={`hover:bg-accent hover:ring-ring border-border flex w-full

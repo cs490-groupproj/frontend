@@ -51,6 +51,12 @@ export const useChatRoom = (socket, user) => {
     });
   }, []);
 
+  //handles clearing the chat history when the conversation is changed to avoid flicker
+  const handleSwitchConversation = useCallback((changedUserID) => {
+    setSelectedChatUserID(changedUserID);
+    setChatHistory(null);
+  }, []);
+
   //handles changing the conversation
   useEffect(() => {
     if (!selectedChatUserID) {
@@ -182,7 +188,7 @@ export const useChatRoom = (socket, user) => {
       userCoachesError,
       userCoachesLoading,
       userCoachesData,
-      setSelectedChatUserID,
+      handleSwitchConversation,
       selectedChatUserID,
     },
     chat_content: {
