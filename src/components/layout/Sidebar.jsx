@@ -1,4 +1,6 @@
 import { NavLink } from "react-router-dom";
+import React from "react";
+import Notifications from "@/features/notifications/Notifications";
 import {
   LayoutDashboard,
   Users,
@@ -8,9 +10,8 @@ import {
   Utensils,
   MessageSquare,
 } from "lucide-react";
-import React from "react";
 
-export default function Sidebar() {
+const Sidebar = ({ notifications }) => {
   const links = [
     { to: "/clientDashboard", icon: LayoutDashboard, label: "Dashboard" },
     { to: "/nutrition", icon: Utensils, label: "Nutrition" },
@@ -23,7 +24,8 @@ export default function Sidebar() {
 
   return (
     <aside
-      className="bg-card border-border fixed min-h-screen w-64 border-r pt-10"
+      className="bg-card border-border fixed flex h-screen w-56 flex-col
+        justify-between gap-32 border-r py-10"
     >
       <nav className="space-y-2 px-6">
         {links.map(({ to, icon: Icon, label }) => (
@@ -43,6 +45,9 @@ export default function Sidebar() {
           </NavLink>
         ))}
       </nav>
+      <Notifications notifications={notifications} />
     </aside>
   );
-}
+};
+
+export default Sidebar;

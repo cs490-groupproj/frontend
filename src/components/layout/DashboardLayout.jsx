@@ -11,7 +11,7 @@ const DashboardLayout = () => {
     <div className="bg-background text-foreground min-h-screen">
       <Sidebar notifications={notifications} />
       {authToken && user ? (
-        <main className="flex min-h-screen overflow-y-auto p-8 pl-72">
+        <main className="flex min-h-screen overflow-y-auto p-8 pl-64">
           <Outlet
             context={{
               socket,

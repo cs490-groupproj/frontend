@@ -20,7 +20,7 @@ export const useSocketNotifications = () => {
     requests: [],
     workouts: [],
     system: [],
-  });
+  }); // All notifications must include a `type` matching NOTIFICATION_CONFIG
 
   //gets the userID, requestURI will be null until the auth token is gotten
   const { data: user } = useGetFromAPI(userRequestURI, null);
