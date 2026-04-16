@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import DailySurvey from "./components/DailySurvey";
 import useGetFromAPI from "@/hooks/useGetFromAPI";
-
+import Stats from "./components/Stats";
 
 export default function ClientDashboard() {
   const [activeTab, setActiveTab] = useState("thisWeek");
@@ -25,7 +25,7 @@ export default function ClientDashboard() {
 
 
   return (
-    <div className="max-w-7xl space-y-8">
+    <div className="w-full max-w-none space-y-8">
       {/* Header */}
       <div>
         <h1 className="text-foreground text-3xl font-bold">
@@ -67,6 +67,9 @@ export default function ClientDashboard() {
         <DailySurvey />
       ) : null}
 
-      </div>
+      {activeTab === "stats" ? (
+        <Stats />
+      ) : null}
+    </div>
   );
 }
