@@ -119,8 +119,8 @@ function WorkoutMetricChart({
           <LineChart data={data} margin={{ top: 8, right: 12, left: 10, bottom: 0 }}>
             <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" />
             <XAxis
-              dataKey={range === 90 ? "dayDate" : "dayShort"}
-              interval={range === 90 ? 8 : 0}
+              dataKey={range === 90 || range === 30 ? "dayDate" : "dayShort"}
+              interval={range === 90 ? 8 : range === 30 ? 3 : 0}
               tick={{ fill: "var(--muted-foreground)" }}
             />
             <YAxis
