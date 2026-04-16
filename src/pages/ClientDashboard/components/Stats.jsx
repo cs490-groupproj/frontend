@@ -163,13 +163,13 @@ const Stats = () => {
   const uri = userId ? `/clients/${userId}/daily_survey/history?days=${range}` : null;
   const { data, loading, error } = useGetFromAPI(uri, undefined, false);
   const caloriesUri = userId
-    ? `/nutrition/history?user_id=${userId}&timezone=${encodeURIComponent(timezone)}&days=${range}`
+    ? `/nutrition/history?user_id=${userId}&timezone=${encodeURIComponent(timezone)}&days=${calRange}`
     : null;
   const {
     data: caloriesData,
     loading: caloriesLoading,
     error: caloriesError,
-  } = useGetFromAPI(caloriesUri, range);
+  } = useGetFromAPI(caloriesUri, calRange);
   const setsUri = userId
     ? `/workouts/history/sets-logged?user_id=${userId}&days=${workoutRange}`
     : null;
