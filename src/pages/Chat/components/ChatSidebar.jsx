@@ -34,7 +34,7 @@ const ChatSidebar = ({
           userCoachesData?.coaches.map((coach) => {
             return (
               <ChatCard
-                key={coach.id}
+                key={coach.coach_user_id}
                 coach={coach}
                 handleSwitchConversation={handleSwitchConversation}
                 selectedChatUserID={selectedChatUserID}
