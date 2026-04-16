@@ -1,124 +1,72 @@
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import DailySurvey from "./components/DailySurvey";
+import useGetFromAPI from "@/hooks/useGetFromAPI";
 
-const MetricCard = ({ title, description }) => {
-  const [timePeriod, setTimePeriod] = useState("7D");
-
-  return (
-    <div
-      className="border-border bg-card flex min-h-[300px] flex-col rounded-xl
-        border p-6"
-    >
-      {/* Header with Title and Toggle */}
-      <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-foreground text-lg font-semibold">{title}</h2>
-        <div className="flex gap-2">
-          <button
-            onClick={() => setTimePeriod("7D")}
-            className={`rounded px-3 py-1 text-sm font-medium transition-colors
-              ${
-                timePeriod === "7D"
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-muted-foreground hover:bg-muted/80"
-              }`}
-          >
-            7D
-          </button>
-          <button
-            onClick={() => setTimePeriod("30D")}
-            className={`rounded px-3 py-1 text-sm font-medium transition-colors
-              ${
-                timePeriod === "30D"
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-muted-foreground hover:bg-muted/80"
-              }`}
-          >
-            30D
-          </button>
-        </div>
-      </div>
-
-      {/* Content Area */}
-      <div className="flex flex-1 items-center justify-center">
-        <div className="text-center">
-          <p className="text-muted-foreground mb-2">{description}</p>
-          <p className="text-muted-foreground text-sm">
-            Showing {timePeriod} data
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-};
 
 export default function ClientDashboard() {
-  const metrics = [
-    {
-      title: "Bodyweight Change",
-      description: "Area Chart slot - Track your weight trends",
-    },
-    {
-      title: "Strength Progress",
-      description: "Line Chart slot - 1RM and Volume tracking",
-    },
-    {
-      title: "Calorie & Nutrition",
-      description: "Bar Chart slot - Macros breakdown",
-    },
-    {
-      title: "Daily Steps",
-      description: "Bar Chart slot - Daily step counts",
-    },
-    {
-      title: "Mood History",
-      description: "Line Chart slot - Survey trends over time",
-    },
-  ];
+  const [activeTab, setActiveTab] = useState("thisWeek");
+  const resolvedUserId = localStorage.getItem("userId");
+
+  const { data: profileData, loading: profileLoading } = useGetFromAPI(
+      resolvedUserId ? `/users/${resolvedUserId}/profile` : null,
+
+    );
+
+  const [firstName, setFirstName] = useState("");
+
+  const nameFromProfile = useCallback((p) => {
+    if (!p) return "Client";
+    setFirstName(p.first_name);
+  }, []);
+
+  useEffect(() => {
+    nameFromProfile(profileData);
+  }, [profileData, nameFromProfile]);
+
 
   return (
-    <div className="mx-auto max-w-7xl space-y-8">
+    <div className="max-w-7xl space-y-8">
       {/* Header */}
       <div>
         <h1 className="text-foreground text-3xl font-bold">
-          Welcome back, Client
+          Welcome back, {firstName || "Client"}
         </h1>
       </div>
-
-      {/* Grid Layout - 3 columns on large screens */}
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-        {/* Daily Survey */}
-        <DailySurvey />
-
-        {/* Bodyweight Change */}
-        <MetricCard
-          title={metrics[0].title}
-          description={metrics[0].description}
-        />
-
-        {/* Strength Progress */}
-        <MetricCard
-          title={metrics[1].title}
-          description={metrics[1].description}
-        />
-
-        {/* Calorie & Nutrition */}
-        <MetricCard
-          title={metrics[2].title}
-          description={metrics[2].description}
-        />
-
-        {/* Daily Steps */}
-        <MetricCard
-          title={metrics[3].title}
-          description={metrics[3].description}
-        />
-
-        {/* Mood History */}
-        <MetricCard
-          title={metrics[4].title}
-          description={metrics[4].description}
-        />
+      <div className="flex border-b border-gray-200">
+        <button
+          onClick={() => setActiveTab("thisWeek")}
+          className={`px-4 py-2 text-sm font-medium focus:outline-none ${
+            activeTab === "thisWeek"
+              ? "border-b-2 border-border-600 text-text"
+              : "text-gray-500 hover:text-gray-700"
+          }`}>
+          This Week
+          </button>
+          <button 
+          onClick={() => setActiveTab("stats")}
+          className={`px-4 py-2 text-sm font-medium focus:outline-none ${
+            activeTab === "stats"
+              ? "border-b-2 border-border-600 text-text"
+              : "text-gray-500 hover:text-gray-700"
+          }`}>
+          Statistics
+          </button>
+          <button
+          onClick={() => setActiveTab("dailySurvey")}
+          className={`px-4 py-2 text-sm font-medium focus:outline-none ${
+            activeTab === "dailySurvey"
+              ? "border-b-2 border-border-600 text-text"
+              : "text-gray-500 hover:text-gray-700"
+          }`}
+        >
+          Daily Survey
+        </button>
       </div>
-    </div>
+
+      {activeTab === "dailySurvey" ? (
+        <DailySurvey />
+      ) : null}
+
+      </div>
   );
 }

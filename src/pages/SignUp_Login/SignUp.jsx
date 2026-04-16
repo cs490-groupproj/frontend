@@ -4,6 +4,9 @@ import { Button } from "@/components/ui/button";
 import { signInWithGooglePopup } from "@/lib/googleSignIn.js";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { auth } from "@/firebase.js";
+import { API_BASE_URL } from "../../../config.js";
+import { getAuthHeader } from "@/lib/authHeader";
+import usePostToAPI from "@/hooks/usePostToAPI";
 
 function mapEmailPasswordError(err) {
   const code = err?.code;
@@ -18,6 +21,7 @@ function mapEmailPasswordError(err) {
 
 const SignUp = () => {
   const navigate = useNavigate();
+  const { postFunction } = usePostToAPI();
 
   // --- STATE ---
   const [accountType, setAccountType] = useState("client");
@@ -32,15 +36,14 @@ const SignUp = () => {
   const [signupError, setSignupError] = useState(null);
 
   /**
-   * REUSABLE SYNC FUNCTION
-   * This is the bridge that gets the REAL database UUID
+   * Fetches the app user row and stores the real DB UUID (uses same auth as hooks).
    */
-  const syncWithBackend = async (idToken) => {
-    const response = await fetch("https://optimal-api.lambusta.me/users/me", {
+  const syncWithBackend = async () => {
+    const response = await fetch(`${API_BASE_URL}/users/me`, {
       method: "GET",
       headers: {
-        Authorization: `Bearer ${idToken}`,
         "Content-Type": "application/json",
+        ...(await getAuthHeader()),
       },
     });
 
@@ -51,10 +54,11 @@ const SignUp = () => {
     }
 
     const dbData = await response.json();
-
-    // --- STORAGE ---
-    localStorage.setItem("token", idToken);
-    localStorage.setItem("userId", dbData.user_id); // The real UUID (550e...)
+    const token = await auth.currentUser?.getIdToken();
+    if (token) {
+      localStorage.setItem("token", token);
+    }
+    localStorage.setItem("userId", dbData.user_id);
 
     return dbData;
   };
@@ -67,12 +71,7 @@ const SignUp = () => {
 
     try {
       // 1. Create Firebase Auth account
-      const userCredential = await createUserWithEmailAndPassword(
-        auth,
-        email,
-        password
-      );
-      const idToken = await userCredential.user.getIdToken();
+      await createUserWithEmailAndPassword(auth, email, password);
 
       // 2. Register user in your SQL Database
       const payload = {
@@ -81,25 +80,11 @@ const SignUp = () => {
         email,
         is_coach: accountType === "coach",
       };
-      const signupEndpoint = "https://optimal-api.lambusta.me/users/register";
 
-      const res = await fetch(signupEndpoint, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${idToken}`,
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (!res.ok) {
-        throw new Error(
-          "Firebase account created, but backend registration failed."
-        );
-      }
+      await postFunction("/users/register", payload);
 
       // 3. Handshake: Get the real database ID
-      await syncWithBackend(idToken);
+      await syncWithBackend();
 
       // 4. Redirect
       navigate(accountType === "client" ? "/clientSurvey" : "/coachSurvey");
@@ -114,11 +99,31 @@ const SignUp = () => {
     setGoogleError(null);
     setGoogleLoading(true);
     try {
-      // 1. Google Login
-      const { idToken } = await signInWithGooglePopup();
+      const { user } = await signInWithGooglePopup();
+      const emailGoogle = user.email;
+      if (!emailGoogle) {
+        throw new Error("Your Google account has no email address.");
+      }
+      const parts = (user.displayName?.trim() || "").split(/\s+/).filter(Boolean);
+      const first_name =
+        parts[0] || emailGoogle.split("@")[0] || "User";
+      const last_name =
+        parts.length > 1 ? parts.slice(1).join(" ") : "User";
 
-      // 2. Handshake & Store
-      await syncWithBackend(idToken);
+      // Same as email signup: backend rejects /users/me until POST /users/register.
+      try {
+        await postFunction("/users/register", {
+          first_name,
+          last_name,
+          email: emailGoogle,
+          is_coach: accountType === "coach",
+        });
+      } catch (regErr) {
+        const msg = regErr?.message || "";
+        if (!msg.includes("409")) throw regErr;
+      }
+
+      await syncWithBackend();
 
       navigate(accountType === "client" ? "/clientSurvey" : "/coachSurvey", {
         replace: true,
