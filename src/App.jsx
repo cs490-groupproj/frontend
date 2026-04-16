@@ -1,12 +1,13 @@
 import React from "react";
 import { Routes, Route } from "react-router-dom";
-import BrowseCoaches from "./pages/ClientDashboard/components/BrowseCoaches.jsx";
+import BrowseCoaches from "./pages/Coaches/BrowseCoaches.jsx";
 import ClientDashboard from "./pages/ClientDashboard/ClientDashboard.jsx";
 import ClientSurvey from "./pages/SignUp_Login/ClientSurvey.jsx";
 import Chat from "./pages/Chat/Chat.jsx";
 import CoachSurvey from "./pages/SignUp_Login/CoachSurvey.jsx";
 import LandingPage from "./pages/LandingPage/LandingPage.jsx";
 import EditProfile from "./pages/Profile/EditClientProfile.jsx";
+import MyCoach from "./pages/coaches/MyCoach.jsx";
 
 import LogIn from "./pages/SignUp_Login/LogIn.jsx";
 import SignUp from "./pages/SignUp_Login/SignUp.jsx";
@@ -28,7 +29,8 @@ const App = () => {
       {/* put things that need the sidebar in here */}
       <Route element={<DashboardLayout />}>
         <Route path="/clientDashboard" element={<ClientDashboard />} />
-        <Route path="/coaches" element={<BrowseCoaches />} />
+        <Route path="/coaches/browse" element={<BrowseCoaches />} />
+        <Route path="/coaches/my-coach" element={<MyCoach />} />
         <Route path="/exercises" element={<div>Exercises</div>} />
         <Route path="/nutrition" element={<Nutrition />} />
         <Route path="/payment" element={<PaymentPage />} />
