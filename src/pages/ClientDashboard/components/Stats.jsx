@@ -79,21 +79,33 @@ function WorkoutMetricChart({
   yAxisFormatter,
   tooltipFormatter,
 }) {
+  const safeTickFormatter = (value) =>
+    typeof yAxisFormatter === "function" ? yAxisFormatter(value) : value;
+  const safeTooltipFormatter =
+    typeof tooltipFormatter === "function"
+      ? tooltipFormatter
+      : (value) => [value, title];
+
   return (
     <section className="border-border bg-card text-card-foreground rounded-xl border p-4">
       <h3 className="mb-4 text-lg font-semibold">{title}</h3>
       <div className="h-72 w-full min-h-[288px]">
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={data} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
+          <LineChart data={data} margin={{ top: 8, right: 12, left: 10, bottom: 0 }}>
             <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" />
             <XAxis
               dataKey={range === 90 ? "dayDate" : "dayShort"}
               interval={range === 90 ? 8 : 0}
               tick={{ fill: "var(--muted-foreground)" }}
             />
-            <YAxis tick={{ fill: "var(--muted-foreground)" }} tickFormatter={yAxisFormatter} />
+            <YAxis
+              width={70}
+              tick={{ fill: "var(--muted-foreground)" }}
+              allowDecimals={false}
+              tickFormatter={(value) => safeTickFormatter(Math.round(value))}
+            />
             <Tooltip
-              formatter={tooltipFormatter}
+              formatter={safeTooltipFormatter}
               contentStyle={{
                 backgroundColor: "var(--popover)",
                 border: "1px solid var(--border)",
