@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { signInWithGooglePopup } from "@/lib/googleSignIn.js";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "@/firebase.js";
+import { API_BASE_URL } from "../../../config.js";
+import { getAuthHeader } from "@/lib/authHeader";
 
 function mapEmailPasswordError(err) {
   const code = err?.code;
@@ -24,12 +26,12 @@ const LogIn = () => {
   const [loginLoading, setLoginLoading] = useState(false);
   const [loginError, setLoginError] = useState(null);
 
-  const syncWithBackend = async (idToken) => {
-    const response = await fetch("https://optimal-api.lambusta.me/users/me", {
-      method: "GET",
+    const syncWithBackend = async () => {
+    const response = await fetch(`${API_BASE_URL}/users/me`, {
+       method: "GET",
       headers: {
-        Authorization: `Bearer ${idToken}`,
         "Content-Type": "application/json",
+        ...(await getAuthHeader()),
       },
     });
 
@@ -40,7 +42,11 @@ const LogIn = () => {
 
     const dbData = await response.json();
 
-    localStorage.setItem("token", idToken);
+    const token = await auth.currentUser?.getIdToken();
+    if (token) {
+      localStorage.setItem("token", token);
+    }
+
 
     localStorage.setItem("userId", dbData.user_id);
 
@@ -52,10 +58,9 @@ const LogIn = () => {
     setLoginError(null);
     setLoginLoading(true);
     try {
-      const result = await signInWithEmailAndPassword(auth, email, password);
-      const idToken = await result.user.getIdToken();
+      await signInWithEmailAndPassword(auth, email, password);
 
-      await syncWithBackend(idToken);
+      await syncWithBackend();
 
       navigate("/clientDashboard", { replace: true });
     } catch (err) {
@@ -70,10 +75,10 @@ const LogIn = () => {
     setGoogleLoading(true);
     try {
       // 1. Google Login
-      const { idToken } = await signInWithGooglePopup();
+      await signInWithGooglePopup();
 
       // 2. Handshake & Store
-      await syncWithBackend(idToken);
+      await syncWithBackend();
 
       navigate("/clientDashboard", { replace: true });
     } catch (err) {

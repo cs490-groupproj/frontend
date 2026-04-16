@@ -24,16 +24,12 @@ const ChatContent = ({
       }}
     >
       <div className="flex flex-1 items-center justify-center">
-        {messageHistoryError ? (
-          <p>error: {messageHistoryError}</p>
-        ) : !chatHistory ? (
-          !selectedChatUserID ? (
-            <p>Select a Chat</p>
-          ) : (
-            <p>Loading Messages</p>
-          )
-        ) : (
-          <></>
+        {messageHistoryError && <p>error: {messageHistoryError}</p>}
+        {!messageHistoryError && !chatHistory && !selectedChatUserID && (
+          <p>Select a Chat</p>
+        )}
+        {!messageHistoryError && !chatHistory && selectedChatUserID && (
+          <p>Loading Messages</p>
         )}
       </div>
       {!messageHistoryError && chatHistory && (
@@ -54,7 +50,7 @@ const ChatContent = ({
               key={index}
               className={`w-fit max-w-[75%] rounded-3xl px-4 py-2 break-words
               whitespace-pre-wrap ${
-                msg.sender_id == selectedChatUserID
+                msg.sender_id === selectedChatUserID
                   ? `bg-secondary text-secondary-foreground mr-auto
                     rounded-bl-sm`
                   : "bg-primary text-primary-foreground ml-auto rounded-br-sm"
