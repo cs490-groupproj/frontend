@@ -103,7 +103,7 @@ const PaymentPage = () => {
                       focus:ring-2 focus:outline-none"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    placeholder="Manisha Palaniappan"
+                    placeholder="John Doe"
                     required
                   />
                 </div>
