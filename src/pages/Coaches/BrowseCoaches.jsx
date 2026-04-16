@@ -1,83 +1,31 @@
 import React, { useMemo, useState } from "react";
-import { Button } from "../../../components/ui/button.jsx";
+import { Button } from "../../components/ui/button.jsx";
 
-const initialCoaches = [
-  {
-    id: 1,
-    name: "Avery Parks",
-    specializations: ["Fitness", "Nutrition"],
-    certifications: ["NASM CPT", "Precision Nutrition Level 2"],
-    costPerHour: 85,
-    rating: 4.9,
-    reviews: [
-      {
-        id: 1,
-        user: "Chris",
-        rating: 5,
-        text: "Fantastic guidance and nutrition advice!",
-      },
-    ],
-    bio: "Strength and nutrition coach focused on sustainable fat loss and muscle building.",
+import { useEffect } from "react";
+
+const mapCoachFromBackend = (coach) => {
+  return {
+    id: coach.coach_user_id,
+    name: `${coach.first_name} ${coach.last_name}`,
+
+    specializations: [
+      coach.is_exercise_specialization && "Fitness",
+      coach.is_nutrition_specialization && "Nutrition",
+    ].filter(Boolean),
+
+    certifications: [], // not in backend
+
+    costPerHour: coach.coach_cost,
+
+    rating: Number(coach.avg_rating ?? 5),
+
+    reviews: [], // not returned yet
+
+    bio: "", // not returned yet
+
     reports: 0,
-  },
-  {
-    id: 2,
-    name: "Jordan Lee",
-    specializations: ["Fitness"],
-    certifications: ["ACE Certified Personal Trainer"],
-    costPerHour: 70,
-    rating: 4.6,
-    reviews: [
-      {
-        id: 1,
-        user: "Jamie",
-        rating: 4.5,
-        text: "Great energy and form cues.",
-      },
-    ],
-    bio: "Expert in functional training, mobility and sports performance.",
-    reports: 0,
-  },
-  {
-    id: 3,
-    name: "Casey Morgan",
-    specializations: ["Nutrition"],
-    certifications: [
-      "Registered Dietitian (RD)",
-      "Certified Diabetes Educator",
-    ],
-    costPerHour: 95,
-    rating: 4.7,
-    reviews: [
-      {
-        id: 1,
-        user: "Taylor",
-        rating: 4.8,
-        text: "Made eating healthy easy and delicious.",
-      },
-    ],
-    bio: "Nutrition strategist for clients who want flexible meal plans and blood sugar balance.",
-    reports: 0,
-  },
-  {
-    id: 4,
-    name: "Riley Chen",
-    specializations: ["Fitness", "Nutrition"],
-    certifications: ["ISSA CPT", "Precision Nutrition Level 1"],
-    costPerHour: 105,
-    rating: 4.8,
-    reviews: [
-      {
-        id: 1,
-        user: "Morgan",
-        rating: 4.9,
-        text: "Holistic approach that finally worked.",
-      },
-    ],
-    bio: "Lifestyle coach specializing in holistic transformation and mindset.",
-    reports: 0,
-  },
-];
+  };
+};
 
 const specializationFilters = [
   { key: "all", label: "All" },
@@ -98,8 +46,58 @@ function matchesSpecialization(coach, filterKey) {
 }
 
 export default function BrowseCoaches() {
-  const [coachData, setCoachData] = useState(initialCoaches);
+  const [coachData, setCoachData] = useState([]);
   const [search, setSearch] = useState("");
+
+  useEffect(() => {
+    //debugging!
+    console.log("SEARCH CHANGED:", search);
+
+    const delay = setTimeout(() => {
+      fetchCoaches();
+    }, 300);
+
+    return () => clearTimeout(delay);
+  }, [search]);
+
+  const fetchCoaches = async () => {
+    try {
+      // const res = await fetch(`/search?limit=20&offset=0&query=${search}`, {
+      //   headers: {
+      //     Authorization: `Bearer ${localStorage.getItem("token")}`,
+      //   },
+      // });
+
+      const queryParam = search.trim()
+  ? `&query=${encodeURIComponent(search)}`
+  : "";
+      console.log("TOKEN SENT:", localStorage.getItem("token")) // debugging
+
+     const res = await fetch(
+  `https://optimal-api.lambusta.me/coaches/search?limit=20&offset=0${queryParam}`,
+  {
+    headers: {
+      Authorization: `Bearer ${localStorage.getItem("token")}`,
+    },
+  }
+);
+
+      const data = await res.json();
+
+      const mapped = data.coaches.map(mapCoachFromBackend);
+
+      setCoachData(mapped);
+
+      //debugging!
+      console.log("RAW BACKEND:", data);
+      console.log("MAPPED:", mapped);
+
+    } catch (err) {
+      console.error("Error fetching coaches:", err);
+      
+    }
+  };
+
   const [selectedSpecialization, setSelectedSpecialization] = useState("all");
   const [maxPrice, setMaxPrice] = useState(120);
   const [minRating, setMinRating] = useState(4);
@@ -231,7 +229,7 @@ export default function BrowseCoaches() {
       if (query && !coach.name.toLowerCase().includes(query)) return false;
       if (!matchesSpecialization(coach, selectedSpecialization)) return false;
       if (coach.costPerHour > maxPrice) return false;
-      if (coach.rating < minRating) return false;
+      if ((coach.rating ?? 0) < minRating) return false;
       return true;
     });
   }, [coachData, search, selectedSpecialization, maxPrice, minRating]);
@@ -334,8 +332,8 @@ export default function BrowseCoaches() {
             <input
               type="range"
               min="0"
-              max="5"
-              step="0.5"
+              max="10"
+              step="1"
               value={minRating}
               onChange={(e) => setMinRating(Number(e.target.value))}
               className="bg-muted accent-primary mt-2 h-2 w-full cursor-pointer
@@ -346,7 +344,7 @@ export default function BrowseCoaches() {
                 text-xs"
             >
               <span>0</span>
-              <span>5</span>
+              <span>10</span>
             </div>
           </div>
         </div>
