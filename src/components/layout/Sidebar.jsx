@@ -1,4 +1,6 @@
 import { NavLink, useLocation } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import Notifications from "@/features/notifications/Notifications";
 import {
   LayoutDashboard,
   Users,
@@ -9,9 +11,7 @@ import {
   MessageSquare,
   ChevronDown,
 } from "lucide-react";
-import React, { useState, useEffect } from "react";
-
-export default function Sidebar() {
+const Sidebar = ({ notifications }) => {
   const [openCoaches, setOpenCoaches] = useState(false);
   const location = useLocation();
 
@@ -34,7 +34,10 @@ export default function Sidebar() {
 
 
   return (
-    <aside className="bg-card border-border fixed min-h-screen w-64 border-r pt-10">
+    <aside
+      className="bg-card border-border fixed flex h-screen w-56 flex-col
+        justify-between gap-32 border-r py-10"
+    >
       <nav className="space-y-2 px-6">
         {links.map((link, idx) => {
           // Coaches section
@@ -117,6 +120,9 @@ export default function Sidebar() {
           );
         })}
       </nav>
+      <Notifications notifications={notifications} />
     </aside>
   );
-}
+};
+
+export default Sidebar;
