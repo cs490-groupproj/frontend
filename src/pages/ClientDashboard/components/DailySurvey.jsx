@@ -44,67 +44,77 @@ useEffect(() => {
   const { patchFunction } = usePatchToAPI();
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    const userId = localStorage.getItem("userId");
-    const payload = {
-      mood: selectedMood,
-      energy: selectedEnergy,
-      sleep: selectedSleep,
-      notes: notes
-    };
-    
+  const userId = localStorage.getItem("userId");
+  const payload = {
+    mood: selectedMood,
+    energy: selectedEnergy,
+    sleep: selectedSleep,
+    notes: notes,
+  };
 
-    console.log("client survey payload", payload);
+  try {
+    let effectiveSurveyId = submittedSurveyId;
 
-    try {
-      if (submittedSurveyId != null) {
-        await patchFunction(`/clients/${userId}/daily_survey/edit`, {
-          survey_id: submittedSurveyId,
-          mood: selectedMood,
-          energy: selectedEnergy,
-          sleep: selectedSleep,
-          notes: notes,
-        });
-      } else {
-        const result = await postFunction(
-          `/clients/${userId}/daily_survey/submit`,
-          payload
-        );
-        const row = Array.isArray(result) ? result[0] : result;
-        if (row?.daily_survey_id != null) {
-          setSubmittedSurveyId(row.daily_survey_id);
-        }
+    if (effectiveSurveyId != null) {
+      await patchFunction(`/clients/${userId}/daily_survey/edit`, {
+        survey_id: effectiveSurveyId,
+        mood: selectedMood,
+        energy: selectedEnergy,
+        sleep: selectedSleep,
+        notes: notes,
+      });
+    } else {
+      const result = await postFunction(
+        `/clients/${userId}/daily_survey/submit`,
+        payload
+      );
+      const row = Array.isArray(result) ? result[0] : result;
+      if (row?.daily_survey_id != null) {
+        effectiveSurveyId = row.daily_survey_id;
+        setSubmittedSurveyId(effectiveSurveyId);
       }
+    }
 
-        localStorage.setItem(
+    localStorage.setItem(
+      "dailySurvey",
+      JSON.stringify({
+        isSaved: true,
+        submittedSurveyId: effectiveSurveyId,
+        mood: selectedMood,
+        energy: selectedEnergy,
+        sleep: selectedSleep,
+        notes: notes,
+      })
+    );
+
+    onSubmitted?.();
+    setIsSaved(true);
+  } catch (err) {
+    console.error("survey request error:", err);
+  }
+};
+
+const handleChangeResponse = () => {
+  // Keep submittedSurveyId so next save uses PATCH
+  localStorage.setItem(
     "dailySurvey",
     JSON.stringify({
-      isSaved: true,
+      isSaved: false,
       submittedSurveyId: submittedSurveyId,
-      mood: selectedMood,
-      energy: selectedEnergy,
-      sleep: selectedSleep,
-      notes: notes,
+      mood: null,
+      energy: null,
+      sleep: null,
+      notes: "",
     })
   );
-
-
-      onSubmitted?.();
-      setIsSaved(true);
-    } catch (err) {
-      console.error("survey request error:", err);
-    }
-  };
-
-  const handleChangeResponse = () => {
-    localStorage.removeItem("dailySurvey"); 
-    setSelectedMood(null);
-    setSelectedEnergy(null);
-    setSelectedSleep(null);
-    setNotes("");
-    setIsSaved(false);
-  };
+  setSelectedMood(null);
+  setSelectedEnergy(null);
+  setSelectedSleep(null);
+  setNotes("");
+  setIsSaved(false);
+};
 
 
 
