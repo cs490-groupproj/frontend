@@ -18,6 +18,7 @@ const DashboardLayout = () => {
               user,
               notifications,
               handleMarkMessagesAsRead,
+              authToken,
             }}
           />
         </main>
