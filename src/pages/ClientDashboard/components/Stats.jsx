@@ -70,6 +70,31 @@ function buildWorkoutMetricChartData(apiRows, n, valueKey) {
   return out;
 }
 
+function buildCaloriesChartData(apiRows, n) {
+  const summedByDate = new Map();
+  for (const row of apiRows || []) {
+    const key = dateKeyFromRow(row.date_submitted);
+    if (!key) continue;
+    const rawValue = Number(row?.daily_total_calories);
+    const safeValue = Number.isFinite(rawValue) ? rawValue : 0;
+    summedByDate.set(key, (summedByDate.get(key) || 0) + safeValue);
+  }
+
+  const out = [];
+  for (let i = n - 1; i >= 0; i--) {
+    const d = new Date();
+    d.setHours(12, 0, 0, 0);
+    d.setDate(d.getDate() - i);
+    const key = d.toISOString().slice(0, 10);
+    out.push({
+      dayShort: d.toLocaleDateString(undefined, { weekday: "short" }),
+      dayDate: d.toLocaleDateString(undefined, { month: "short", day: "numeric" }),
+      daily_total_calories: Math.round(summedByDate.get(key) ?? 0),
+    });
+  }
+  return out;
+}
+
 function WorkoutMetricChart({
   title,
   data,
@@ -130,11 +155,21 @@ function WorkoutMetricChart({
 
 const Stats = () => {
   const [range, setRange] = useState(7);
+  const [calRange, setCalRange] = useState(7);
   const [workoutRange, setWorkoutRange] = useState(30);
 
   const userId = localStorage.getItem("userId");
+  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const uri = userId ? `/clients/${userId}/daily_survey/history?days=${range}` : null;
   const { data, loading, error } = useGetFromAPI(uri, undefined, false);
+  const caloriesUri = userId
+    ? `/nutrition/history?user_id=${userId}&timezone=${encodeURIComponent(timezone)}&days=${range}`
+    : null;
+  const {
+    data: caloriesData,
+    loading: caloriesLoading,
+    error: caloriesError,
+  } = useGetFromAPI(caloriesUri, range);
   const setsUri = userId
     ? `/workouts/history/sets-logged?user_id=${userId}&days=${workoutRange}`
     : null;
@@ -169,12 +204,14 @@ const Stats = () => {
     const rows = Array.isArray(workoutVolumeData) ? workoutVolumeData : [];
     return buildWorkoutMetricChartData(rows, workoutRange, "total_volume");
   }, [workoutVolumeData, workoutRange]);
+  const caloriesChartData = useMemo(() => {
+    const rows = Array.isArray(caloriesData) ? caloriesData : [];
+    return buildCaloriesChartData(rows, calRange);
+  }, [caloriesData, calRange]);
   const workoutLoading = setsLoading || workoutTimeLoading || workoutVolumeLoading;
   const workoutError = setsError || workoutTimeError || workoutVolumeError;
 
-  if (loading && userId) {
-    return <p className="text-muted-foreground text-sm p-4">Loading statistics…</p>;
-  }
+
 
   return (
     <div className="w-full space-y-4 p-6">
@@ -234,10 +271,81 @@ const Stats = () => {
         </div>
       </section>
       <section className="border-border bg-card text-card-foreground rounded-xl border p-4">
+          <div className="mb-4 flex items-center justify-between">
+        <h2 className="mb-4 text-xl font-semibold">Calories intake (last {calRange} days)</h2>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setCalRange(7)}
+              className={`px-3 py-1 rounded-md text-sm font-medium transition ${
+                calRange === 7 
+                ? "bg-muted text-foreground" 
+                : "text-muted-foreground"
+              }`}
+            >
+              7D
+            </button>
+            <button
+              onClick={() => setCalRange(30)}
+              className={`px-3 py-1 rounded-md text-sm font-medium transition ${
+                calRange === 30 
+                ? "bg-muted text-foreground" 
+                : "text-muted-foreground"
+              }`}
+            >
+              30D
+            </button>
+          </div>
+          </div>
+            {caloriesError ? (
+          <p className="text-destructive text-sm" role="alert">
+            {caloriesError}
+          </p>
+        ) : null}
+        <div className="h-80 w-full min-h-[320px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart
+              data={caloriesChartData}
+              margin={{ top: 8, right: 12, left: 10, bottom: 0 }}
+            >
+              <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" />
+              <XAxis
+                dataKey={calRange === 30 ? "dayDate" : "dayShort"}
+                interval={calRange === 30 ? 4 : 0}
+                tick={{ fill: "var(--muted-foreground)" }}
+              />
+              <YAxis
+                width={70}
+                tick={{ fill: "var(--muted-foreground)" }}
+                allowDecimals={false}
+                tickFormatter={(value) => `${Math.round(value)}`}
+              />
+              <Tooltip
+                formatter={(value) => [`${Math.round(value)} kcal`, "Calories intake"]}
+                contentStyle={{
+                  backgroundColor: "var(--popover)",
+                  border: "1px solid var(--border)",
+                  color: "var(--popover-foreground)",
+                }}
+              />
+              <Legend />
+              <Line
+                type="monotone"
+                dataKey="daily_total_calories"
+                stroke="var(--chart-4)"
+                strokeWidth={3}
+                name="Calories intake"
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      </section>
+      <section className="border-border bg-card text-card-foreground rounded-xl border p-4">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-xl font-semibold">
             Workout trends (last {workoutRange} days)
           </h2>
+          
           <div className="flex items-center gap-2">
             <button
               onClick={() => setWorkoutRange(7)}
