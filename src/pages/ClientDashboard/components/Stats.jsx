@@ -32,9 +32,9 @@ function buildLastNDaysChartData(apiRows, n = 7) {
     out.push({
       dayShort: d.toLocaleDateString(undefined, { weekday: "short" }), 
       dayDate: d.toLocaleDateString(undefined, { month: "short", day: "numeric" }), 
-      mood: row?.mood ?? null,
-      energy: row?.energy ?? null,
-      sleep: row?.sleep ?? null,
+      mood: row?.mood ?? 0,
+      energy: row?.energy ?? 0,
+      sleep: row?.sleep ?? 0,
     });
   }
   return out;
