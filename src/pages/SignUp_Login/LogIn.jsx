@@ -26,9 +26,23 @@ const LogIn = () => {
   const [loginLoading, setLoginLoading] = useState(false);
   const [loginError, setLoginError] = useState(null);
 
-    const syncWithBackend = async () => {
+  const getNavPath = (user) => {
+    if (!user) {
+      return "/";
+    }
+    if (user?.is_coach) {
+      return "/coachDashboard";
+    } else if (user?.is_client) {
+      return "/clientDashboard";
+    } else if (user?.is_admin) {
+      return "/";
+    } else {
+      return "/";
+    }
+  };
+  const syncWithBackend = async () => {
     const response = await fetch(`${API_BASE_URL}/users/me`, {
-       method: "GET",
+      method: "GET",
       headers: {
         "Content-Type": "application/json",
         ...(await getAuthHeader()),
@@ -47,7 +61,6 @@ const LogIn = () => {
       localStorage.setItem("token", token);
     }
 
-
     localStorage.setItem("userId", dbData.user_id);
 
     return dbData;
@@ -60,9 +73,9 @@ const LogIn = () => {
     try {
       await signInWithEmailAndPassword(auth, email, password);
 
-      await syncWithBackend();
+      const dbData = await syncWithBackend();
 
-      navigate("/clientDashboard", { replace: true });
+      navigate(getNavPath(dbData), { replace: true });
     } catch (err) {
       setLoginError(mapEmailPasswordError(err));
     } finally {
@@ -78,9 +91,9 @@ const LogIn = () => {
       await signInWithGooglePopup();
 
       // 2. Handshake & Store
-      await syncWithBackend();
+      const dbData = await syncWithBackend();
 
-      navigate("/clientDashboard", { replace: true });
+      navigate(getNavPath(dbData), { replace: true });
     } catch (err) {
       if (err.code !== "auth/popup-closed-by-user") {
         setGoogleError(err.message || "Failed to sync with backend.");

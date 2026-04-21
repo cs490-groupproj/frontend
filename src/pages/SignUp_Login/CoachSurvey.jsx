@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import usePostToAPI from "@/hooks/usePostToAPI";        
+import usePostToAPI from "@/hooks/usePostToAPI";
 
 const SPECIALIZATIONS = [
   { value: "fitness", label: "Fitness" },
@@ -9,7 +9,7 @@ const SPECIALIZATIONS = [
   { value: "both", label: "Both" },
 ];
 
-const CoachSurvey = ( { onSubmitted }) => {
+const CoachSurvey = ({ onSubmitted }) => {
   const navigate = useNavigate();
 
   const [specialization, setSpecialization] = useState("fitness");
@@ -42,7 +42,7 @@ const CoachSurvey = ( { onSubmitted }) => {
       console.error("coach survey request error:", err);
     }
 
-    navigate("/ClientDashboard", { replace: true });
+    navigate("/coachDashboard", { replace: true });
   };
 
   return (
@@ -64,7 +64,6 @@ const CoachSurvey = ( { onSubmitted }) => {
         </div>
 
         <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4">
-
           <div className="flex flex-col gap-2">
             <span className="text-foreground text-sm font-medium">
               Specialization
@@ -76,8 +75,7 @@ const CoachSurvey = ( { onSubmitted }) => {
               {SPECIALIZATIONS.map((opt) => (
                 <label
                   key={opt.value}
-                  className="flex cursor-pointer items-center gap-3
-                    text-sm"
+                  className="flex cursor-pointer items-center gap-3 text-sm"
                 >
                   <input
                     type="radio"
@@ -107,8 +105,7 @@ const CoachSurvey = ( { onSubmitted }) => {
               onChange={(e) => setQualifications(e.target.value)}
               placeholder="Certifications, experience, focus areas…"
               className={
-                inputClass +
-                " min-h-[96px] resize-y py-2 leading-relaxed"
+                inputClass + " min-h-[96px] resize-y py-2 leading-relaxed"
               }
               required
             />
