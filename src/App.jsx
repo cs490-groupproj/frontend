@@ -38,6 +38,14 @@ const App = () => {
         <Route path="/payment" element={<PaymentPage />} />
         <Route path="/profile" element={<EditProfile />} />
         <Route path="/chat" element={<Chat />} />
+
+        <Route path="/coachDashboard" element={<div>Coach Dashboard</div>} />
+        <Route path="/clientManagement" element={<div>My Clients</div>} />
+        <Route path="/assignWorkouts" element={<div>Assign Workouts</div>} />
+        <Route
+          path="/viewClientProgress"
+          element={<div>View Client Progress</div>}
+        />
       </Route>
       {/* Put things that need neither here */}
       <Route path="/login" element={<LogIn />} />

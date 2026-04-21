@@ -1,6 +1,7 @@
-import { NavLink, useLocation } from "react-router-dom";
-import React, { useState, useEffect } from "react";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
+import React, { useState, useEffect, useMemo } from "react";
 import Notifications from "@/features/notifications/Notifications";
+import { ACTIVE_MODE_MODES } from "../../../config";
 import {
   LayoutDashboard,
   Users,
@@ -10,28 +11,68 @@ import {
   Utensils,
   MessageSquare,
   ChevronDown,
+  View,
 } from "lucide-react";
-const Sidebar = ({ notifications }) => {
+
+const Sidebar = ({ notifications, activeMode, user, setActiveMode }) => {
+  const navigate = useNavigate();
+
   const [openCoaches, setOpenCoaches] = useState(false);
   const location = useLocation();
 
   const isCoachesRoute = location.pathname.startsWith("/coaches");
-    useEffect(() => {
-    if (isCoachesRoute) {
-      setOpenCoaches(true);
-    }
+  useEffect(() => {
+    setOpenCoaches(isCoachesRoute);
   }, [isCoachesRoute]);
 
-  const links = [
-    { to: "/clientDashboard", icon: LayoutDashboard, label: "Dashboard" },
-    { to: "/nutrition", icon: Utensils, label: "Nutrition" },
-    { type: "coaches" }, 
-    { to: "/exercises", icon: Dumbbell, label: "Exercises" },
-    { to: "/payment", icon: CreditCard, label: "Payment" },
-    { to: "/profile", icon: User, label: "Edit Profile" },
-    { to: "/chat", icon: MessageSquare, label: "Chat" },
-  ];
+  const toggleActiveMode = () => {
+    if (activeMode === ACTIVE_MODE_MODES.CLIENT && user?.is_coach) {
+      navigate("/coachDashboard", { replace: true });
+      setActiveMode(ACTIVE_MODE_MODES.COACH);
+    } else if (activeMode === ACTIVE_MODE_MODES.COACH && user?.is_client) {
+      navigate("/clientDashboard", { replace: true });
+      setActiveMode(ACTIVE_MODE_MODES.CLIENT);
+    } else {
+      console.log("What? no", activeMode);
+    }
+  };
 
+  const links = useMemo(() => {
+    if (!activeMode) {
+      return [];
+    }
+    if (activeMode === ACTIVE_MODE_MODES.CLIENT) {
+      return [
+        { to: "/clientDashboard", icon: LayoutDashboard, label: "Dashboard" },
+        { to: "/nutrition", icon: Utensils, label: "Nutrition" },
+        { type: "coaches" },
+        { to: "/exercises", icon: Dumbbell, label: "Exercises" },
+        { to: "/payment", icon: CreditCard, label: "Payment" },
+        { to: "/profile", icon: User, label: "Edit Profile" },
+        { to: "/chat", icon: MessageSquare, label: "Chat" },
+      ];
+    } else if (activeMode === ACTIVE_MODE_MODES.COACH) {
+      return [
+        //add more links to coach here, and in app.jsx
+        { to: "/coachDashboard", icon: LayoutDashboard, label: "Dashboard" },
+        { to: "/clientManagement", icon: Users, label: "My Clients" },
+        { to: "/assignWorkouts", icon: Dumbbell, label: "Assign Workouts" },
+        {
+          to: "/viewClientProgress",
+          icon: View,
+          label: "View Client Progress",
+        },
+        { to: "/chat", icon: MessageSquare, label: "Chat" },
+      ];
+    } else if (activeMode === ACTIVE_MODE_MODES.ADMIN) {
+      return [
+        { to: "/adminDashboard", icon: LayoutDashboard, label: "Dashboard" },
+      ];
+    } else {
+      console.log(`How tf did ${activeMode} become your active mode???`);
+      return [];
+    }
+  }, [activeMode]);
 
   return (
     <aside
@@ -39,7 +80,7 @@ const Sidebar = ({ notifications }) => {
         justify-between gap-32 border-r py-10"
     >
       <nav className="space-y-2 px-6">
-        {links.map((link, idx) => {
+        {links.map((link) => {
           // Coaches section
           if (link.type === "coaches") {
             return (
@@ -47,11 +88,12 @@ const Sidebar = ({ notifications }) => {
                 {/* Parent tab */}
                 <button
                   onClick={() => setOpenCoaches((prev) => !prev)}
-                  className={`flex w-full items-center justify-between rounded-lg px-4 py-3 ${
-  isCoachesRoute
-    ? "bg-sidebar-primary text-sidebar-primary-foreground"
-    : "hover:bg-sidebar/80"
-}`}
+                  className={`flex w-full items-center justify-between
+                  rounded-lg px-4 py-3 ${
+                    isCoachesRoute
+                      ? "bg-sidebar-primary text-sidebar-primary-foreground"
+                      : "hover:bg-sidebar/80"
+                  }`}
                 >
                   <div className="flex items-center gap-4">
                     <Users size={20} />
@@ -67,13 +109,14 @@ const Sidebar = ({ notifications }) => {
 
                 {/* Subtabs */}
                 {openCoaches && (
-                  <div className="ml-8 mt-1 space-y-1">
+                  <div className="mt-1 ml-8 space-y-1">
                     <NavLink
                       to="/coaches/browse"
                       className={({ isActive }) =>
                         `block rounded-lg px-3 py-2 text-sm ${
                           isActive
-                            ? "bg-sidebar-primary text-sidebar-primary-foreground"
+                            ? `bg-sidebar-primary
+                              text-sidebar-primary-foreground`
                             : "hover:bg-sidebar/80"
                         }`
                       }
@@ -86,7 +129,8 @@ const Sidebar = ({ notifications }) => {
                       className={({ isActive }) =>
                         `block rounded-lg px-3 py-2 text-sm ${
                           isActive
-                            ? "bg-sidebar-primary text-sidebar-primary-foreground"
+                            ? `bg-sidebar-primary
+                              text-sidebar-primary-foreground`
                             : "hover:bg-sidebar/80"
                         }`
                       }
@@ -107,7 +151,8 @@ const Sidebar = ({ notifications }) => {
               key={to}
               to={to}
               className={({ isActive }) =>
-                `flex items-center gap-4 rounded-lg px-4 py-3 transition-colors ${
+                `flex items-center gap-4 rounded-lg px-4 py-3 transition-colors
+                ${
                   isActive
                     ? "bg-sidebar-primary text-sidebar-primary-foreground"
                     : "hover:bg-sidebar/80"
@@ -120,7 +165,19 @@ const Sidebar = ({ notifications }) => {
           );
         })}
       </nav>
-      <Notifications notifications={notifications} />
+      <div>
+        <Notifications notifications={notifications} />
+        {user?.is_coach && user?.is_client && (
+          <div
+            className="hover:bg-sidebar/80 mx-6 flex items-center gap-4
+              rounded-lg px-6 py-3 transition-colors hover:cursor-pointer"
+            onClick={toggleActiveMode}
+          >
+            {activeMode === ACTIVE_MODE_MODES.CLIENT ? "Coach" : "Client"}{" "}
+            Dashboard
+          </div>
+        )}
+      </div>
     </aside>
   );
 };

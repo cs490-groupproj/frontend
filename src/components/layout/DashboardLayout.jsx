@@ -1,15 +1,40 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Sidebar from "./Sidebar";
 import { Outlet } from "react-router-dom";
 import { useSocketNotifications } from "@/hooks/useSocketNotifications";
+import { ACTIVE_MODE_MODES } from "../../../config";
 
 const DashboardLayout = () => {
+  const [activeMode, setActiveMode] = useState(null);
+
   const { authToken, socket, user, notifications, handleMarkMessagesAsRead } =
     useSocketNotifications();
 
+  useEffect(() => {
+    if (!user) return;
+    if (activeMode) return;
+
+    if (user?.is_coach) {
+      setActiveMode(ACTIVE_MODE_MODES.COACH);
+    } else if (user?.is_client) {
+      setActiveMode(ACTIVE_MODE_MODES.CLIENT);
+    } else if (user?.is_admin) {
+      setActiveMode(ACTIVE_MODE_MODES.ADMIN);
+    } else {
+      console.log("'Ey Jimmy. Gimme a user with nuthin'");
+    }
+  }, [user]);
+
   return (
     <div className="bg-background text-foreground min-h-screen">
-      <Sidebar notifications={notifications} />
+      {
+        <Sidebar
+          notifications={notifications}
+          activeMode={activeMode}
+          user={user}
+          setActiveMode={setActiveMode}
+        />
+      }
       {authToken && user ? (
         <main className="flex min-h-screen overflow-y-auto p-8 pl-64">
           <Outlet

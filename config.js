@@ -1,4 +1,4 @@
-export const API_BASE_URL = "https://optimal-api.lambusta.me";
+export const API_BASE_URL = "http://localhost:5000";
 //https://optimal-api.lambusta.me
 //http://localhost:5000
 //http://127.0.0.1:5000
@@ -24,4 +24,10 @@ export const NOTIFICATION_CONFIG = {
     color: "border-chart bg-chart-4/15",
     text: "text-chart-4",
   },
+};
+
+export const ACTIVE_MODE_MODES = {
+  CLIENT: "client",
+  COACH: "coach",
+  ADMIN: "admin",
 };
