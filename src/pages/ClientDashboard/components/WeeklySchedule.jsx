@@ -100,7 +100,9 @@ const WeeklySchedule = () => {
       </div>
       <div
         className={`flex justify-center overflow-y-auto ${
-          selectedDateWorkouts?.length === 0
+          selectedDateWorkouts?.length === 0 ||
+          weeklyScheduleError ||
+          weeklyScheduleLoading
             ? " flex-1 items-center"
             : "no-scrollbar flex-col gap-4"
           }`}
