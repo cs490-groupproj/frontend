@@ -1,6 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import usePostToAPI from "@/hooks/usePostToAPI";
 import usePatchToAPI from "@/hooks/usePatchToAPI";
+import useGetFromAPI from "@/hooks/useGetFromAPI";
+
+const DAILY_SURVEY_STORAGE_KEY = "dailySurvey";
+
+function getLocalDateKey() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
 
 const DailySurvey = ({ onSubmitted }) => {
   const [selectedMood, setSelectedMood] = useState(null);
@@ -9,6 +20,12 @@ const DailySurvey = ({ onSubmitted }) => {
   const [notes, setNotes] = useState("");
   const [isSaved, setIsSaved] = useState(false);
   const [submittedSurveyId, setSubmittedSurveyId] = useState(null);
+  const userId = localStorage.getItem("userId");
+  const todaySurveyUri = userId ? `/clients/${userId}/daily_survey/history?days=1` : null;
+  const { data: todaySurveyData, loading: todaySurveyLoading, error: todaySurveyError } = useGetFromAPI(
+    todaySurveyUri,
+    userId
+  );
 
   const surveyOptions = [1,2,3,4,5,6,7,8,9,10];
  
@@ -26,19 +43,67 @@ const DailySurvey = ({ onSubmitted }) => {
   }
 
 useEffect(() => {
-  const saved = localStorage.getItem("dailySurvey");
+  const saved = localStorage.getItem(DAILY_SURVEY_STORAGE_KEY);
+  const todayKey = getLocalDateKey();
 
   if (saved) {
-    const data = JSON.parse(saved);
+    try {
+      const data = JSON.parse(saved);
+      const isToday = data?.dateKey === todayKey;
+      const isSameUser = data?.userId === userId;
 
-    setIsSaved(data.isSaved ?? false);
-    setSubmittedSurveyId(data.submittedSurveyId ?? null);
-    setSelectedMood(data.mood ?? null);
-    setSelectedEnergy(data.energy ?? null);
-    setSelectedSleep(data.sleep ?? null);
-    setNotes(data.notes ?? "");
+      if (isToday && isSameUser) {
+        setIsSaved(data.isSaved ?? false);
+        setSubmittedSurveyId(data.submittedSurveyId ?? null);
+        setSelectedMood(data.mood ?? null);
+        setSelectedEnergy(data.energy ?? null);
+        setSelectedSleep(data.sleep ?? null);
+        setNotes(data.notes ?? "");
+      } else {
+        localStorage.removeItem(DAILY_SURVEY_STORAGE_KEY);
+      }
+    } catch (error) {
+      console.error("Failed to parse saved daily survey:", error);
+      localStorage.removeItem(DAILY_SURVEY_STORAGE_KEY);
+    }
   }
-}, []);
+}, [userId]);
+
+useEffect(() => {
+  if (todaySurveyLoading) return;
+  if (todaySurveyError) return;
+
+  const rows = Array.isArray(todaySurveyData) ? todaySurveyData : [];
+  const latestRow = rows[rows.length - 1];
+
+  if (!latestRow) {
+    setIsSaved(false);
+    setSubmittedSurveyId(null);
+    return;
+  }
+
+  const todayKey = getLocalDateKey();
+  setIsSaved(true);
+  setSubmittedSurveyId(latestRow.daily_survey_id ?? null);
+  setSelectedMood(latestRow.mood ?? null);
+  setSelectedEnergy(latestRow.energy ?? null);
+  setSelectedSleep(latestRow.sleep ?? null);
+  setNotes(latestRow.notes ?? "");
+
+  localStorage.setItem(
+    DAILY_SURVEY_STORAGE_KEY,
+    JSON.stringify({
+      userId,
+      dateKey: todayKey,
+      isSaved: true,
+      submittedSurveyId: latestRow.daily_survey_id ?? null,
+      mood: latestRow.mood ?? null,
+      energy: latestRow.energy ?? null,
+      sleep: latestRow.sleep ?? null,
+      notes: latestRow.notes ?? "",
+    })
+  );
+}, [todaySurveyData, todaySurveyLoading, todaySurveyError, userId]);
 
   const { postFunction } = usePostToAPI();
   const { patchFunction } = usePatchToAPI();
@@ -46,7 +111,6 @@ useEffect(() => {
   const handleSubmit = async (e) => {
   e.preventDefault();
 
-  const userId = localStorage.getItem("userId");
   const payload = {
     mood: selectedMood,
     energy: selectedEnergy,
@@ -56,6 +120,7 @@ useEffect(() => {
 
   try {
     let effectiveSurveyId = submittedSurveyId;
+    const todayKey = getLocalDateKey();
 
     if (effectiveSurveyId != null) {
       await patchFunction(`/clients/${userId}/daily_survey/edit`, {
@@ -78,8 +143,10 @@ useEffect(() => {
     }
 
     localStorage.setItem(
-      "dailySurvey",
+      DAILY_SURVEY_STORAGE_KEY,
       JSON.stringify({
+        userId,
+        dateKey: todayKey,
         isSaved: true,
         submittedSurveyId: effectiveSurveyId,
         mood: selectedMood,
@@ -98,9 +165,12 @@ useEffect(() => {
 
 const handleChangeResponse = () => {
   // Keep submittedSurveyId so next save uses PATCH
+  const todayKey = getLocalDateKey();
   localStorage.setItem(
-    "dailySurvey",
+    DAILY_SURVEY_STORAGE_KEY,
     JSON.stringify({
+      userId,
+      dateKey: todayKey,
       isSaved: false,
       submittedSurveyId: submittedSurveyId,
       mood: null,

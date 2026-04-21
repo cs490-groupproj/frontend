@@ -32,9 +32,9 @@ function buildLastNDaysChartData(apiRows, n = 7) {
     out.push({
       dayShort: d.toLocaleDateString(undefined, { weekday: "short" }), 
       dayDate: d.toLocaleDateString(undefined, { month: "short", day: "numeric" }), 
-      mood: row?.mood ?? null,
-      energy: row?.energy ?? null,
-      sleep: row?.sleep ?? null,
+      mood: row?.mood ?? 0,
+      energy: row?.energy ?? 0,
+      sleep: row?.sleep ?? 0,
     });
   }
   return out;
@@ -158,7 +158,7 @@ const Stats = () => {
   const [calRange, setCalRange] = useState(7);
   const [workoutRange, setWorkoutRange] = useState(30);
 
-  const userId = localStorage.getItem("userId");
+  const [userId, setUserId] = useState(localStorage.getItem("userId"));
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const uri = userId ? `/clients/${userId}/daily_survey/history?days=${range}` : null;
   const { data, loading, error } = useGetFromAPI(uri, undefined, false);
