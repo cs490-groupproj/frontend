@@ -158,7 +158,7 @@ const Stats = () => {
   const [calRange, setCalRange] = useState(7);
   const [workoutRange, setWorkoutRange] = useState(30);
 
-  const userId = localStorage.getItem("userId");
+  const [userId, setUserId] = useState(localStorage.getItem("userId"));
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const uri = userId ? `/clients/${userId}/daily_survey/history?days=${range}` : null;
   const { data, loading, error } = useGetFromAPI(uri, undefined, false);
