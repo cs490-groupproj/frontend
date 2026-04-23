@@ -61,21 +61,20 @@ export default function ClientManagement() {
       )}
 
       {!isLoading && !error && clients.length > 0 && (
-        <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <section className="flex max-w-4xl flex-col gap-3">
           {clients.map((client) => (
             <article
               key={client.client_id}
-              className="border-border bg-card rounded-xl border p-5 shadow-sm"
+              className="border-border bg-card flex flex-row items-center justify-between
+                gap-4 rounded-xl border px-6 py-4 shadow-sm sm:px-8 sm:py-5"
             >
-              <h2 className="text-lg font-semibold">
+              <h2 className="text-lg font-semibold sm:text-xl">
                 {client.first_name} {client.last_name}
               </h2>
-              <p className="text-muted-foreground mt-2 text-sm break-all">
-                Client ID: {client.client_id}
-              </p>
               <Link
                 to={`/clientManagement/${client.client_id}/view`}
-                className="mt-4 inline-flex rounded-lg border px-3 py-2 text-sm font-medium hover:bg-muted"
+                className="shrink-0 rounded-lg border px-4 py-2.5 text-sm font-medium
+                  hover:bg-muted"
               >
                 View Client
               </Link>
