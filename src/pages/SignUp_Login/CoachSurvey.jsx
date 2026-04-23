@@ -12,7 +12,7 @@ const SPECIALIZATIONS = [
 const CoachSurvey = ({ onSubmitted }) => {
   const navigate = useNavigate();
 
-  const [specialization, setSpecialization] = useState("SPECIALIZATIONS[0].value");
+  const [specialization, setSpecialization] = useState(SPECIALIZATIONS[0].value);
   const [qualifications, setQualifications] = useState("");
   const [costPerHour, setCostPerHour] = useState("");
 
