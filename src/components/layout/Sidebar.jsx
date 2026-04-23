@@ -18,7 +18,13 @@ import {
 import { signOut } from "firebase/auth";
 import { auth } from "@/firebase.js";
 
-const Sidebar = ({ notifications, activeMode, user, setActiveMode }) => {
+const Sidebar = ({
+  notifications,
+  activeMode,
+  user,
+  socket,
+  setActiveMode,
+}) => {
   const navigate = useNavigate();
 
   const [openCoaches, setOpenCoaches] = useState(false);
@@ -43,6 +49,9 @@ const Sidebar = ({ notifications, activeMode, user, setActiveMode }) => {
 
   const handleSignOut = async () => {
     try {
+      if (socket) {
+        socket.disconnect();
+      }
       await signOut(auth);
     } catch (err) {
       console.error("Sign out failed:", err);
@@ -94,9 +103,9 @@ const Sidebar = ({ notifications, activeMode, user, setActiveMode }) => {
   return (
     <aside
       className="bg-card border-border fixed flex h-screen w-56 flex-col
-        border-r py-10"
+        justify-between border-r py-10"
     >
-      <nav className="min-h-0 flex-1 space-y-2 overflow-y-auto px-6">
+      <nav className="space-y-2 px-6">
         {links.map((link) => {
           // Coaches section
           if (link.type === "coaches") {
@@ -182,39 +191,40 @@ const Sidebar = ({ notifications, activeMode, user, setActiveMode }) => {
           );
         })}
       </nav>
-
-      <div
-        className="border-border mt-auto flex shrink-0 flex-col gap-2 border-t
-          px-6 pb-4 pt-3"
-      >
+      <div>
         <Notifications notifications={notifications} />
+        <div
+          className="border-border flex shrink-0 flex-col gap-2 border-t px-6
+            pt-3 pb-4"
+        >
+          {user?.is_coach && user?.is_client && (
+            <button
+              type="button"
+              onClick={toggleActiveMode}
+              className="text-foreground hover:bg-sidebar/80 flex w-full
+                items-center gap-4 rounded-lg px-4 py-3 text-left text-sm
+                transition-colors"
+            >
+              <ArrowLeftRight size={20} />
+              <span>
+                {activeMode === ACTIVE_MODE_MODES.CLIENT
+                  ? "Coach Dashboard"
+                  : "Client Dashboard"}
+              </span>
+            </button>
+          )}
 
-        {user?.is_coach && user?.is_client && (
           <button
             type="button"
-            onClick={toggleActiveMode}
-            className="text-foreground hover:bg-sidebar/80 flex w-full items-center
-              gap-4 rounded-lg px-4 py-3 text-left text-sm transition-colors"
+            onClick={handleSignOut}
+            className="text-muted-foreground hover:bg-sidebar/80
+              hover:text-destructive flex w-full items-center gap-4 rounded-lg
+              px-4 py-3 text-left text-sm transition-colors"
           >
-            <ArrowLeftRight size={20} />
-            <span>
-              {activeMode === ACTIVE_MODE_MODES.CLIENT
-                ? "Coach Dashboard"
-                : "Client Dashboard"}
-            </span>
+            <LogOut size={20} />
+            <span>Sign out</span>
           </button>
-        )}
-
-        <button
-          type="button"
-          onClick={handleSignOut}
-          className="text-muted-foreground hover:bg-sidebar/80 hover:text-destructive
-            flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left text-sm
-            transition-colors"
-        >
-          <LogOut size={20} />
-          <span>Sign out</span>
-        </button>
+        </div>
       </div>
     </aside>
   );
