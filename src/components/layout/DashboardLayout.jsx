@@ -44,29 +44,30 @@ const DashboardLayout = () => {
 
   return (
     <div className="bg-background text-foreground min-h-screen">
-      {
-        <Sidebar
-          notifications={notifications}
-          activeMode={activeMode}
-          user={user}
-          socket={socket}
-          setActiveMode={setActiveMode}
-        />
-      }
       {!isAppLoading ? (
-        <main className="flex min-h-screen overflow-y-auto p-8 pl-64">
-          <Outlet
-            context={{
-              socket,
-              user,
-              notifications,
-              handleMarkMessagesAsRead,
-              authToken,
-            }}
+        <div>
+          <Sidebar
+            notifications={notifications}
+            activeMode={activeMode}
+            user={user}
+            socket={socket}
+            setActiveMode={setActiveMode}
           />
-        </main>
+
+          <main className="flex min-h-screen overflow-y-auto p-8 pl-64">
+            <Outlet
+              context={{
+                socket,
+                user,
+                notifications,
+                handleMarkMessagesAsRead,
+                authToken,
+              }}
+            />
+          </main>
+        </div>
       ) : (
-        <p className="flex min-h-screen items-center justify-center p-8 pl-72">
+        <p className="flex min-h-screen items-center justify-center">
           content loading
         </p>
       )}

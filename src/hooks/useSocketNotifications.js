@@ -120,8 +120,7 @@ export const useSocketNotifications = () => {
       return;
     }
     const newSocket = io(API_BASE_URL, {
-      query: { token: authToken },
-      transports: ["websocket"],
+      query: { token: authToken }, //have fun never figuring this out
     });
 
     setSocket(newSocket);
