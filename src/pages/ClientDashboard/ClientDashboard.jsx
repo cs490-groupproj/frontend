@@ -1,16 +1,16 @@
 import React, { useCallback, useEffect, useState } from "react";
-import DailySurvey from "./components/DailySurvey";
 import useGetFromAPI from "@/hooks/useGetFromAPI";
+import WeeklySchedule from "./components/WeeklySchedule";
 import Stats from "./components/Stats";
+import DailySurvey from "./components/DailySurvey";
 
 export default function ClientDashboard() {
-  const [activeTab, setActiveTab] = useState("thisWeek");
+  const [activeTab, setActiveTab] = useState("weeklySchedule");
   const resolvedUserId = localStorage.getItem("userId");
 
   const { data: profileData, loading: profileLoading } = useGetFromAPI(
-      resolvedUserId ? `/users/${resolvedUserId}/profile` : null,
-
-    );
+    resolvedUserId ? `/users/${resolvedUserId}/profile` : null
+  );
 
   const [firstName, setFirstName] = useState("");
 
@@ -23,7 +23,6 @@ export default function ClientDashboard() {
     nameFromProfile(profileData);
   }, [profileData, nameFromProfile]);
 
-
   return (
     <div className="w-full max-w-none space-y-8">
       {/* Header */}
@@ -32,44 +31,42 @@ export default function ClientDashboard() {
           Welcome back, {firstName || "Client"}
         </h1>
       </div>
-      <div className="flex border-b border-gray-200">
+      <div className="flex w-fit border-b border-gray-200">
         <button
-          onClick={() => setActiveTab("thisWeek")}
+          onClick={() => setActiveTab("weeklySchedule")}
           className={`px-4 py-2 text-sm font-medium focus:outline-none ${
-            activeTab === "thisWeek"
-              ? "border-b-2 border-border-600 text-text"
+            activeTab === "weeklySchedule"
+              ? "border-border-600 text-text border-b-2"
               : "text-gray-500 hover:text-gray-700"
-          }`}>
+            }`}
+        >
           This Week
-          </button>
-          <button 
+        </button>
+        <button
           onClick={() => setActiveTab("stats")}
           className={`px-4 py-2 text-sm font-medium focus:outline-none ${
             activeTab === "stats"
-              ? "border-b-2 border-border-600 text-text"
+              ? "border-border-600 text-text border-b-2"
               : "text-gray-500 hover:text-gray-700"
-          }`}>
+            }`}
+        >
           Statistics
-          </button>
-          <button
+        </button>
+        <button
           onClick={() => setActiveTab("dailySurvey")}
           className={`px-4 py-2 text-sm font-medium focus:outline-none ${
             activeTab === "dailySurvey"
-              ? "border-b-2 border-border-600 text-text"
+              ? "border-border-600 text-text border-b-2"
               : "text-gray-500 hover:text-gray-700"
-          }`}
+            }`}
         >
           Daily Survey
         </button>
       </div>
 
-      {activeTab === "dailySurvey" ? (
-        <DailySurvey />
-      ) : null}
-
-      {activeTab === "stats" ? (
-        <Stats />
-      ) : null}
+      {activeTab === "dailySurvey" && <DailySurvey />}
+      {activeTab === "stats" && <Stats />}
+      {activeTab === "weeklySchedule" && <WeeklySchedule />}
     </div>
   );
 }

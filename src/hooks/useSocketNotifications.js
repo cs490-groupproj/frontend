@@ -22,8 +22,10 @@ export const useSocketNotifications = () => {
     system: [],
   }); // All notifications must include a `type` matching NOTIFICATION_CONFIG
 
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
+
   //gets the userID, requestURI will be null until the auth token is gotten
-  const { data: user } = useGetFromAPI(userRequestURI, null);
+  const { data: user, error: userError } = useGetFromAPI(userRequestURI, null);
   const { data: storedUnreadChatNotifications } = useGetFromAPI(
     chatNotificationsRequestURI,
     null
@@ -107,6 +109,7 @@ export const useSocketNotifications = () => {
         setUserRequestURI("/users/me");
         setChatNotificationsRequestURI("/messages/unread_message_count");
       }
+      setIsAuthLoading(false);
     });
     return () => unsubscribe();
   }, []);
@@ -117,7 +120,7 @@ export const useSocketNotifications = () => {
       return;
     }
     const newSocket = io(API_BASE_URL, {
-      query: { token: authToken },
+      query: { token: authToken }, //have fun never figuring this out
     });
 
     setSocket(newSocket);
@@ -129,7 +132,6 @@ export const useSocketNotifications = () => {
 
   useEffect(() => {
     if (!socket) {
-      console.log("no socket somehow, cannot set up notifications");
       return;
     }
 
@@ -141,11 +143,15 @@ export const useSocketNotifications = () => {
     };
   }, [socket, handleNewNotification]);
 
+  const isAppLoading =
+    isAuthLoading || (userRequestURI !== null && !user && !userError);
+
   return {
     authToken,
     socket,
     user,
     notifications,
     handleMarkMessagesAsRead,
+    isAppLoading,
   };
 };

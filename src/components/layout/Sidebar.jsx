@@ -1,6 +1,7 @@
-import { NavLink, useLocation } from "react-router-dom";
-import React, { useState, useEffect } from "react";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
+import React, { useState, useEffect, useMemo } from "react";
 import Notifications from "@/features/notifications/Notifications";
+import { ACTIVE_MODE_MODES } from "../../../config";
 import {
   LayoutDashboard,
   Users,
@@ -11,8 +12,22 @@ import {
   MessageSquare,
   ChevronDown,
   ShieldCheck,
+  ArrowLeftRight,
+  LogOut,
+  View,
 } from "lucide-react";
-const Sidebar = ({ notifications }) => {
+import { signOut } from "firebase/auth";
+import { auth } from "@/firebase.js";
+
+const Sidebar = ({
+  notifications,
+  activeMode,
+  user,
+  socket,
+  setActiveMode,
+}) => {
+  const navigate = useNavigate();
+
   const [openCoaches, setOpenCoaches] = useState(false);
   const location = useLocation();
 
@@ -23,29 +38,74 @@ const Sidebar = ({ notifications }) => {
     }
   }, [isCoachesRoute]);
 
-  const links = [
-    { to: "/clientDashboard", icon: LayoutDashboard, label: "Dashboard" },
-    { to: "/nutrition", icon: Utensils, label: "Nutrition" },
-    { type: "coaches" },
-    { to: "/exercises", icon: Dumbbell, label: "Exercises" },
-    { to: "/payment", icon: CreditCard, label: "Payment" },
-    { to: "/profile", icon: User, label: "Edit Profile" },
-    { to: "/chat", icon: MessageSquare, label: "Chat" },
-    { to: "/adminDashboard", icon: ShieldCheck, label: "Admin Panel" },
-  ];
+  const toggleActiveMode = () => {
+    if (activeMode === ACTIVE_MODE_MODES.CLIENT && user?.is_coach) {
+      navigate("/coachDashboard", { replace: true });
+      setActiveMode(ACTIVE_MODE_MODES.COACH);
+    } else if (activeMode === ACTIVE_MODE_MODES.COACH && user?.is_client) {
+      navigate("/clientDashboard", { replace: true });
+      setActiveMode(ACTIVE_MODE_MODES.CLIENT);
+    }
+  };
+
+  const handleSignOut = async () => {
+    try {
+      if (socket) {
+        socket.disconnect();
+      }
+      await signOut(auth);
+    } catch (err) {
+      console.error("Sign out failed:", err);
+    } finally {
+      localStorage.removeItem("token");
+      localStorage.removeItem("userId");
+      localStorage.removeItem("activeMode");
+      navigate("/login", { replace: true });
+    }
+  };
+
+  const links = useMemo(() => {
+    if (!activeMode) {
+      return [];
+    }
+    if (activeMode === ACTIVE_MODE_MODES.CLIENT) {
+      return [
+        { to: "/clientDashboard", icon: LayoutDashboard, label: "Dashboard" },
+        { to: "/nutrition", icon: Utensils, label: "Nutrition" },
+        { type: "coaches" },
+        { to: "/exercises", icon: Dumbbell, label: "Exercises" },
+        { to: "/payment", icon: CreditCard, label: "Payment" },
+        { to: "/profile", icon: User, label: "Edit Profile" },
+        { to: "/chat", icon: MessageSquare, label: "Chat" },
+      ];
+    } else if (activeMode === ACTIVE_MODE_MODES.COACH) {
+      return [
+        { to: "/coachDashboard", icon: LayoutDashboard, label: "Dashboard" },
+        { to: "/clientManagement", icon: Users, label: "My Clients" },
+        { to: "/assignWorkouts", icon: Dumbbell, label: "Assign Workouts" },
+        { to: "/viewClientProgress", icon: View, label: "View Progress" },
+        { to: "/coachProfile", icon: User, label: "Edit Profile" },
+        { to: "/chat", icon: MessageSquare, label: "Chat" },
+      ];
+    } else if (activeMode === ACTIVE_MODE_MODES.ADMIN) {
+      return [
+        { to: "/adminDashboard", icon: LayoutDashboard, label: "Dashboard" },
+        { to: "/adminDashboard", icon: ShieldCheck, label: "Admin Panel" },
+      ];
+    }
+    return [];
+  }, [activeMode]);
 
   return (
     <aside
       className="bg-card border-border fixed flex h-screen w-56 flex-col
-        justify-between gap-32 border-r py-10"
+        justify-between border-r py-10"
     >
       <nav className="space-y-2 px-6">
-        {links.map((link, idx) => {
-          // Coaches section
+        {links.map((link) => {
           if (link.type === "coaches") {
             return (
               <div key="coaches">
-                {/* Parent tab */}
                 <button
                   onClick={() => setOpenCoaches((prev) => !prev)}
                   className={`flex w-full items-center justify-between
@@ -67,7 +127,6 @@ const Sidebar = ({ notifications }) => {
                   />
                 </button>
 
-                {/* Subtabs */}
                 {openCoaches && (
                   <div className="mt-1 ml-8 space-y-1">
                     <NavLink
@@ -103,7 +162,6 @@ const Sidebar = ({ notifications }) => {
             );
           }
 
-          // Normal links
           const { to, icon: Icon, label } = link;
 
           return (
@@ -125,7 +183,41 @@ const Sidebar = ({ notifications }) => {
           );
         })}
       </nav>
-      <Notifications notifications={notifications} />
+      <div>
+        <Notifications notifications={notifications} />
+        <div
+          className="border-border flex shrink-0 flex-col gap-2 border-t px-6
+            pt-3 pb-4"
+        >
+          {user?.is_coach && user?.is_client && (
+            <button
+              type="button"
+              onClick={toggleActiveMode}
+              className="text-foreground hover:bg-sidebar/80 flex w-full
+                items-center gap-4 rounded-lg px-4 py-3 text-left text-sm
+                transition-colors"
+            >
+              <ArrowLeftRight size={20} />
+              <span>
+                {activeMode === ACTIVE_MODE_MODES.CLIENT
+                  ? "Coach Dashboard"
+                  : "Client Dashboard"}
+              </span>
+            </button>
+          )}
+
+          <button
+            type="button"
+            onClick={handleSignOut}
+            className="text-muted-foreground hover:bg-sidebar/80
+              hover:text-destructive flex w-full items-center gap-4 rounded-lg
+              px-4 py-3 text-left text-sm transition-colors"
+          >
+            <LogOut size={20} />
+            <span>Sign out</span>
+          </button>
+        </div>
+      </div>
     </aside>
   );
 };

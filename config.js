@@ -25,3 +25,9 @@ export const NOTIFICATION_CONFIG = {
     text: "text-chart-4",
   },
 };
+
+export const ACTIVE_MODE_MODES = {
+  CLIENT: "client",
+  COACH: "coach",
+  ADMIN: "admin",
+};
