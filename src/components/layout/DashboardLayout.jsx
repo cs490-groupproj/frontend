@@ -39,6 +39,7 @@ const DashboardLayout = () => {
           notifications={notifications}
           activeMode={activeMode}
           user={user}
+          socket={socket}
           setActiveMode={setActiveMode}
         />
       }

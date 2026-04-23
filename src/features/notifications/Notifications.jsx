@@ -18,7 +18,7 @@ const Notifications = ({ notifications }) => {
   const allAlerts = [...chatAlerts, ...otherAlerts];
 
   return (
-    <div className="no-scrollbar space-y-2 overflow-y-auto px-6 pb-4">
+    <div className="no-scrollbar max-h-42 space-y-2 overflow-y-auto px-6 pb-4">
       {allAlerts.map((alert) => (
         <NotificationCard key={alert.id} alert={alert} />
       ))}
