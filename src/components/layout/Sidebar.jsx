@@ -12,7 +12,11 @@ import {
   MessageSquare,
   ChevronDown,
   View,
+  LogOut,
+  ArrowLeftRight,
 } from "lucide-react";
+import { signOut } from "firebase/auth";
+import { auth } from "@/firebase.js";
 
 const Sidebar = ({ notifications, activeMode, user, setActiveMode }) => {
   const navigate = useNavigate();
@@ -35,6 +39,17 @@ const Sidebar = ({ notifications, activeMode, user, setActiveMode }) => {
     } else {
       console.log("What? no", activeMode);
     }
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await signOut(auth);
+    } catch (err) {
+      console.error("Sign out failed:", err);
+    }
+    localStorage.removeItem("token");
+    localStorage.removeItem("userId");
+    navigate("/login", { replace: true });
   };
 
   const links = useMemo(() => {
@@ -62,6 +77,7 @@ const Sidebar = ({ notifications, activeMode, user, setActiveMode }) => {
           icon: View,
           label: "View Client Progress",
         },
+        { to: "/coachProfile", icon: User, label: "Edit Profile" },
         { to: "/chat", icon: MessageSquare, label: "Chat" },
       ];
     } else if (activeMode === ACTIVE_MODE_MODES.ADMIN) {
@@ -77,9 +93,9 @@ const Sidebar = ({ notifications, activeMode, user, setActiveMode }) => {
   return (
     <aside
       className="bg-card border-border fixed flex h-screen w-56 flex-col
-        justify-between gap-32 border-r py-10"
+        border-r py-10"
     >
-      <nav className="space-y-2 px-6">
+      <nav className="min-h-0 flex-1 space-y-2 overflow-y-auto px-6">
         {links.map((link) => {
           // Coaches section
           if (link.type === "coaches") {
@@ -165,18 +181,39 @@ const Sidebar = ({ notifications, activeMode, user, setActiveMode }) => {
           );
         })}
       </nav>
-      <div>
+
+      <div
+        className="border-border mt-auto flex shrink-0 flex-col gap-2 border-t
+          px-6 pb-4 pt-3"
+      >
         <Notifications notifications={notifications} />
+
         {user?.is_coach && user?.is_client && (
-          <div
-            className="hover:bg-sidebar/80 mx-6 flex items-center gap-4
-              rounded-lg px-6 py-3 transition-colors hover:cursor-pointer"
+          <button
+            type="button"
             onClick={toggleActiveMode}
+            className="text-foreground hover:bg-sidebar/80 flex w-full items-center
+              gap-4 rounded-lg px-4 py-3 text-left text-sm transition-colors"
           >
-            {activeMode === ACTIVE_MODE_MODES.CLIENT ? "Coach" : "Client"}{" "}
-            Dashboard
-          </div>
+            <ArrowLeftRight size={20} />
+            <span>
+              {activeMode === ACTIVE_MODE_MODES.CLIENT
+                ? "Coach dashboard"
+                : "Client dashboard"}
+            </span>
+          </button>
         )}
+
+        <button
+          type="button"
+          onClick={handleSignOut}
+          className="text-muted-foreground hover:bg-sidebar/80 hover:text-destructive
+            flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left text-sm
+            transition-colors"
+        >
+          <LogOut size={20} />
+          <span>Sign out</span>
+        </button>
       </div>
     </aside>
   );
