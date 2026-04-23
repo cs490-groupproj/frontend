@@ -22,21 +22,7 @@ function usePostToAPI() {
       });
 
       if (!response.ok) {
-        let detail = `Request failed (${response.status})`;
-        try {
-          const errBody = await response.json();
-          if (typeof errBody?.error === "string") {
-            detail = errBody.error;
-          } else if (typeof errBody?.message === "string") {
-            detail = errBody.message;
-          }
-          if (typeof errBody?.internal_error === "string") {
-            detail = `${detail}: ${errBody.internal_error}`;
-          }
-        } catch {
-          /* ignore non-JSON error bodies */
-        }
-        throw new Error(detail);
+        throw new Error(`HTTP error: Status ${response.status}`);
       }
 
       if (response.status === 204) {
