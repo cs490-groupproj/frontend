@@ -7,9 +7,9 @@ import useGetFromAPI from "@/hooks/useGetFromAPI";
 import usePatchToAPI from "@/hooks/usePatchToAPI";
 
 const SPECIALIZATIONS = [
-  { value: "exercise", label: "Exercise" },
-  { value: "nutrition", label: "Nutrition" },
-  { value: "both", label: "Both" },
+  { value: "EXERCISE", label: "Exercise" },
+  { value: "NUTRITION", label: "Nutrition" },
+  { value: "BOTH", label: "Both" },
 ];
 
 function specializationLabel(value) {
@@ -54,7 +54,7 @@ export default function EditCoachProfile() {
   const [email, setEmail] = useState("");
 
   const [coachSurveyId, setCoachSurveyId] = useState(null);
-  const [specialization, setSpecialization] = useState("exercise");
+  const [specialization, setSpecialization] = useState(SPECIALIZATIONS[0].value);
   const [qualifications, setQualifications] = useState("");
   const [coachCost, setCoachCost] = useState("");
 
@@ -75,12 +75,12 @@ export default function EditCoachProfile() {
         cs.specialization &&
           SPECIALIZATIONS.some((o) => o.value === cs.specialization)
           ? cs.specialization
-          : "fitness"
+          : SPECIALIZATIONS[0].value
       );
       setQualifications(cs.qualifications || "");
     } else {
       setCoachSurveyId(null);
-      setSpecialization("fitness");
+      setSpecialization(SPECIALIZATIONS[0].value);
       setQualifications("");
     }
 
@@ -159,7 +159,7 @@ export default function EditCoachProfile() {
       specialization,
       qualifications: qualifications.trim() || null,
       coach_cost:
-        coachCost === "" ? null : Math.max(0, Math.round(Number(coachCost))),
+        Number.isFinite(Number(coachCost)) ? Math.max(0, Math.round(Number(coachCost))) : null,
     };
 
     try {
