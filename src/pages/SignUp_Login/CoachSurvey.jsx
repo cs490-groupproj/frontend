@@ -4,15 +4,15 @@ import { Button } from "@/components/ui/button";
 import usePostToAPI from "@/hooks/usePostToAPI";
 
 const SPECIALIZATIONS = [
-  { value: "exercise", label: "Exercise" },
-  { value: "nutrition", label: "Nutrition" },
-  { value: "both", label: "Both" },
+  { value: "EXERCISE", label: "Exercise" },
+  { value: "NUTRITION", label: "Nutrition" },
+  { value: "BOTH", label: "Both" },
 ];
 
 const CoachSurvey = ({ onSubmitted }) => {
   const navigate = useNavigate();
 
-  const [specialization, setSpecialization] = useState("exercise");
+  const [specialization, setSpecialization] = useState("SPECIALIZATIONS[0].value");
   const [qualifications, setQualifications] = useState("");
   const [costPerHour, setCostPerHour] = useState("");
 
