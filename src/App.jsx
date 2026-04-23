@@ -16,7 +16,6 @@ import BrowseCoaches from "./pages/Coaches/BrowseCoaches.jsx";
 import ClientDashboard from "./pages/ClientDashboard/ClientDashboard.jsx";
 import MyCoach from "./pages/coaches/MyCoach.jsx";
 import Workouts from "./pages/Workouts/Workouts.jsx";
-import AdminDashboard from "./pages/Admin/AdminDashboard.jsx";
 import Nutrition from "./pages/Nutrition/nutrition.jsx";
 import PaymentPage from "./pages/Payment/PaymentPage.jsx";
 import EditProfile from "./pages/Profile/EditClientProfile.jsx";
@@ -58,10 +57,6 @@ const App = () => {
             element={<div>View Client Progress</div>}
           />
           <Route path="/coachProfile" element={<EditCoachProfile />} />
-        </Route>
-
-        <Route element={<RoleProtectedRoute requiredRoles={["admin"]} />}>
-          <Route path="/adminDashboard" element={<AdminDashboard />} />
         </Route>
       </Route>
 

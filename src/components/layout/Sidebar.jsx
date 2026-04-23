@@ -11,7 +11,6 @@ import {
   Utensils,
   MessageSquare,
   ChevronDown,
-  ShieldCheck,
   ArrowLeftRight,
   LogOut,
   View,
@@ -86,11 +85,6 @@ const Sidebar = ({
         { to: "/viewClientProgress", icon: View, label: "View Progress" },
         { to: "/coachProfile", icon: User, label: "Edit Profile" },
         { to: "/chat", icon: MessageSquare, label: "Chat" },
-      ];
-    } else if (activeMode === ACTIVE_MODE_MODES.ADMIN) {
-      return [
-        { to: "/adminDashboard", icon: LayoutDashboard, label: "Dashboard" },
-        { to: "/adminDashboard", icon: ShieldCheck, label: "Admin Panel" },
       ];
     }
     return [];
