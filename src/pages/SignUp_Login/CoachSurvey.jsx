@@ -4,15 +4,15 @@ import { Button } from "@/components/ui/button";
 import usePostToAPI from "@/hooks/usePostToAPI";
 
 const SPECIALIZATIONS = [
-  { value: "fitness", label: "Fitness" },
-  { value: "nutrition", label: "Nutrition" },
-  { value: "both", label: "Both" },
+  { value: "EXERCISE", label: "Exercise" },
+  { value: "NUTRITION", label: "Nutrition" },
+  { value: "BOTH", label: "Both" },
 ];
 
 const CoachSurvey = ({ onSubmitted }) => {
   const navigate = useNavigate();
 
-  const [specialization, setSpecialization] = useState("fitness");
+  const [specialization, setSpecialization] = useState(SPECIALIZATIONS[0].value);
   const [qualifications, setQualifications] = useState("");
   const [costPerHour, setCostPerHour] = useState("");
 
@@ -20,10 +20,12 @@ const CoachSurvey = ({ onSubmitted }) => {
     "border-input bg-background text-foreground ring-ring/50 " +
     "placeholder:text-muted-foreground focus-visible:border-ring h-9 " +
     "w-full rounded-lg border px-3 text-sm outline-none focus-visible:ring-3";
-  const { postFunction } = usePostToAPI();
+  const { postFunction, loading } = usePostToAPI();
+  const [submitError, setSubmitError] = useState(null);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setSubmitError(null);
 
     const payload = {
       specialization,
@@ -31,18 +33,14 @@ const CoachSurvey = ({ onSubmitted }) => {
       coach_cost: costPerHour === "" ? null : Number(costPerHour),
     };
 
-    console.log("coach survey payload", payload);
-
-    // TODO: replace with backend endpoint + Authorization header
     const endpoint = "/users/onboarding/submit_coach_survey";
     try {
       await postFunction(endpoint, payload);
       onSubmitted?.();
+      navigate("/coachDashboard", { replace: true });
     } catch (err) {
-      console.error("coach survey request error:", err);
+      setSubmitError(err?.message || "Could not save your coach survey.");
     }
-
-    navigate("/coachDashboard", { replace: true });
   };
 
   return (
@@ -64,6 +62,11 @@ const CoachSurvey = ({ onSubmitted }) => {
         </div>
 
         <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4">
+          {submitError && (
+            <p className="text-destructive text-sm" role="alert">
+              {submitError}
+            </p>
+          )}
           <div className="flex flex-col gap-2">
             <span className="text-foreground text-sm font-medium">
               Specialization
@@ -133,8 +136,8 @@ const CoachSurvey = ({ onSubmitted }) => {
             />
           </div>
 
-          <Button type="submit" className="mt-2 w-full" size="lg">
-            Save and continue
+          <Button type="submit" className="mt-2 w-full" size="lg" disabled={loading}>
+            {loading ? "Saving…" : "Save and continue"}
           </Button>
         </form>
       </div>

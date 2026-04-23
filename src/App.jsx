@@ -19,6 +19,8 @@ import PaymentPage from "./pages/Payment/PaymentPage.jsx";
 import Nutrition from "./pages/Nutrition/nutrition.jsx";
 import Workouts from "./pages/Workouts/Workouts.jsx";
 
+import EditCoachProfile from "./pages/Profile/EditCoachProfile.jsx";
+
 // ONLY PUT ROUTES IN HERE. DON'T STYLE. IF YOU WANT TO STYLE, GO TO THE LAYOUT
 const App = () => {
   return (
@@ -46,6 +48,7 @@ const App = () => {
           path="/viewClientProgress"
           element={<div>View Client Progress</div>}
         />
+        <Route path="/coachProfile" element={<EditCoachProfile />} />
       </Route>
       {/* Put things that need neither here */}
       <Route path="/login" element={<LogIn />} />
