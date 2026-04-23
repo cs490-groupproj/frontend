@@ -10,13 +10,14 @@ import {
   Utensils,
   MessageSquare,
   ChevronDown,
+  ShieldCheck,
 } from "lucide-react";
 const Sidebar = ({ notifications }) => {
   const [openCoaches, setOpenCoaches] = useState(false);
   const location = useLocation();
 
   const isCoachesRoute = location.pathname.startsWith("/coaches");
-    useEffect(() => {
+  useEffect(() => {
     if (isCoachesRoute) {
       setOpenCoaches(true);
     }
@@ -25,13 +26,13 @@ const Sidebar = ({ notifications }) => {
   const links = [
     { to: "/clientDashboard", icon: LayoutDashboard, label: "Dashboard" },
     { to: "/nutrition", icon: Utensils, label: "Nutrition" },
-    { type: "coaches" }, 
+    { type: "coaches" },
     { to: "/exercises", icon: Dumbbell, label: "Exercises" },
     { to: "/payment", icon: CreditCard, label: "Payment" },
     { to: "/profile", icon: User, label: "Edit Profile" },
     { to: "/chat", icon: MessageSquare, label: "Chat" },
+    { to: "/adminDashboard", icon: ShieldCheck, label: "Admin Panel" },
   ];
-
 
   return (
     <aside
@@ -47,11 +48,12 @@ const Sidebar = ({ notifications }) => {
                 {/* Parent tab */}
                 <button
                   onClick={() => setOpenCoaches((prev) => !prev)}
-                  className={`flex w-full items-center justify-between rounded-lg px-4 py-3 ${
-  isCoachesRoute
-    ? "bg-sidebar-primary text-sidebar-primary-foreground"
-    : "hover:bg-sidebar/80"
-}`}
+                  className={`flex w-full items-center justify-between
+                  rounded-lg px-4 py-3 ${
+                    isCoachesRoute
+                      ? "bg-sidebar-primary text-sidebar-primary-foreground"
+                      : "hover:bg-sidebar/80"
+                  }`}
                 >
                   <div className="flex items-center gap-4">
                     <Users size={20} />
@@ -67,13 +69,14 @@ const Sidebar = ({ notifications }) => {
 
                 {/* Subtabs */}
                 {openCoaches && (
-                  <div className="ml-8 mt-1 space-y-1">
+                  <div className="mt-1 ml-8 space-y-1">
                     <NavLink
                       to="/coaches/browse"
                       className={({ isActive }) =>
                         `block rounded-lg px-3 py-2 text-sm ${
                           isActive
-                            ? "bg-sidebar-primary text-sidebar-primary-foreground"
+                            ? `bg-sidebar-primary
+                              text-sidebar-primary-foreground`
                             : "hover:bg-sidebar/80"
                         }`
                       }
@@ -86,7 +89,8 @@ const Sidebar = ({ notifications }) => {
                       className={({ isActive }) =>
                         `block rounded-lg px-3 py-2 text-sm ${
                           isActive
-                            ? "bg-sidebar-primary text-sidebar-primary-foreground"
+                            ? `bg-sidebar-primary
+                              text-sidebar-primary-foreground`
                             : "hover:bg-sidebar/80"
                         }`
                       }
@@ -107,7 +111,8 @@ const Sidebar = ({ notifications }) => {
               key={to}
               to={to}
               className={({ isActive }) =>
-                `flex items-center gap-4 rounded-lg px-4 py-3 transition-colors ${
+                `flex items-center gap-4 rounded-lg px-4 py-3 transition-colors
+                ${
                   isActive
                     ? "bg-sidebar-primary text-sidebar-primary-foreground"
                     : "hover:bg-sidebar/80"

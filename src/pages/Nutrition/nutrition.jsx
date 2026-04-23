@@ -3,12 +3,26 @@ import { Card } from "../../components/ui/card";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { Progress } from "../../components/ui/progress";
-import { Loader2, Search, Utensils, CheckCircle2 } from "lucide-react";
+import {
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+} from "../../components/ui/tabs";
+import {
+  Loader2,
+  Search,
+  Utensils,
+  CheckCircle2,
+  Calendar,
+  History,
+  TrendingUp,
+  Clock,
+} from "lucide-react";
 import useGetFromAPI from "../../hooks/useGetFromAPI";
 import usePostToAPI from "../../hooks/usePostToAPI";
 
 const MEAL_NAMES = ["Breakfast", "Lunch", "Dinner", "Snacks"];
-
 const mealTypeToName = { 1: "Breakfast", 2: "Lunch", 3: "Dinner", 4: "Snacks" };
 const mealNameToType = { Breakfast: 1, Lunch: 2, Dinner: 3, Snacks: 4 };
 
@@ -24,6 +38,136 @@ const emptyPersistedFoodsByMeal = () => ({
   Dinner: [],
   Snacks: [],
 });
+
+/**
+ * Detailed Weekly History Component
+ * Fetches specific meal plans and food items from the last 7 days using /week
+ */
+const WeeklyHistory = ({ userId, timezone }) => {
+  const { data: historyData, loading } = useGetFromAPI(
+    userId
+      ? `/nutrition/week?user_id=${userId}&timezone=${encodeURIComponent(timezone)}`
+      : null
+  );
+
+  if (loading)
+    return (
+      <div className="flex h-48 items-center justify-center">
+        <Loader2 className="text-primary animate-spin" />
+      </div>
+    );
+
+  // Group meals by date
+  const groupedByDate = (historyData?.meal_plans || []).reduce((acc, plan) => {
+    const date = new Date(plan.meal_logged_at).toLocaleDateString(undefined, {
+      weekday: "long",
+      month: "short",
+      day: "numeric",
+    });
+    if (!acc[date]) acc[date] = [];
+    acc[date].push(plan);
+    return acc;
+  }, {});
+
+  const sortedDates = Object.keys(groupedByDate).sort(
+    (a, b) => new Date(b) - new Date(a)
+  );
+
+  return (
+    <div className="space-y-8">
+      {sortedDates.length === 0 ? (
+        <div
+          className="text-muted-foreground flex flex-col items-center
+            justify-center py-12 text-center"
+        >
+          <History size={48} className="mb-4 opacity-20" />
+          <p>No meal logs found for the past week.</p>
+        </div>
+      ) : (
+        sortedDates.map((date) => (
+          <div key={date} className="space-y-4">
+            <h3
+              className="text-muted-foreground border-b pb-1 text-sm font-bold
+                tracking-wider uppercase"
+            >
+              {date}
+            </h3>
+            <div className="grid gap-4">
+              {groupedByDate[date].map((plan) => {
+                const mealTotal = plan.meal_plan_foods.reduce(
+                  (sum, f) =>
+                    sum +
+                    parseFloat(f.calories) * (parseFloat(f.portion_size) / 100),
+                  0
+                );
+
+                return (
+                  <Card
+                    key={plan.meal_plan_id}
+                    className="bg-muted/20 overflow-hidden border shadow-none"
+                  >
+                    <div
+                      className="bg-muted/30 flex items-center justify-between
+                        border-b px-4 py-2"
+                    >
+                      <div className="flex items-center gap-2">
+                        <Utensils size={14} className="text-primary" />
+                        <span className="font-semibold">
+                          {mealTypeToName[plan.meal_type]}
+                        </span>
+                      </div>
+                      <div
+                        className="text-muted-foreground flex items-center gap-1
+                          text-xs"
+                      >
+                        <Clock size={12} />
+                        {new Date(plan.meal_logged_at).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </div>
+                    </div>
+                    <div className="p-4">
+                      <ul className="space-y-2">
+                        {plan.meal_plan_foods.map((food, idx) => (
+                          <li
+                            key={idx}
+                            className="flex justify-between text-sm"
+                          >
+                            <span className="text-muted-foreground">
+                              <span className="text-foreground font-medium">
+                                {food.food_name}
+                              </span>
+                              {` • ${food.portion_size}g`}
+                            </span>
+                            <span className="font-medium">
+                              {Math.round(
+                                food.calories * (food.portion_size / 100)
+                              )}{" "}
+                              kcal
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                      <div className="mt-3 flex justify-end border-t pt-2">
+                        <span
+                          className="text-primary text-xs font-bold
+                            tracking-tighter uppercase"
+                        >
+                          Meal Total: {Math.round(mealTotal)} kcal
+                        </span>
+                      </div>
+                    </div>
+                  </Card>
+                );
+              })}
+            </div>
+          </div>
+        ))
+      )}
+    </div>
+  );
+};
 
 const MealSection = ({
   meal,
@@ -52,7 +196,6 @@ const MealSection = ({
     }
   }, [persistedFoods]);
 
-  // Search Logic
   useEffect(() => {
     const q = searchInput.trim().toLowerCase();
     if (q.length < 2) {
@@ -60,7 +203,6 @@ const MealSection = ({
       setIsSearching(false);
       return;
     }
-
     setIsSearching(true);
     const delay = setTimeout(async () => {
       try {
@@ -75,7 +217,6 @@ const MealSection = ({
         setIsSearching(false);
       }
     }, 400);
-
     return () => clearTimeout(delay);
   }, [searchInput, foodPost]);
 
@@ -83,7 +224,6 @@ const MealSection = ({
     const energy = food.foodNutrients?.find((n) =>
       n.nutrientName?.toLowerCase().includes("energy")
     );
-
     setLocalLog((prev) => [
       ...prev,
       {
@@ -102,16 +242,11 @@ const MealSection = ({
   const handleLogToBackend = async (idx) => {
     const item = localLog[idx];
     const portion = parseFloat(item.portion) || 0;
-
-    if (!mealPlanId) {
-      console.error("No meal plan ID found for", meal);
-      return;
-    }
+    if (!mealPlanId) return;
 
     setLocalLog((prev) =>
       prev.map((f, i) => (i === idx ? { ...f, loading: true } : f))
     );
-
     try {
       await foodPost(`/nutrition/plans/${mealPlanId}/add_food`, {
         fdc_id: item.fdc_id,
@@ -119,18 +254,14 @@ const MealSection = ({
         calories: item.caloriesPer100g,
         portion_size: portion,
       });
-
       await foodPost(`/nutrition/plans/${mealPlanId}/log_eaten`, {});
-
       setLocalLog((prev) =>
         prev.map((f, i) =>
           i === idx ? { ...f, isLogged: true, loading: false } : f
         )
       );
-
       onLogFood(Math.round((item.caloriesPer100g * portion) / 100));
     } catch (e) {
-      console.error("Logging error:", e);
       setLocalLog((prev) =>
         prev.map((f, i) => (i === idx ? { ...f, loading: false } : f))
       );
@@ -143,7 +274,6 @@ const MealSection = ({
         <Utensils size={16} className="text-primary" />
         {meal}
       </h2>
-
       <div className="relative">
         <Search
           className="text-muted-foreground absolute top-1/2 left-3
@@ -156,7 +286,6 @@ const MealSection = ({
           className="pl-10"
           placeholder={`Search ${meal}...`}
         />
-
         {searchResults.length > 0 && (
           <div
             className="bg-card absolute z-50 mt-1 w-full overflow-hidden
@@ -180,7 +309,6 @@ const MealSection = ({
           </div>
         )}
       </div>
-
       <div className="mt-4 space-y-3">
         {localLog.map((f, i) => (
           <div
@@ -191,10 +319,9 @@ const MealSection = ({
               <div className="mr-2 flex-1">
                 <p className="text-sm leading-tight font-medium">{f.name}</p>
                 <p className="text-muted-foreground mt-1 text-xs">
-                  {Math.round((f.caloriesPer100g * f.portion) / 100)} kcal total
+                  {Math.round((f.caloriesPer100g * f.portion) / 100)} kcal
                 </p>
               </div>
-
               {f.isLogged ? (
                 <span
                   className="text-primary flex items-center gap-1 text-xs
@@ -217,7 +344,6 @@ const MealSection = ({
                 </Button>
               )}
             </div>
-
             {!f.isLogged && (
               <div className="mt-2 flex items-center gap-2">
                 <Input
@@ -254,14 +380,11 @@ const NutritionPage = () => {
   );
 
   const hydrateRef = useRef(false);
-  const HYDRATION_KEY = `nutrition_hydrated_${currentUserId}`;
-
   const { data: todayData, loading } = useGetFromAPI(
     currentUserId
       ? `/nutrition/today?user_id=${currentUserId}&timezone=${encodeURIComponent(userTimezone)}`
       : null
   );
-
   const { postFunction: apiPost } = usePostToAPI();
 
   const createMealPlan = useCallback(
@@ -327,46 +450,70 @@ const NutritionPage = () => {
     <div className="mx-auto w-full max-w-7xl space-y-6 px-6 py-8">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Nutrition</h1>
-        <Button variant="outline" onClick={() => window.location.reload()}>
-          Refresh
-        </Button>
       </div>
 
-      <Card className="flex flex-col items-center justify-center space-y-4 p-8">
-        <div className="text-primary text-6xl font-bold">{loggedCalories}</div>
-        <div
-          className="text-muted-foreground text-xs font-bold tracking-widest
-            uppercase"
-        >
-          Total Calories
-        </div>
-        <div className="w-full max-w-md">
-          <Progress
-            value={Math.min((loggedCalories / 2500) * 100, 100)}
-            className="h-2"
-          />
-          <div
-            className="text-muted-foreground mt-2 flex justify-between
-              text-[10px] font-bold"
+      <Tabs defaultValue="today" className="w-full">
+        <TabsList className="mb-6 grid w-full max-w-md grid-cols-2">
+          <TabsTrigger value="today" className="flex items-center gap-2">
+            <Calendar size={16} /> Today
+          </TabsTrigger>
+          <TabsTrigger value="history" className="flex items-center gap-2">
+            <History size={16} /> Weekly Logs
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="today" className="space-y-6">
+          <Card
+            className="flex flex-col items-center justify-center space-y-4 p-8"
           >
-            <span>0 KCAL</span>
-            <span>GOAL: 2500 KCAL</span>
-          </div>
-        </div>
-      </Card>
+            <div className="text-primary text-6xl font-bold">
+              {loggedCalories}
+            </div>
+            <div
+              className="text-muted-foreground text-xs font-bold tracking-widest
+                uppercase"
+            >
+              Total Calories Today
+            </div>
+            <div className="w-full max-w-md">
+              <Progress
+                value={Math.min((loggedCalories / 2500) * 100, 100)}
+                className="h-2"
+              />
+              <div
+                className="text-muted-foreground mt-2 flex justify-between
+                  text-[10px] font-bold"
+              >
+                <span>0 KCAL</span>
+                <span>GOAL: 2500 KCAL</span>
+              </div>
+            </div>
+          </Card>
 
-      <div className="grid gap-6 md:grid-cols-2">
-        {MEAL_NAMES.map((meal) => (
-          <MealSection
-            key={meal}
-            meal={meal}
-            mealPlanId={mealPlanIds[meal]}
-            foodPost={apiPost}
-            onLogFood={(c) => setLoggedCalories((p) => p + c)}
-            persistedFoods={persistedFoodsByMeal[meal]}
-          />
-        ))}
-      </div>
+          <div className="grid gap-6 md:grid-cols-2">
+            {MEAL_NAMES.map((meal) => (
+              <MealSection
+                key={meal}
+                meal={meal}
+                mealPlanId={mealPlanIds[meal]}
+                foodPost={apiPost}
+                onLogFood={(c) => setLoggedCalories((p) => p + c)}
+                persistedFoods={persistedFoodsByMeal[meal]}
+              />
+            ))}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="history">
+          <Card className="p-6">
+            <div className="mb-6 flex items-center gap-2 border-b pb-4">
+              <TrendingUp className="text-primary" size={20} />
+              <h2 className="text-xl font-semibold">Detailed Weekly History</h2>
+            </div>
+            <WeeklyHistory userId={currentUserId} timezone={userTimezone} />
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
