@@ -5,8 +5,12 @@ import { useSocketNotifications } from "@/hooks/useSocketNotifications";
 import { ACTIVE_MODE_MODES } from "../../../config";
 
 const DashboardLayout = () => {
-  const [activeMode, setActiveMode] = useState(null);
-
+  // activeMode is ui only for displaying the correct sidebar. it IS NOT ALWAYS
+  // RIGHT, so you MUST NOT USE IT for checking the user's role, use user.is_*
+  // for that
+  const [activeMode, setActiveMode] = useState(() => {
+    return localStorage.getItem("activeMode");
+  });
   const {
     authToken,
     socket,
@@ -17,9 +21,15 @@ const DashboardLayout = () => {
   } = useSocketNotifications();
 
   useEffect(() => {
+    if (activeMode) {
+      localStorage.setItem("activeMode", activeMode);
+    }
+  }, [activeMode]);
+  useEffect(() => {
     if (!user) {
       return;
     }
+    if (activeMode) return;
 
     if (user?.is_coach) {
       setActiveMode(ACTIVE_MODE_MODES.COACH);

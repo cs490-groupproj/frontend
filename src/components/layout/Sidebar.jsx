@@ -58,6 +58,7 @@ const Sidebar = ({
     } finally {
       localStorage.removeItem("token");
       localStorage.removeItem("userId");
+      localStorage.removeItem("activeMode");
       navigate("/login", { replace: true });
     }
   };
