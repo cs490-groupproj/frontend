@@ -20,6 +20,8 @@ import Nutrition from "./pages/Nutrition/nutrition.jsx";
 import PaymentPage from "./pages/Payment/PaymentPage.jsx";
 import EditProfile from "./pages/Profile/EditClientProfile.jsx";
 import Chat from "./pages/Chat/Chat.jsx";
+import ClientManagement from "./pages/Coach/ClientManagement.jsx";
+import CoachClientView from "./pages/Coach/CoachClientView.jsx";
 
 import EditCoachProfile from "./pages/Profile/EditCoachProfile.jsx";
 
@@ -50,7 +52,11 @@ const App = () => {
         </Route>
         <Route element={<RoleProtectedRoute requiredRoles={["coach"]} />}>
           <Route path="/coachDashboard" element={<div>Coach Dashboard</div>} />
-          <Route path="/clientManagement" element={<div>My Clients</div>} />
+          <Route path="/clientManagement" element={<ClientManagement />} />
+          <Route
+            path="/clientManagement/:clientId/view"
+            element={<CoachClientView />}
+          />
           <Route path="/assignWorkouts" element={<div>Assign Workouts</div>} />
           <Route
             path="/viewClientProgress"

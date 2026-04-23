@@ -31,6 +31,7 @@ const MealSection = ({
   foodPost,
   onLogFood,
   persistedFoods = [],
+  readOnly = false,
 }) => {
   const [searchInput, setSearchInput] = useState("");
   const [searchResults, setSearchResults] = useState([]);
@@ -144,42 +145,44 @@ const MealSection = ({
         {meal}
       </h2>
 
-      <div className="relative">
-        <Search
-          className="text-muted-foreground absolute top-1/2 left-3
-            -translate-y-1/2"
-          size={14}
-        />
-        <Input
-          value={searchInput}
-          onChange={(e) => setSearchInput(e.target.value)}
-          className="pl-10"
-          placeholder={`Search ${meal}...`}
-        />
+      {!readOnly && (
+        <div className="relative">
+          <Search
+            className="text-muted-foreground absolute top-1/2 left-3
+              -translate-y-1/2"
+            size={14}
+          />
+          <Input
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            className="pl-10"
+            placeholder={`Search ${meal}...`}
+          />
 
-        {searchResults.length > 0 && (
-          <div
-            className="bg-card absolute z-50 mt-1 w-full overflow-hidden
-              rounded-md border shadow-xl"
-          >
-            {searchResults.map((food) => (
-              <button
-                key={food.fdcId}
-                className="hover:bg-muted w-full border-b p-3 text-left text-sm
-                  last:border-0"
-                onClick={() => handleSelect(food)}
-              >
-                <div className="line-clamp-1 font-medium">
-                  {food.description}
-                </div>
-                <div className="text-muted-foreground text-xs">
-                  {food.brandOwner || "General Food"}
-                </div>
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
+          {searchResults.length > 0 && (
+            <div
+              className="bg-card absolute z-50 mt-1 w-full overflow-hidden
+                rounded-md border shadow-xl"
+            >
+              {searchResults.map((food) => (
+                <button
+                  key={food.fdcId}
+                  className="hover:bg-muted w-full border-b p-3 text-left text-sm
+                    last:border-0"
+                  onClick={() => handleSelect(food)}
+                >
+                  <div className="line-clamp-1 font-medium">
+                    {food.description}
+                  </div>
+                  <div className="text-muted-foreground text-xs">
+                    {food.brandOwner || "General Food"}
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="mt-4 space-y-3">
         {localLog.map((f, i) => (
@@ -195,7 +198,7 @@ const MealSection = ({
                 </p>
               </div>
 
-              {f.isLogged ? (
+              {f.isLogged || readOnly ? (
                 <span
                   className="text-primary flex items-center gap-1 text-xs
                     font-semibold"
@@ -218,7 +221,7 @@ const MealSection = ({
               )}
             </div>
 
-            {!f.isLogged && (
+            {!f.isLogged && !readOnly && (
               <div className="mt-2 flex items-center gap-2">
                 <Input
                   type="number"
@@ -243,8 +246,8 @@ const MealSection = ({
   );
 };
 
-const NutritionPage = () => {
-  const currentUserId = localStorage.getItem("userId");
+const NutritionPage = ({ viewedUserId = null, readOnly = false }) => {
+  const currentUserId = viewedUserId || localStorage.getItem("userId");
   const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
   const [loggedCalories, setLoggedCalories] = useState(0);
@@ -305,11 +308,15 @@ const NutritionPage = () => {
       }
     });
 
-    const finalIds = await ensurePlans(groupedIds);
-    setMealPlanIds(finalIds);
+    if (readOnly) {
+      setMealPlanIds(groupedIds);
+    } else {
+      const finalIds = await ensurePlans(groupedIds);
+      setMealPlanIds(finalIds);
+    }
     setPersistedFoodsByMeal(groupedFoods);
     setLoggedCalories(Math.round(todayData?.daily_total_calories || 0));
-  }, [todayData, ensurePlans]);
+  }, [todayData, ensurePlans, readOnly]);
 
   useEffect(() => {
     if (todayData && !loading) hydrate();
@@ -364,6 +371,7 @@ const NutritionPage = () => {
             foodPost={apiPost}
             onLogFood={(c) => setLoggedCalories((p) => p + c)}
             persistedFoods={persistedFoodsByMeal[meal]}
+            readOnly={readOnly}
           />
         ))}
       </div>
