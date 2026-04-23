@@ -46,10 +46,11 @@ const Sidebar = ({ notifications, activeMode, user, setActiveMode }) => {
       await signOut(auth);
     } catch (err) {
       console.error("Sign out failed:", err);
+    } finally {
+      localStorage.removeItem("token");
+      localStorage.removeItem("userId");
+      navigate("/login", { replace: true });
     }
-    localStorage.removeItem("token");
-    localStorage.removeItem("userId");
-    navigate("/login", { replace: true });
   };
 
   const links = useMemo(() => {
@@ -198,8 +199,8 @@ const Sidebar = ({ notifications, activeMode, user, setActiveMode }) => {
             <ArrowLeftRight size={20} />
             <span>
               {activeMode === ACTIVE_MODE_MODES.CLIENT
-                ? "Coach dashboard"
-                : "Client dashboard"}
+                ? "Coach Dashboard"
+                : "Client Dashboard"}
             </span>
           </button>
         )}
