@@ -7,12 +7,19 @@ import { ACTIVE_MODE_MODES } from "../../../config";
 const DashboardLayout = () => {
   const [activeMode, setActiveMode] = useState(null);
 
-  const { authToken, socket, user, notifications, handleMarkMessagesAsRead } =
-    useSocketNotifications();
+  const {
+    authToken,
+    socket,
+    user,
+    notifications,
+    handleMarkMessagesAsRead,
+    isAppLoading,
+  } = useSocketNotifications();
 
   useEffect(() => {
-    if (!user) return;
-    if (activeMode) return;
+    if (!user) {
+      return;
+    }
 
     if (user?.is_coach) {
       setActiveMode(ACTIVE_MODE_MODES.COACH);
@@ -35,7 +42,7 @@ const DashboardLayout = () => {
           setActiveMode={setActiveMode}
         />
       }
-      {authToken && user ? (
+      {!isAppLoading ? (
         <main className="flex min-h-screen overflow-y-auto p-8 pl-64">
           <Outlet
             context={{
