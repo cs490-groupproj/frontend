@@ -86,6 +86,10 @@ const Sidebar = ({
         { to: "/coachProfile", icon: User, label: "Edit Profile" },
         { to: "/chat", icon: MessageSquare, label: "Chat" },
       ];
+    } else if (activeMode === ACTIVE_MODE_MODES.ADMIN) {
+      return [
+        { to: "/adminDashboard", icon: LayoutDashboard, label: "Dashboard" },
+      ];
     }
     return [];
   }, [activeMode]);
