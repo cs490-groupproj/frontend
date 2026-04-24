@@ -11,9 +11,9 @@ import {
   Utensils,
   MessageSquare,
   ChevronDown,
-  View,
-  LogOut,
   ArrowLeftRight,
+  LogOut,
+  View,
 } from "lucide-react";
 import { signOut } from "firebase/auth";
 import { auth } from "@/firebase.js";
@@ -32,7 +32,9 @@ const Sidebar = ({
 
   const isCoachesRoute = location.pathname.startsWith("/coaches");
   useEffect(() => {
-    setOpenCoaches(isCoachesRoute);
+    if (isCoachesRoute) {
+      setOpenCoaches(true);
+    }
   }, [isCoachesRoute]);
 
   const toggleActiveMode = () => {
@@ -42,8 +44,6 @@ const Sidebar = ({
     } else if (activeMode === ACTIVE_MODE_MODES.COACH && user?.is_client) {
       navigate("/clientDashboard", { replace: true });
       setActiveMode(ACTIVE_MODE_MODES.CLIENT);
-    } else {
-      console.log("What? no", activeMode);
     }
   };
 
@@ -79,26 +79,15 @@ const Sidebar = ({
       ];
     } else if (activeMode === ACTIVE_MODE_MODES.COACH) {
       return [
-        //add more links to coach here, and in app.jsx
         { to: "/coachDashboard", icon: LayoutDashboard, label: "Dashboard" },
         { to: "/clientManagement", icon: Users, label: "My Clients" },
         { to: "/assignWorkouts", icon: Dumbbell, label: "Assign Workouts" },
-        {
-          to: "/viewClientProgress",
-          icon: View,
-          label: "View Client Progress",
-        },
+        { to: "/viewClientProgress", icon: View, label: "View Progress" },
         { to: "/coachProfile", icon: User, label: "Edit Profile" },
         { to: "/chat", icon: MessageSquare, label: "Chat" },
       ];
-    } else if (activeMode === ACTIVE_MODE_MODES.ADMIN) {
-      return [
-        { to: "/adminDashboard", icon: LayoutDashboard, label: "Dashboard" },
-      ];
-    } else {
-      console.log(`How tf did ${activeMode} become your active mode???`);
-      return [];
     }
+    return [];
   }, [activeMode]);
 
   return (
@@ -108,11 +97,9 @@ const Sidebar = ({
     >
       <nav className="space-y-2 px-6">
         {links.map((link) => {
-          // Coaches section
           if (link.type === "coaches") {
             return (
               <div key="coaches">
-                {/* Parent tab */}
                 <button
                   onClick={() => setOpenCoaches((prev) => !prev)}
                   className={`flex w-full items-center justify-between
@@ -134,7 +121,6 @@ const Sidebar = ({
                   />
                 </button>
 
-                {/* Subtabs */}
                 {openCoaches && (
                   <div className="mt-1 ml-8 space-y-1">
                     <NavLink
@@ -170,7 +156,6 @@ const Sidebar = ({
             );
           }
 
-          // Normal links
           const { to, icon: Icon, label } = link;
 
           return (
