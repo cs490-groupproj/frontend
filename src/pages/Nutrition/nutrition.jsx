@@ -39,10 +39,6 @@ const emptyPersistedFoodsByMeal = () => ({
   Snacks: [],
 });
 
-/**
- * Detailed Weekly History Component
- * Fetches specific meal plans and food items from the last 7 days using /week
- */
 const WeeklyHistory = ({ userId, timezone }) => {
   const { data: historyData, loading } = useGetFromAPI(
     userId
@@ -57,7 +53,6 @@ const WeeklyHistory = ({ userId, timezone }) => {
       </div>
     );
 
-  // Group meals by date
   const groupedByDate = (historyData?.meal_plans || []).reduce((acc, plan) => {
     const date = new Date(plan.meal_logged_at).toLocaleDateString(undefined, {
       weekday: "long",
@@ -374,12 +369,11 @@ const NutritionPage = () => {
   const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
   const [loggedCalories, setLoggedCalories] = useState(0);
-  const [mealPlanIds, setMealPlanIds] = useState(emptyMealPlanIds);
+  const [mealPlanIds, setMealPlanIds] = useState(emptyMealPlanIds());
   const [persistedFoodsByMeal, setPersistedFoodsByMeal] = useState(
-    emptyPersistedFoodsByMeal
+    emptyPersistedFoodsByMeal()
   );
 
-  const hydrateRef = useRef(false);
   const { data: todayData, loading } = useGetFromAPI(
     currentUserId
       ? `/nutrition/today?user_id=${currentUserId}&timezone=${encodeURIComponent(userTimezone)}`
@@ -413,9 +407,8 @@ const NutritionPage = () => {
     [createMealPlan]
   );
 
-  const hydrate = useCallback(async () => {
-    if (hydrateRef.current || !todayData) return;
-    hydrateRef.current = true;
+  useEffect(() => {
+    if (loading || !todayData) return;
 
     const groupedFoods = emptyPersistedFoodsByMeal();
     const groupedIds = emptyMealPlanIds();
@@ -428,15 +421,18 @@ const NutritionPage = () => {
       }
     });
 
-    const finalIds = await ensurePlans(groupedIds);
-    setMealPlanIds(finalIds);
+    // Resetting state based on fresh data from the day's query
+    setMealPlanIds(groupedIds);
     setPersistedFoodsByMeal(groupedFoods);
     setLoggedCalories(Math.round(todayData?.daily_total_calories || 0));
-  }, [todayData, ensurePlans]);
 
-  useEffect(() => {
-    if (todayData && !loading) hydrate();
-  }, [todayData, loading, hydrate]);
+    const initializeDay = async () => {
+      const finalIds = await ensurePlans(groupedIds);
+      setMealPlanIds(finalIds);
+    };
+
+    initializeDay();
+  }, [todayData, loading, ensurePlans]);
 
   if (loading) {
     return (

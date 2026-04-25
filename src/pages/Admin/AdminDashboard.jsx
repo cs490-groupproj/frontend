@@ -3,42 +3,42 @@ import { Button } from "../../components/ui/button.jsx";
 import useGetFromAPI from "../../hooks/useGetFromAPI"; 
 
 export default function AdminDashboard() {
-  // 1. Increased pagination limit to 10
+  
   const [currentPage, setCurrentPage] = useState(1);
   const usersPerPage = 10; 
   const offset = (currentPage - 1) * usersPerPage;
 
-  // Fetch Analytics (DAU/WAU/MAU)
+ 
   const { 
     data: statsData, 
     loading: statsLoading 
   } = useGetFromAPI("/admin/users/active");
 
-  // Fetch Users - Pass currentPage as a trigger to ensure the hook refetches
+  
   const { 
     data: userData, 
     loading: usersLoading 
   } = useGetFromAPI(`/admin/users/all?limit=${usersPerPage}&offset=${offset}`, currentPage);
 
-  // Safe data access
+ 
   const activeStats = statsData || { dau: 0, wau: 0, mau: 0 };
   const userList = userData?.users || [];
   const totalUsers = userData?.total_count || 0;
 
-  // Pagination UI Logic
+  
   const indexOfFirstUser = offset;
   const indexOfLastUser = indexOfFirstUser + userList.length;
 
   return (
     <div className="w-full space-y-8 p-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Admin Dashboard</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Welcome Back, Admin</h1>
         <p className="text-muted-foreground mt-1">
           Managing {totalUsers} registered users.
         </p>
       </div>
 
-      {/* Analytics Cards */}
+    
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {[
           { label: "Daily", value: activeStats.dau },
@@ -56,7 +56,7 @@ export default function AdminDashboard() {
         ))}
       </div>
 
-      {/* Main Table Container */}
+     
       <div className="border-border bg-card w-full overflow-hidden rounded-xl border shadow-sm">
         <div className="border-border bg-muted/5 border-b px-8 py-6">
           <h2 className="text-foreground text-xl font-semibold">User Directory</h2>
@@ -97,7 +97,7 @@ export default function AdminDashboard() {
           </table>
         </div>
 
-        {/* Footer / Pagination */}
+   
         <div className="bg-muted/5 border-border flex items-center justify-between border-t px-8 py-5">
           <p className="text-muted-foreground text-sm">
             Showing <span className="font-medium text-foreground">{totalUsers > 0 ? indexOfFirstUser + 1 : 0}</span> to{" "}
