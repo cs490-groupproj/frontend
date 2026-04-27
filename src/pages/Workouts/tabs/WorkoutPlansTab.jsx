@@ -404,19 +404,17 @@ const WorkoutPlansTab = ({
                       <span className="font-medium">
                         {entry.weekday} {formatScheduleTime(entry.schedule_time)}
                       </span>
-                      <button
-                        type="button"
-                        className="text-muted-foreground hover:text-foreground"
-                        onClick={() => removePlanAssignment(entry.id)}
-                        disabled={
-                          !entry.id ||
-                          plan.is_locked_assigned_plan ||
-                          (isCoachAssignScreen && !selectedClientId)
-                        }
-                        aria-label="Delete assignment"
-                      >
-                        ×
-                      </button>
+                      {!plan.is_locked_assigned_plan && (
+                        <button
+                          type="button"
+                          className="text-muted-foreground hover:text-foreground"
+                          onClick={() => removePlanAssignment(entry.id)}
+                          disabled={!entry.id || (isCoachAssignScreen && !selectedClientId)}
+                          aria-label="Delete assignment"
+                        >
+                          ×
+                        </button>
+                      )}
                     </div>
                   ))}
                 </div>
