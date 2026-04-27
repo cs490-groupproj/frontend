@@ -2,6 +2,7 @@ import React from "react";
 import { Routes, Route } from "react-router-dom";
 
 import LandingPage from "./pages/LandingPage/LandingPage.jsx";
+import VisitorExerciseBankView from "./pages/VisitorExerciseBank/VisitorExerciseBankView.jsx";
 
 import DashboardLayout from "./components/layout/DashboardLayout.jsx";
 import PublicLayout from "./components/layout/PublicLayout.jsx";
@@ -35,6 +36,10 @@ const App = () => {
     <Routes>
       <Route element={<PublicLayout />}>
         <Route path="/" element={<LandingPage />} />
+        <Route
+          path="/visitorExerciseBank"
+          element={<VisitorExerciseBankView />}
+        />
       </Route>
 
       <Route element={<DashboardLayout />}>
@@ -59,8 +64,12 @@ const App = () => {
           <Route path="/coachDashboard" element={<CoachDashboard />} />
           <Route path="/clientManagement" element={<ClientManagement />} />
           <Route path="/clientManagement/:clientId/view"
-          element={<CoachClientView />}
-/>
+          element={<CoachClientView />} />
+          <Route path="/assignWorkouts" element={<Workouts />} />
+          <Route
+            path="/viewClientProgress"
+            element={<div>View Client Progress</div>}
+          />
           <Route path="/coachProfile" element={<EditCoachProfile />} />
         </Route>
 

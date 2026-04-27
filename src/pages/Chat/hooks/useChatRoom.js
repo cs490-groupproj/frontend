@@ -7,7 +7,7 @@ import {
 } from "react";
 import useGetFromAPI from "@/hooks/useGetFromAPI";
 
-export const useChatRoom = (socket, user) => {
+export const useChatRoom = (socket) => {
   const messageLoadLimit = 50;
   const startOffset = 0;
 
@@ -27,10 +27,10 @@ export const useChatRoom = (socket, user) => {
   const savedScrollHeightRef = useRef(null);
 
   const {
-    data: userCoachesData,
-    loading: userCoachesLoading,
-    error: userCoachesError,
-  } = useGetFromAPI(`/clients/${user.user_id}/coaches`, null);
+    data: userChattersData,
+    loading: userChattersLoading,
+    error: userChattersError,
+  } = useGetFromAPI(`/messages/chatters`, null);
 
   const {
     data: messageHistoryData,
@@ -52,10 +52,16 @@ export const useChatRoom = (socket, user) => {
   }, []);
 
   //handles clearing the chat history when the conversation is changed to avoid flicker
-  const handleSwitchConversation = useCallback((changedUserID) => {
-    setSelectedChatUserID(changedUserID);
-    setChatHistory(null);
-  }, []);
+  const handleSwitchConversation = useCallback(
+    (changedUserID) => {
+      if (changedUserID === selectedChatUserID) {
+        return;
+      }
+      setSelectedChatUserID(changedUserID);
+      setChatHistory(null);
+    },
+    [selectedChatUserID]
+  );
 
   //handles changing the conversation
   useEffect(() => {
@@ -69,7 +75,6 @@ export const useChatRoom = (socket, user) => {
     if (!socket) {
       setMessageHistoryURI(null);
       setChatHistory(null);
-      console.log("no socket somehow");
       return;
     }
 
@@ -81,6 +86,7 @@ export const useChatRoom = (socket, user) => {
     //this joins the room and listens for incoming messages
     socket.emit("join", { other_id: selectedChatUserID });
 
+    socket.off("new_message");
     socket.on("new_message", handleNewMessage);
 
     setMessageHistoryURI(
@@ -185,9 +191,9 @@ export const useChatRoom = (socket, user) => {
 
   return {
     chat_sidebar: {
-      userCoachesError,
-      userCoachesLoading,
-      userCoachesData,
+      userChattersData,
+      userChattersLoading,
+      userChattersError,
       handleSwitchConversation,
       selectedChatUserID,
     },

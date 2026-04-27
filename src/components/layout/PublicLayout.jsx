@@ -11,8 +11,7 @@ const PublicLayout = () => {
       path: "/",
     },
     navPaths: [
-      { pathTitle: "Client Dashboard", path: "/clientDashboard" },
-      { pathTitle: "Path2", path: "/pathname2" },
+      { pathTitle: "Workout Bank", path: "/visitorExerciseBank" },
       {
         pathTitle: "Log In",
         path: "/login",
