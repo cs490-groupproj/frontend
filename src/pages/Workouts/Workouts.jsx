@@ -74,15 +74,18 @@ const emptyLogRow = {
   pace_sec_per_km: "",
 };
 
+const defaultScheduleEntry = () => ({
+  day: DAYS_OF_WEEK[0],
+  time: "09:00",
+});
+
 const Workouts = () => {
   const location = useLocation();
   const { user } = useOutletContext();
   const userId = user?.user_id;
   const isCoachAssignScreen = location.pathname === "/assignWorkouts";
 
-  const [activeTab, setActiveTab] = useState(
-    isReadOnlyView ? TABS.HISTORY : TABS.PLANS
-  );
+  const [activeTab, setActiveTab] = useState(TABS.PLANS);
   const [plansRefreshKey, setPlansRefreshKey] = useState(0);
   const [expandedPlanId, setExpandedPlanId] = useState(null);
   const [assigningPlanId, setAssigningPlanId] = useState(null);
@@ -111,6 +114,7 @@ const Workouts = () => {
   const [mood, setMood] = useState("");
   const [sessionNotes, setSessionNotes] = useState("");
   const [selectedClientId, setSelectedClientId] = useState("");
+  const [selectedClientScheduleRefreshKey, setSelectedClientScheduleRefreshKey] = useState(0);
 
   useEffect(() => {
     if (
@@ -143,7 +147,7 @@ const Workouts = () => {
     isCoachAssignScreen && selectedClientId
       ? `/workouts/my_schedule?user_id=${selectedClientId}`
       : null,
-    null
+    selectedClientScheduleRefreshKey
   );
   const { data: workoutsData } = useGetFromAPI(
     userId ? `/workouts?user_id=${userId}` : null,
@@ -265,10 +269,11 @@ const Workouts = () => {
       if (!planId) return acc;
       if (!acc[planId]) acc[planId] = [];
       acc[planId].push({
-        id: item.assignment_id ?? null,
+        id: item.assignment_day_id ?? item.id ?? item.assignment_id ?? null,
         workout_plan_id: item.workout_plan_id,
         weekday: item.weekday || "",
         schedule_time: item.schedule_time || "",
+        source: item.source || null,
       });
       return acc;
     }, {});
@@ -458,10 +463,48 @@ const Workouts = () => {
     setScheduleDraftsByPlan((prev) => ({
       ...prev,
       [planId]: {
-        ...(prev[planId] || { day: DAYS_OF_WEEK[0], time: "09:00" }),
-        [key]: value,
+        entries:
+          prev[planId]?.entries?.length > 0
+            ? prev[planId].entries.map((entry, index) =>
+                index === 0 ? { ...entry, [key]: value } : entry
+              )
+            : [{ ...defaultScheduleEntry(), [key]: value }],
       },
     }));
+  };
+
+  const updateScheduleDraftEntry = (planId, index, key, value) => {
+    setScheduleDraftsByPlan((prev) => ({
+      ...prev,
+      [planId]: {
+        entries: (prev[planId]?.entries || [defaultScheduleEntry()]).map((entry, entryIndex) =>
+          entryIndex === index ? { ...entry, [key]: value } : entry
+        ),
+      },
+    }));
+  };
+
+  const addScheduleDraftEntry = (planId) => {
+    setScheduleDraftsByPlan((prev) => ({
+      ...prev,
+      [planId]: {
+        entries: [...(prev[planId]?.entries || [defaultScheduleEntry()]), defaultScheduleEntry()],
+      },
+    }));
+  };
+
+  const removeScheduleDraftEntry = (planId, index) => {
+    setScheduleDraftsByPlan((prev) => {
+      const nextEntries = (prev[planId]?.entries || [defaultScheduleEntry()]).filter(
+        (_, entryIndex) => entryIndex !== index
+      );
+      return {
+        ...prev,
+        [planId]: {
+          entries: nextEntries.length > 0 ? nextEntries : [defaultScheduleEntry()],
+        },
+      };
+    });
   };
 
   const assignScheduleToPlan = async (planId) => {
@@ -479,17 +522,38 @@ const Workouts = () => {
     }
 
     const draft = scheduleDraftsByPlan[planId];
-    if (!draft?.day || !draft?.time) return;
-    const scheduleTime = draft.time.length === 5 ? `${draft.time}:00` : draft.time;
+    const draftEntries =
+      draft?.entries?.length > 0
+        ? draft.entries
+        : draft?.day && draft?.time
+          ? [{ day: draft.day, time: draft.time }]
+          : [];
+    const cleanedAssignments = draftEntries
+      .filter((entry) => entry?.day && entry?.time)
+      .map((entry) => ({
+        weekday: entry.day,
+        schedule_time: entry.time.length === 5 ? `${entry.time}:00` : entry.time,
+      }));
+    if (cleanedAssignments.length === 0) return;
     try {
-      await postFunction(`/workout-plans/${planId}/assignments`, {
-        weekday: draft.day,
-        schedule_time: scheduleTime,
-        ...(isCoachAssignScreen ? { client_id: String(selectedClientId) } : {}),
-      });
+      if (isCoachAssignScreen) {
+        await postFunction(`/workout-plans/${planId}/assignments`, {
+          client_id: String(selectedClientId),
+          assignments: cleanedAssignments,
+        });
+      } else {
+        const firstAssignment = cleanedAssignments[0];
+        await postFunction(`/workout-plans/${planId}/assignments`, {
+          weekday: firstAssignment.weekday,
+          schedule_time: firstAssignment.schedule_time,
+        });
+      }
       setFormError("");
       setAssigningPlanId(null);
       setPlansRefreshKey((prev) => prev + 1);
+      if (isCoachAssignScreen) {
+        setSelectedClientScheduleRefreshKey((prev) => prev + 1);
+      }
     } catch (error) {
       setFormError(error?.message || "Failed to assign workout.");
     }
@@ -497,6 +561,10 @@ const Workouts = () => {
 
   const removePlanAssignment = async (assignmentId) => {
     if (!assignmentId) return;
+    if (isCoachAssignScreen && !selectedClientId) {
+      setFormError("Select a client before changing assignments.");
+      return;
+    }
     const hasLockedPlanWithAssignment = plans.some(
       (plan) =>
         plan.is_locked_assigned_plan &&
@@ -511,6 +579,9 @@ const Workouts = () => {
     try {
       await deleteFunction(`/workout-plan-assignments/${assignmentId}`);
       setPlansRefreshKey((prev) => prev + 1);
+      if (isCoachAssignScreen) {
+        setSelectedClientScheduleRefreshKey((prev) => prev + 1);
+      }
     } catch (error) {
       setFormError(error?.message || "Failed to delete assignment.");
     }
@@ -874,7 +945,7 @@ const Workouts = () => {
         )}
       </div>
 
-      {!isReadOnlyView && activeTab === TABS.PLANS && (
+      {activeTab === TABS.PLANS && (
         <WorkoutPlansTab
           pageTitle={isCoachAssignScreen ? "Assign Workouts" : "Create and Manage Workout Plans"}
           isCoachAssignScreen={isCoachAssignScreen}
@@ -920,6 +991,9 @@ const Workouts = () => {
           scheduleDraftsByPlan={scheduleDraftsByPlan}
           DAYS_OF_WEEK={DAYS_OF_WEEK}
           updateScheduleDraft={updateScheduleDraft}
+          updateScheduleDraftEntry={updateScheduleDraftEntry}
+          addScheduleDraftEntry={addScheduleDraftEntry}
+          removeScheduleDraftEntry={removeScheduleDraftEntry}
           assignScheduleToPlan={assignScheduleToPlan}
         />
       )}

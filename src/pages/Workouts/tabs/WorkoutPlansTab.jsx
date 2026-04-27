@@ -2,7 +2,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Minus } from "lucide-react";
 
 const MetricField = ({ label, className = "", children }) => (
   <div className={className}>
@@ -67,6 +67,9 @@ const WorkoutPlansTab = ({
   scheduleDraftsByPlan,
   DAYS_OF_WEEK,
   updateScheduleDraft,
+  updateScheduleDraftEntry,
+  addScheduleDraftEntry,
+  removeScheduleDraftEntry,
   assignScheduleToPlan,
 }) => {
   return (
@@ -346,12 +349,12 @@ const WorkoutPlansTab = ({
                 {!plan.is_locked_assigned_plan && (
                   <Button
                     variant="outline"
+                    disabled={isCoachAssignScreen && !selectedClientId}
                     onClick={() => {
                       setScheduleDraftsByPlan((prev) => ({
                         ...prev,
                         [plan.workout_plan_id]: prev[plan.workout_plan_id] || {
-                          day: DAYS_OF_WEEK[0],
-                          time: "09:00",
+                          entries: [{ day: DAYS_OF_WEEK[0], time: "09:00" }],
                         },
                       }));
                       setAssigningPlanId((prev) =>
@@ -388,7 +391,11 @@ const WorkoutPlansTab = ({
                         type="button"
                         className="text-muted-foreground hover:text-foreground"
                         onClick={() => removePlanAssignment(entry.id)}
-                        disabled={!entry.id || plan.is_locked_assigned_plan}
+                        disabled={
+                          !entry.id ||
+                          plan.is_locked_assigned_plan ||
+                          (isCoachAssignScreen && !selectedClientId)
+                        }
                         aria-label="Delete assignment"
                       >
                         ×
@@ -401,45 +408,122 @@ const WorkoutPlansTab = ({
               {assigningPlanId === plan.workout_plan_id && (
                 <Card>
                   <CardContent className="grid grid-cols-1 gap-3 p-3 md:grid-cols-2">
-                    <div className="space-y-1">
-                      <label className="text-sm font-medium">Weekday</label>
-                      <select
-                        className="border-input bg-background h-10 w-full rounded-md border px-3 text-sm"
-                        value={scheduleDraftsByPlan[plan.workout_plan_id]?.day || DAYS_OF_WEEK[0]}
-                        onChange={(event) =>
-                          updateScheduleDraft(
-                            plan.workout_plan_id,
-                            "day",
-                            event.target.value
-                          )
-                        }
-                      >
-                        {DAYS_OF_WEEK.map((day) => (
-                          <option key={day} value={day}>
-                            {day}
-                          </option>
+                    {isCoachAssignScreen ? (
+                      <div className="md:col-span-2 space-y-3">
+                        {(scheduleDraftsByPlan[plan.workout_plan_id]?.entries || [
+                          { day: DAYS_OF_WEEK[0], time: "09:00" },
+                        ]).map((entry, index) => (
+                          <div
+                            key={`${plan.workout_plan_id}-draft-${index}`}
+                            className="grid grid-cols-1 gap-2 md:grid-cols-[1fr_1fr_auto]"
+                          >
+                            <select
+                              className="border-input bg-background h-10 w-full rounded-md border px-3 text-sm"
+                              value={entry.day || DAYS_OF_WEEK[0]}
+                              onChange={(event) =>
+                                updateScheduleDraftEntry(
+                                  plan.workout_plan_id,
+                                  index,
+                                  "day",
+                                  event.target.value
+                                )
+                              }
+                            >
+                              {DAYS_OF_WEEK.map((day) => (
+                                <option key={day} value={day}>
+                                  {day}
+                                </option>
+                              ))}
+                            </select>
+                            <Input
+                              type="time"
+                              value={entry.time || "09:00"}
+                              onChange={(event) =>
+                                updateScheduleDraftEntry(
+                                  plan.workout_plan_id,
+                                  index,
+                                  "time",
+                                  event.target.value
+                                )
+                              }
+                            />
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={() => removeScheduleDraftEntry(plan.workout_plan_id, index)}
+                              disabled={
+                                (scheduleDraftsByPlan[plan.workout_plan_id]?.entries || []).length <=
+                                1
+                              }
+                              className="gap-1"
+                            >
+                              <Minus className="h-4 w-4" />
+                              Remove
+                            </Button>
+                          </div>
                         ))}
-                      </select>
-                    </div>
-                    <div className="space-y-1">
-                      <label className="text-sm font-medium">Time</label>
-                      <Input
-                        type="time"
-                        value={scheduleDraftsByPlan[plan.workout_plan_id]?.time || "09:00"}
-                        onChange={(event) =>
-                          updateScheduleDraft(
-                            plan.workout_plan_id,
-                            "time",
-                            event.target.value
-                          )
-                        }
-                      />
-                    </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => addScheduleDraftEntry(plan.workout_plan_id)}
+                          className="gap-1"
+                        >
+                          <Plus className="h-4 w-4" />
+                          Add Day
+                        </Button>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="space-y-1">
+                          <label className="text-sm font-medium">Weekday</label>
+                          <select
+                            className="border-input bg-background h-10 w-full rounded-md border px-3 text-sm"
+                            value={
+                              scheduleDraftsByPlan[plan.workout_plan_id]?.entries?.[0]?.day ||
+                              DAYS_OF_WEEK[0]
+                            }
+                            onChange={(event) =>
+                              updateScheduleDraft(
+                                plan.workout_plan_id,
+                                "day",
+                                event.target.value
+                              )
+                            }
+                          >
+                            {DAYS_OF_WEEK.map((day) => (
+                              <option key={day} value={day}>
+                                {day}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-sm font-medium">Time</label>
+                          <Input
+                            type="time"
+                            value={
+                              scheduleDraftsByPlan[plan.workout_plan_id]?.entries?.[0]?.time ||
+                              "09:00"
+                            }
+                            onChange={(event) =>
+                              updateScheduleDraft(
+                                plan.workout_plan_id,
+                                "time",
+                                event.target.value
+                              )
+                            }
+                          />
+                        </div>
+                      </>
+                    )}
                     <div className="md:col-span-2 flex justify-end gap-2">
                       <Button variant="outline" onClick={() => setAssigningPlanId(null)}>
                         Cancel
                       </Button>
-                      <Button onClick={() => assignScheduleToPlan(plan.workout_plan_id)}>
+                      <Button
+                        onClick={() => assignScheduleToPlan(plan.workout_plan_id)}
+                        disabled={isCoachAssignScreen && !selectedClientId}
+                      >
                         Submit
                       </Button>
                     </div>
