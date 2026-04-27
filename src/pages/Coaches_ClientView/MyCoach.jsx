@@ -248,7 +248,7 @@ const mapCoachFromBackend = (coach) => {
       const isExercise = coach.is_exercise_specialization;
       const isNutrition = coach.is_nutrition_specialization;
 
-      if (isExercise && isNutrition) return ["BOTH"];
+      if (isExercise && isNutrition) return ["EXERCISE", "NUTRITION"];
       if (isExercise) return ["EXERCISE"];
       if (isNutrition) return ["NUTRITION"];
       return [];
@@ -263,6 +263,7 @@ export default function MyCoach() {
   const [showReview, setShowReview] = useState(false);
   const [rating, setRating] = useState(0);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [notification, setNotification] = useState(null);
 
   const userId = localStorage.getItem("userId");
 
@@ -290,19 +291,28 @@ export default function MyCoach() {
   const { deleteFunction: fireCoachAPI } = useDeleteFromAPI();
   const { postFunction: postReport } = usePostToAPI();
 
+  const showNotification = (text, type = "info") => {
+    setNotification({ text, type });
+    window.setTimeout(() => {
+      setNotification(null);
+    }, 3500);
+  };
+
   const submitReview = async () => {
     if (!coach) return;
 
     try {
-      await submitReviewAPI(`/coach/${coach.id}/review`, {
-        rating: rating * 2,
+      await submitReviewAPI(`/coaches/${coach.id}/review`, {
+        rating,
       });
 
       setShowReview(false);
       setRating(0);
       setRefreshTrigger((prev) => prev + 1);
+      showNotification("Review submitted successfully.", "success");
     } catch (err) {
       console.error("Error submitting review:", err);
+      showNotification("Failed to submit review. Please try again.", "danger");
     }
   };
 
@@ -319,8 +329,10 @@ export default function MyCoach() {
       await fireCoachAPI(`/coaches/${coach.id}/fire`);
 
       setRefreshTrigger((prev) => prev + 1);
+      showNotification("Coach removed successfully.", "success");
     } catch (err) {
       console.error("Error firing coach:", err);
+      showNotification("Failed to remove coach. Please try again.", "danger");
     }
   };
 
@@ -335,8 +347,10 @@ export default function MyCoach() {
         report_body: reason.trim(),
       });
       setRefreshTrigger((prev) => prev + 1);
+      showNotification("Coach reported successfully.", "success");
     } catch (err) {
       console.error("Error reporting coach:", err);
+      showNotification("Failed to report coach. Please try again.", "danger");
     }
   };
 
@@ -363,6 +377,20 @@ export default function MyCoach() {
 
   return (
     <div className="space-y-6">
+      {notification && (
+        <div
+          className={`rounded-lg border px-4 py-2 text-sm ${
+            notification.type === "success"
+              ? "border-emerald-300 bg-emerald-100 text-emerald-900"
+              : notification.type === "danger"
+                ? "border-rose-300 bg-rose-100 text-rose-900"
+                : "border-slate-300 bg-slate-100 text-slate-900"
+          }`}
+        >
+          {notification.text}
+        </div>
+      )}
+
       {/* HEADER */}
       <div className="bg-card rounded-xl border p-6 shadow-sm">
         <div className="flex items-start justify-between">

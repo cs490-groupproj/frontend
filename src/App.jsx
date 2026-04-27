@@ -12,17 +12,16 @@ import SignUp from "./pages/SignUp_Login/SignUp.jsx";
 import ClientSurvey from "./pages/SignUp_Login/ClientSurvey.jsx";
 import CoachSurvey from "./pages/SignUp_Login/CoachSurvey.jsx";
 
-import BrowseCoaches from "./pages/Coaches/BrowseCoaches.jsx";
+import BrowseCoaches from "./pages/Coaches_ClientView/BrowseCoaches.jsx";
 import ClientDashboard from "./pages/ClientDashboard/ClientDashboard.jsx";
-import MyCoach from "./pages/coaches/MyCoach.jsx";
-import ClientManagement from "./pages/coaches/ClientManagement.jsx";
+import MyCoach from "./pages/Coaches_ClientView/MyCoach.jsx";
+import CoachRequestsManagement from "./pages/Coaches_ClientView/ClientManagement.jsx";
 import Workouts from "./pages/Workouts/Workouts.jsx";
 import Nutrition from "./pages/Nutrition/nutrition.jsx";
 import PaymentPage from "./pages/Payment/PaymentPage.jsx";
 import EditProfile from "./pages/Profile/EditClientProfile.jsx";
 import Chat from "./pages/Chat/Chat.jsx";
-import ClientManagement from "./pages/Coach/ClientManagement.jsx";
-import CoachClientView from "./pages/Coach/CoachClientView.jsx";
+import CoachClientView from "./pages/Coaches_CoachView/CoachClientView.jsx";
 
 import EditCoachProfile from "./pages/Profile/EditCoachProfile.jsx";
 
@@ -39,7 +38,6 @@ const App = () => {
           <Route path="/clientDashboard" element={<ClientDashboard />} />
           <Route path="/coaches/browse" element={<BrowseCoaches />} />
           <Route path="/coaches/my-coach" element={<MyCoach />} />
-          <Route path="/coaches/client-management" element={<ClientManagement />} />
           <Route path="/exercises" element={<Workouts />} />
           <Route path="/nutrition" element={<Nutrition />} />
           <Route path="/workouts" element={<Workouts />} />
@@ -55,7 +53,7 @@ const App = () => {
 
         <Route element={<RoleProtectedRoute requiredRoles={["coach"]} />}>
           <Route path="/coachDashboard" element={<div>Coach Dashboard</div>} />
-          <Route path="/clientManagement" element={<ClientManagement />} />
+          <Route path="/clientManagement" element={<CoachRequestsManagement />} />
           <Route
             path="/clientManagement/:clientId/view"
             element={<CoachClientView />}
