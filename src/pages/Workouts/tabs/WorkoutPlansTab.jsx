@@ -351,10 +351,27 @@ const WorkoutPlansTab = ({
                     variant="outline"
                     disabled={isCoachAssignScreen && !selectedClientId}
                     onClick={() => {
+                      const existingDraftEntries = (plan.assignments || [])
+                        .map((assignment) => {
+                          const normalizedTime = String(
+                            assignment?.schedule_time || "09:00"
+                          )
+                            .slice(0, 5)
+                            .trim();
+                          return {
+                            day: assignment?.weekday || DAYS_OF_WEEK[0],
+                            time: normalizedTime || "09:00",
+                          };
+                        })
+                        .filter((entry) => entry.day && entry.time);
+
                       setScheduleDraftsByPlan((prev) => ({
                         ...prev,
                         [plan.workout_plan_id]: prev[plan.workout_plan_id] || {
-                          entries: [{ day: DAYS_OF_WEEK[0], time: "09:00" }],
+                          entries:
+                            existingDraftEntries.length > 0
+                              ? existingDraftEntries
+                              : [{ day: DAYS_OF_WEEK[0], time: "09:00" }],
                         },
                       }));
                       setAssigningPlanId((prev) =>
