@@ -5,11 +5,11 @@ import Stats from "./components/Stats";
 import DailySurvey from "./components/DailySurvey";
 import ProgressPics from "./components/progressPics";
 
-export default function ClientDashboard() {
+export default function ClientDashboard({ viewedUserId = null, readOnly = false }) {
   const [activeTab, setActiveTab] = useState("weeklySchedule");
-  const resolvedUserId = localStorage.getItem("userId");
+  const resolvedUserId = viewedUserId || localStorage.getItem("userId");
 
-  const { data: profileData, loading: profileLoading } = useGetFromAPI(
+  const { data: profileData } = useGetFromAPI(
     resolvedUserId ? `/users/${resolvedUserId}/profile` : null
   );
 
@@ -53,12 +53,13 @@ export default function ClientDashboard() {
         >
           Statistics
         </button>
-        <button
-          onClick={() => setActiveTab("dailySurvey")}
-          className={`px-4 py-2 text-sm font-medium focus:outline-none ${
-            activeTab === "dailySurvey"
-              ? "border-border-600 text-text border-b-2"
-              : "text-gray-500 hover:text-gray-700"
+        {!readOnly && (
+          <button
+            onClick={() => setActiveTab("dailySurvey")}
+            className={`px-4 py-2 text-sm font-medium focus:outline-none ${
+              activeTab === "dailySurvey"
+                ? "border-border-600 text-text border-b-2"
+                : "text-gray-500 hover:text-gray-700"
             }`}
         >
           Daily Survey
@@ -74,10 +75,12 @@ export default function ClientDashboard() {
           Progress Pics
         </button>
       </div>
-
-      {activeTab === "dailySurvey" && <DailySurvey />}
+      
+      {!readOnly && activeTab === "dailySurvey" && <DailySurvey />}
       {activeTab === "stats" && <Stats />}
-      {activeTab === "weeklySchedule" && <WeeklySchedule />}
+      {activeTab === "weeklySchedule" && (
+        <WeeklySchedule viewedUserId={resolvedUserId} />
+      )}
       {activeTab === "progressPics" && <ProgressPics />}
     </div>
   );
