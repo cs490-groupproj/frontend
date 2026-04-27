@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import CoachCard from "@/features/coach/CoachCard";
-import useGetFromAPI from "@/hooks/useGetFromAPI";
+import useGetPublicAPI from "@/hooks/useGetPublicAPI";
 
 const TopCoaches = () => {
   const [coachData, setCoachData] = useState([]);
@@ -32,7 +32,7 @@ const TopCoaches = () => {
     data: coachesData,
     loading: coachesLoading,
     error: coachesError,
-  } = useGetFromAPI(coachesURI, null);
+  } = useGetPublicAPI(coachesURI, null);
 
   useEffect(() => {
     if (!coachesData || !coachesData.coaches) {

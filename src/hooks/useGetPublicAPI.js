@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { API_BASE_URL } from "../../config.js";
-function useAuthlessGetFromAPI(requestURI, refreshTrigger) {
+
+function useGetPublicAPI(requestURI, refreshTrigger) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -51,4 +52,4 @@ function useAuthlessGetFromAPI(requestURI, refreshTrigger) {
   }, [requestURI, refreshTrigger]);
   return { data, loading, error };
 }
-export default useAuthlessGetFromAPI;
+export default useGetPublicAPI;
