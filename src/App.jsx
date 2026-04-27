@@ -20,11 +20,14 @@ import Nutrition from "./pages/Nutrition/nutrition.jsx";
 import PaymentPage from "./pages/Payment/PaymentPage.jsx";
 import EditProfile from "./pages/Profile/EditClientProfile.jsx";
 import Chat from "./pages/Chat/Chat.jsx";
-import CoachDashboard from "./pages/Coaches/CoachDashboard.jsx"
+import CoachDashboard from "./pages/Coaches/CoachDashboard.jsx";
 
 import EditCoachProfile from "./pages/Profile/EditCoachProfile.jsx";
 
 import AdminDashboard from "./pages/Admin/AdminDashboard.jsx";
+import AdminCoachApplications from "./pages/Admin/AdminCoachApplications.jsx";
+import CoachReports from "./pages/Admin/CoachReports.jsx";
+
 const App = () => {
   return (
     <Routes>
@@ -63,6 +66,11 @@ const App = () => {
 
         <Route element={<RoleProtectedRoute requiredRoles={["admin"]} />}>
           <Route path="/adminDashboard" element={<AdminDashboard />} />
+          <Route
+            path="/admin/coach-applications"
+            element={<AdminCoachApplications />}
+          />
+          <Route path="/admin/reports" element={<CoachReports />} />
         </Route>
       </Route>
 

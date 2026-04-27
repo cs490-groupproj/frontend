@@ -13,7 +13,7 @@ export default function CoachDashboard() {
 
   return (
     <div className="w-full space-y-8 p-6">
-      {/* Personalized Header with Simple Sentence */}
+     
       <div>
         <h1 className="text-4xl font-bold tracking-tight text-white">
           Welcome back, {loading ? "..." : coachName}
