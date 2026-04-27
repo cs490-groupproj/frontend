@@ -74,11 +74,14 @@ const emptyLogRow = {
   pace_sec_per_km: "",
 };
 
-const Workouts = () => {
+const Workouts = ({ viewedUserId = null, readOnly = false }) => {
   const { user } = useOutletContext();
-  const userId = user?.user_id;
+  const userId = viewedUserId || user?.user_id;
+  const isReadOnlyView = readOnly && Boolean(viewedUserId);
 
-  const [activeTab, setActiveTab] = useState(TABS.PLANS);
+  const [activeTab, setActiveTab] = useState(
+    isReadOnlyView ? TABS.HISTORY : TABS.PLANS
+  );
   const [plansRefreshKey, setPlansRefreshKey] = useState(0);
   const [expandedPlanId, setExpandedPlanId] = useState(null);
   const [assigningPlanId, setAssigningPlanId] = useState(null);
@@ -117,7 +120,11 @@ const Workouts = () => {
   const { data: bodyParts } = useGetFromAPI("/body-parts", null);
   const { data: exerciseCategories } = useGetFromAPI("/exercise-categories", null);
   const { data: plansData } = useGetFromAPI(
-    "/workout-plans?created_by=me",
+    userId
+      ? `/workout-plans?created_by=${
+          isReadOnlyView ? encodeURIComponent(userId) : "me"
+        }`
+      : null,
     plansRefreshKey
   );
   const { data: workoutsData } = useGetFromAPI(
@@ -687,17 +694,19 @@ const Workouts = () => {
   return (
     <div className="mx-auto w-full max-w-7xl space-y-6">
       <div className="border-border bg-card inline-flex rounded-xl border p-1">
-        <button
-          type="button"
-          onClick={() => setActiveTab(TABS.PLANS)}
-          className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
-            activeTab === TABS.PLANS
-              ? "bg-primary text-primary-foreground"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          Workout Plans
-        </button>
+        {!isReadOnlyView && (
+          <button
+            type="button"
+            onClick={() => setActiveTab(TABS.PLANS)}
+            className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+              activeTab === TABS.PLANS
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Workout Plans
+          </button>
+        )}
         <button
           type="button"
           onClick={() => setActiveTab(TABS.BANK)}
@@ -720,20 +729,22 @@ const Workouts = () => {
         >
           Workout History
         </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab(TABS.LOG)}
-          className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
-            activeTab === TABS.LOG
-              ? "bg-primary text-primary-foreground"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          Log Workout
-        </button>
+        {!isReadOnlyView && (
+          <button
+            type="button"
+            onClick={() => setActiveTab(TABS.LOG)}
+            className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+              activeTab === TABS.LOG
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Log Workout
+          </button>
+        )}
       </div>
 
-      {activeTab === TABS.PLANS && (
+      {!isReadOnlyView && activeTab === TABS.PLANS && (
         <WorkoutPlansTab
           openCreateForm={openCreateForm}
           isFormOpen={isFormOpen}
@@ -802,7 +813,7 @@ const Workouts = () => {
         />
       )}
 
-      {activeTab === TABS.LOG && (
+      {!isReadOnlyView && activeTab === TABS.LOG && (
         <LogWorkoutTab
           hasWorkoutScheduledToday={hasWorkoutScheduledToday}
           todayWeekday={todayWeekday}
