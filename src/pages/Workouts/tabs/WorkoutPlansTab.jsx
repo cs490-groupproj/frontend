@@ -11,7 +11,24 @@ const MetricField = ({ label, className = "", children }) => (
   </div>
 );
 
+const formatScheduleTime = (scheduleTime) => {
+  if (!scheduleTime) return "Time TBD";
+  const [rawHour, rawMinute] = String(scheduleTime).split(":");
+  const hour = Number(rawHour);
+  const minute = Number(rawMinute);
+  if (!Number.isFinite(hour) || !Number.isFinite(minute)) return scheduleTime;
+  const period = hour >= 12 ? "PM" : "AM";
+  const hour12 = hour % 12 || 12;
+  return `${hour12}:${String(minute).padStart(2, "0")} ${period}`;
+};
+
 const WorkoutPlansTab = ({
+  pageTitle = "Create and Manage Workout Plans",
+  isCoachAssignScreen = false,
+  coachClients = [],
+  coachClientsLoading = false,
+  selectedClientId = "",
+  setSelectedClientId,
   openCreateForm,
   isFormOpen,
   planTitle,
@@ -56,13 +73,38 @@ const WorkoutPlansTab = ({
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-bold">Create and Manage Workout Plans</h1>
+          <h1 className="text-3xl font-bold">{pageTitle}</h1>
         </div>
         <Button onClick={openCreateForm} className="gap-2">
           <Plus className="h-4 w-4" />
           Create Workout
         </Button>
       </div>
+
+      {isCoachAssignScreen && (
+        <Card>
+          <CardContent className="pt-4">
+            <div className="space-y-1 md:max-w-sm">
+              <label className="text-sm font-medium">Select client</label>
+              <select
+                className="border-input bg-background text-foreground h-10 w-full rounded-md border px-3 text-sm"
+                value={selectedClientId}
+                onChange={(event) => setSelectedClientId?.(event.target.value)}
+                disabled={coachClientsLoading || coachClients.length === 0}
+              >
+                <option value="">
+                  {coachClientsLoading ? "Loading clients..." : "Select client"}
+                </option>
+                {coachClients.map((client) => (
+                  <option key={client.client_id} value={client.client_id}>
+                    {client.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {isFormOpen && (
         <Card>
@@ -284,31 +326,42 @@ const WorkoutPlansTab = ({
                         {bodyPart}
                       </span>
                     ))}
+                    {plan.is_locked_assigned_plan && (
+                      <span className="bg-destructive/15 text-destructive rounded-full px-2.5 py-1 text-xs">
+                        Assigned
+                      </span>
+                    )}
                   </div>
                 </div>
-                <Button variant="outline" onClick={() => openEditForm(plan)}>
-                  Edit
-                </Button>
-                <Button variant="outline" onClick={() => removePlan(plan.workout_plan_id)}>
-                  Delete
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setScheduleDraftsByPlan((prev) => ({
-                      ...prev,
-                      [plan.workout_plan_id]: prev[plan.workout_plan_id] || {
-                        day: DAYS_OF_WEEK[0],
-                        time: "09:00",
-                      },
-                    }));
-                    setAssigningPlanId((prev) =>
-                      prev === plan.workout_plan_id ? null : plan.workout_plan_id
-                    );
-                  }}
-                >
-                  {assigningPlanId === plan.workout_plan_id ? "Hide Assign" : "Assign Workout"}
-                </Button>
+                {!plan.is_locked_assigned_plan && (
+                  <Button variant="outline" onClick={() => openEditForm(plan)}>
+                    Edit
+                  </Button>
+                )}
+                {!plan.is_locked_assigned_plan && (
+                  <Button variant="outline" onClick={() => removePlan(plan.workout_plan_id)}>
+                    Delete
+                  </Button>
+                )}
+                {!plan.is_locked_assigned_plan && (
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setScheduleDraftsByPlan((prev) => ({
+                        ...prev,
+                        [plan.workout_plan_id]: prev[plan.workout_plan_id] || {
+                          day: DAYS_OF_WEEK[0],
+                          time: "09:00",
+                        },
+                      }));
+                      setAssigningPlanId((prev) =>
+                        prev === plan.workout_plan_id ? null : plan.workout_plan_id
+                      );
+                    }}
+                  >
+                    {assigningPlanId === plan.workout_plan_id ? "Hide Assign" : "Assign Workout"}
+                  </Button>
+                )}
                 <Button
                   variant="outline"
                   onClick={() =>
@@ -328,13 +381,14 @@ const WorkoutPlansTab = ({
                       key={`${plan.workout_plan_id}-${entry.id || index}`}
                       className="bg-muted/40 border-border flex items-center justify-between gap-2 rounded-md border px-3 py-2 text-xs"
                     >
-                      <span className="font-medium">{entry.weekday}</span>
-                      <span className="text-muted-foreground">{entry.schedule_time}</span>
+                      <span className="font-medium">
+                        {entry.weekday} {formatScheduleTime(entry.schedule_time)}
+                      </span>
                       <button
                         type="button"
                         className="text-muted-foreground hover:text-foreground"
                         onClick={() => removePlanAssignment(entry.id)}
-                        disabled={!entry.id}
+                        disabled={!entry.id || plan.is_locked_assigned_plan}
                         aria-label="Delete assignment"
                       >
                         ×

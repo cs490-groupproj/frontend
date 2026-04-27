@@ -1,5 +1,5 @@
 ﻿import React, { useEffect, useMemo, useState } from "react";
-import { useOutletContext } from "react-router-dom";
+import { useLocation, useOutletContext } from "react-router-dom";
 import useGetFromAPI from "@/hooks/useGetFromAPI";
 import usePostToAPI from "@/hooks/usePostToAPI";
 import usePatchToAPI from "@/hooks/usePatchToAPI";
@@ -75,8 +75,10 @@ const emptyLogRow = {
 };
 
 const Workouts = () => {
+  const location = useLocation();
   const { user } = useOutletContext();
   const userId = user?.user_id;
+  const isCoachAssignScreen = location.pathname === "/assignWorkouts";
 
   const [activeTab, setActiveTab] = useState(TABS.PLANS);
   const [plansRefreshKey, setPlansRefreshKey] = useState(0);
@@ -106,6 +108,16 @@ const Workouts = () => {
   const [logDuration, setLogDuration] = useState("");
   const [mood, setMood] = useState("");
   const [sessionNotes, setSessionNotes] = useState("");
+  const [selectedClientId, setSelectedClientId] = useState("");
+
+  useEffect(() => {
+    if (
+      isCoachAssignScreen &&
+      (activeTab === TABS.HISTORY || activeTab === TABS.LOG)
+    ) {
+      setActiveTab(TABS.PLANS);
+    }
+  }, [isCoachAssignScreen, activeTab]);
 
   const { postFunction } = usePostToAPI();
   const { patchFunction } = usePatchToAPI();
@@ -116,9 +128,20 @@ const Workouts = () => {
   const { data: exercisesCatalog } = useGetFromAPI("/exercises", null);
   const { data: bodyParts } = useGetFromAPI("/body-parts", null);
   const { data: exerciseCategories } = useGetFromAPI("/exercise-categories", null);
-  const { data: plansData } = useGetFromAPI(
-    "/workout-plans?created_by=me",
-    plansRefreshKey
+  const { data: coachClientsData, loading: coachClientsLoading } = useGetFromAPI(
+    isCoachAssignScreen ? "/coaches/clients" : null,
+    null
+  );
+  const plansRequestUri =
+    isCoachAssignScreen || !userId
+      ? "/workout-plans?created_by=me"
+      : `/workout-plans/available?user_id=${userId}`;
+  const { data: plansData } = useGetFromAPI(plansRequestUri, plansRefreshKey);
+  const { data: selectedClientScheduleData } = useGetFromAPI(
+    isCoachAssignScreen && selectedClientId
+      ? `/workouts/my_schedule?user_id=${selectedClientId}`
+      : null,
+    null
   );
   const { data: workoutsData } = useGetFromAPI(
     userId ? `/workouts?user_id=${userId}` : null,
@@ -231,11 +254,40 @@ const Workouts = () => {
     bankCategoryFilter,
   ]);
 
+  const selectedClientAssignmentsByPlanId = useMemo(() => {
+    const scheduleItems = Array.isArray(selectedClientScheduleData?.my_schedule)
+      ? selectedClientScheduleData.my_schedule
+      : [];
+    return scheduleItems.reduce((acc, item) => {
+      const planId = item.workout_plan_id;
+      if (!planId) return acc;
+      if (!acc[planId]) acc[planId] = [];
+      acc[planId].push({
+        id: item.assignment_id ?? null,
+        workout_plan_id: item.workout_plan_id,
+        weekday: item.weekday || "",
+        schedule_time: item.schedule_time || "",
+      });
+      return acc;
+    }, {});
+  }, [selectedClientScheduleData]);
+
   const plans = useMemo(() => {
     if (!Array.isArray(plansData)) return [];
     return plansData.map((plan) => {
       const detail = planDetailsById[plan.workout_plan_id];
       const detailExercises = Array.isArray(detail?.exercises) ? detail.exercises : [];
+      const baseAssignments = Array.isArray(detail?.assignments) ? detail.assignments : [];
+      const assignmentsForView =
+        isCoachAssignScreen && selectedClientId
+          ? selectedClientAssignmentsByPlanId[plan.workout_plan_id] || []
+          : isCoachAssignScreen
+            ? []
+            : baseAssignments;
+      const isCreatedByUser = Boolean(plan?.is_created_by_user);
+      const isAssignedToUser = Boolean(plan?.is_assigned_to_user);
+      const isLockedAssignedPlan =
+        !isCoachAssignScreen && isAssignedToUser && !isCreatedByUser;
       return {
         workout_plan_id: plan.workout_plan_id,
         title: detail?.title || plan.title || "",
@@ -246,11 +298,57 @@ const Workouts = () => {
             : plan.duration_min || 0,
         workout_type_id: detail?.workout_type_id ?? null,
         created_by: detail?.created_by || plan.created_by || null,
+        is_created_by_user: isCreatedByUser,
+        is_assigned_to_user: isAssignedToUser,
+        is_locked_assigned_plan: isLockedAssignedPlan,
         exercises: detailExercises,
-        assignments: Array.isArray(detail?.assignments) ? detail.assignments : [],
+        assignments: assignmentsForView,
       };
     });
-  }, [plansData, planDetailsById]);
+  }, [
+    plansData,
+    planDetailsById,
+    isCoachAssignScreen,
+    selectedClientId,
+    selectedClientAssignmentsByPlanId,
+  ]);
+
+  const coachClients = useMemo(() => {
+    const rawClients = Array.isArray(coachClientsData)
+      ? coachClientsData
+      : coachClientsData?.clients || [];
+
+    return rawClients
+      .map((client) => {
+        const clientUserId = client.client_id ?? client.client_user_id ?? client.user_id ?? client.id;
+        if (!clientUserId) return null;
+        const firstName = client.first_name || "";
+        const lastName = client.last_name || "";
+        const fallbackName = client.name || client.email || `Client ${clientUserId}`;
+        const fullName = `${firstName} ${lastName}`.trim() || fallbackName;
+        return {
+          client_id: String(clientUserId),
+          name: fullName,
+        };
+      })
+      .filter(Boolean);
+  }, [coachClientsData]);
+
+  useEffect(() => {
+    if (!isCoachAssignScreen) {
+      setSelectedClientId("");
+      return;
+    }
+
+    if (selectedClientId) {
+      const selectedStillExists = coachClients.some(
+        (client) => String(client.client_id) === String(selectedClientId)
+      );
+      if (!selectedStillExists) {
+        setSelectedClientId("");
+      }
+    }
+  }, [isCoachAssignScreen, selectedClientId, coachClients]);
 
   const todayWeekday = useMemo(
     () => new Date().toLocaleDateString("en-US", { weekday: "long" }),
@@ -365,6 +463,19 @@ const Workouts = () => {
   };
 
   const assignScheduleToPlan = async (planId) => {
+    const selectedPlan = plans.find(
+      (plan) => String(plan.workout_plan_id) === String(planId)
+    );
+    if (selectedPlan?.is_locked_assigned_plan) {
+      setFormError("Assigned plans cannot be modified.");
+      return;
+    }
+
+    if (isCoachAssignScreen && !selectedClientId) {
+      setFormError("Select a client before assigning this workout.");
+      return;
+    }
+
     const draft = scheduleDraftsByPlan[planId];
     if (!draft?.day || !draft?.time) return;
     const scheduleTime = draft.time.length === 5 ? `${draft.time}:00` : draft.time;
@@ -372,7 +483,9 @@ const Workouts = () => {
       await postFunction(`/workout-plans/${planId}/assignments`, {
         weekday: draft.day,
         schedule_time: scheduleTime,
+        ...(isCoachAssignScreen ? { client_id: String(selectedClientId) } : {}),
       });
+      setFormError("");
       setAssigningPlanId(null);
       setPlansRefreshKey((prev) => prev + 1);
     } catch (error) {
@@ -382,6 +495,17 @@ const Workouts = () => {
 
   const removePlanAssignment = async (assignmentId) => {
     if (!assignmentId) return;
+    const hasLockedPlanWithAssignment = plans.some(
+      (plan) =>
+        plan.is_locked_assigned_plan &&
+        (plan.assignments || []).some(
+          (assignment) => String(assignment.id) === String(assignmentId)
+        )
+    );
+    if (hasLockedPlanWithAssignment) {
+      setFormError("Assigned plans cannot be modified.");
+      return;
+    }
     try {
       await deleteFunction(`/workout-plan-assignments/${assignmentId}`);
       setPlansRefreshKey((prev) => prev + 1);
@@ -407,6 +531,10 @@ const Workouts = () => {
   };
 
   const openEditForm = (plan) => {
+    if (plan?.is_locked_assigned_plan) {
+      setFormError("Assigned plans cannot be edited.");
+      return;
+    }
     setEditingPlanId(plan.workout_plan_id);
     setPlanTitle(plan.title || "");
     setPlanWorkoutTypeId(
@@ -544,6 +672,13 @@ const Workouts = () => {
   };
 
   const removePlan = async (planId) => {
+    const selectedPlan = plans.find(
+      (plan) => String(plan.workout_plan_id) === String(planId)
+    );
+    if (selectedPlan?.is_locked_assigned_plan) {
+      setFormError("Assigned plans cannot be deleted.");
+      return;
+    }
     try {
       await deleteFunction(`/workout-plans/${planId}`);
       if (editingPlanId === planId) {
@@ -696,7 +831,7 @@ const Workouts = () => {
               : "text-muted-foreground hover:text-foreground"
           }`}
         >
-          Workout Plans
+          {isCoachAssignScreen ? "Assign Workouts" : "Workout Plans"}
         </button>
         <button
           type="button"
@@ -709,32 +844,42 @@ const Workouts = () => {
         >
           Exercise Bank
         </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab(TABS.HISTORY)}
-          className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
-            activeTab === TABS.HISTORY
-              ? "bg-primary text-primary-foreground"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          Workout History
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab(TABS.LOG)}
-          className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
-            activeTab === TABS.LOG
-              ? "bg-primary text-primary-foreground"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          Log Workout
-        </button>
+        {!isCoachAssignScreen && (
+          <button
+            type="button"
+            onClick={() => setActiveTab(TABS.HISTORY)}
+            className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+              activeTab === TABS.HISTORY
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Workout History
+          </button>
+        )}
+        {!isCoachAssignScreen && (
+          <button
+            type="button"
+            onClick={() => setActiveTab(TABS.LOG)}
+            className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+              activeTab === TABS.LOG
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Log Workout
+          </button>
+        )}
       </div>
 
       {activeTab === TABS.PLANS && (
         <WorkoutPlansTab
+          pageTitle={isCoachAssignScreen ? "Assign Workouts" : "Create and Manage Workout Plans"}
+          isCoachAssignScreen={isCoachAssignScreen}
+          coachClients={coachClients}
+          coachClientsLoading={coachClientsLoading}
+          selectedClientId={selectedClientId}
+          setSelectedClientId={setSelectedClientId}
           openCreateForm={openCreateForm}
           isFormOpen={isFormOpen}
           planTitle={planTitle}
@@ -791,7 +936,7 @@ const Workouts = () => {
         />
       )}
 
-      {activeTab === TABS.HISTORY && (
+      {!isCoachAssignScreen && activeTab === TABS.HISTORY && (
         <WorkoutHistoryTab
           workoutsData={workoutsData}
           toggleHistoryWorkout={toggleHistoryWorkout}
@@ -802,7 +947,7 @@ const Workouts = () => {
         />
       )}
 
-      {activeTab === TABS.LOG && (
+      {!isCoachAssignScreen && activeTab === TABS.LOG && (
         <LogWorkoutTab
           hasWorkoutScheduledToday={hasWorkoutScheduledToday}
           todayWeekday={todayWeekday}

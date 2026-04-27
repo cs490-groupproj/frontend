@@ -51,7 +51,7 @@ const App = () => {
         <Route element={<RoleProtectedRoute requiredRoles={["coach"]} />}>
           <Route path="/coachDashboard" element={<div>Coach Dashboard</div>} />
           <Route path="/clientManagement" element={<div>My Clients</div>} />
-          <Route path="/assignWorkouts" element={<div>Assign Workouts</div>} />
+          <Route path="/assignWorkouts" element={<Workouts />} />
           <Route
             path="/viewClientProgress"
             element={<div>View Client Progress</div>}
