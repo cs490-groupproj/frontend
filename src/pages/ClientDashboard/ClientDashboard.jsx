@@ -63,7 +63,9 @@ export default function ClientDashboard({ viewedUserId = null, readOnly = false 
             }`}
         >
           Daily Survey
-        </button>
+        </button> )}
+
+        {!readOnly && (
         <button
           onClick={() => setActiveTab("progressPics")}
           className={`px-4 py-2 text-sm font-medium focus:outline-none ${
@@ -73,11 +75,12 @@ export default function ClientDashboard({ viewedUserId = null, readOnly = false 
             }`}
         >
           Progress Pics
-        </button>
+        </button> )}
+
       </div>
       
       {!readOnly && activeTab === "dailySurvey" && <DailySurvey />}
-      {activeTab === "stats" && <Stats />}
+      {activeTab === "stats" && <Stats viewedUserId={resolvedUserId}/>}
       {activeTab === "weeklySchedule" && (
         <WeeklySchedule viewedUserId={resolvedUserId} />
       )}
