@@ -28,6 +28,8 @@ const LogIn = () => {
 
   const getNavPath = (user) => {
     if (!user) {
+      console.log("here2");
+
       return "/";
     }
     if (user?.is_coach) {
@@ -35,8 +37,9 @@ const LogIn = () => {
     } else if (user?.is_client) {
       return "/clientDashboard";
     } else if (user?.is_admin) {
-      return "/";
+      return "/adminDashboard";
     } else {
+      console.log("here");
       return "/";
     }
   };
