@@ -25,6 +25,7 @@ import CoachClientView from "./pages/Coach/CoachClientView.jsx";
 
 import EditCoachProfile from "./pages/Profile/EditCoachProfile.jsx";
 
+import AdminDashboard from "./pages/Admin/AdminDashboard.jsx";
 const App = () => {
   return (
     <Routes>
@@ -63,6 +64,10 @@ const App = () => {
             element={<div>View Client Progress</div>}
           />
           <Route path="/coachProfile" element={<EditCoachProfile />} />
+        </Route>
+
+        <Route element={<RoleProtectedRoute requiredRoles={["admin"]} />}>
+          <Route path="/adminDashboard" element={<AdminDashboard />} />
         </Route>
       </Route>
 
