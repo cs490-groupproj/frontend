@@ -39,6 +39,10 @@ const emptyPersistedFoodsByMeal = () => ({
   Snacks: [],
 });
 
+/**
+ * Detailed Weekly History Component
+ * Fetches specific meal plans and food items from the last 7 days using /week
+ */
 const WeeklyHistory = ({ userId, timezone }) => {
   const { data: historyData, loading } = useGetFromAPI(
     userId
@@ -53,6 +57,7 @@ const WeeklyHistory = ({ userId, timezone }) => {
       </div>
     );
 
+  // Group meals by date
   const groupedByDate = (historyData?.meal_plans || []).reduce((acc, plan) => {
     const date = new Date(plan.meal_logged_at).toLocaleDateString(undefined, {
       weekday: "long",
@@ -170,6 +175,7 @@ const MealSection = ({
   foodPost,
   onLogFood,
   persistedFoods = [],
+  readOnly = false,
 }) => {
   const [searchInput, setSearchInput] = useState("");
   const [searchResults, setSearchResults] = useState([]);
@@ -192,6 +198,11 @@ const MealSection = ({
   }, [persistedFoods]);
 
   useEffect(() => {
+    if (readOnly) {
+      setSearchResults([]);
+      setIsSearching(false);
+      return;
+    }
     const q = searchInput.trim().toLowerCase();
     if (q.length < 2) {
       setSearchResults([]);
@@ -213,9 +224,10 @@ const MealSection = ({
       }
     }, 400);
     return () => clearTimeout(delay);
-  }, [searchInput, foodPost]);
+  }, [searchInput, foodPost, readOnly]);
 
   const handleSelect = (food) => {
+    if (readOnly) return;
     const energy = food.foodNutrients?.find((n) =>
       n.nutrientName?.toLowerCase().includes("energy")
     );
@@ -235,6 +247,7 @@ const MealSection = ({
   };
 
   const handleLogToBackend = async (idx) => {
+    if (readOnly) return;
     const item = localLog[idx];
     const portion = parseFloat(item.portion) || 0;
     if (!mealPlanId) return;
@@ -269,41 +282,43 @@ const MealSection = ({
         <Utensils size={16} className="text-primary" />
         {meal}
       </h2>
-      <div className="relative">
-        <Search
-          className="text-muted-foreground absolute top-1/2 left-3
-            -translate-y-1/2"
-          size={14}
-        />
-        <Input
-          value={searchInput}
-          onChange={(e) => setSearchInput(e.target.value)}
-          className="pl-10"
-          placeholder={`Search ${meal}...`}
-        />
-        {searchResults.length > 0 && (
-          <div
-            className="bg-card absolute z-50 mt-1 w-full overflow-hidden
-              rounded-md border shadow-xl"
-          >
-            {searchResults.map((food) => (
-              <button
-                key={food.fdcId}
-                className="hover:bg-muted w-full border-b p-3 text-left text-sm
-                  last:border-0"
-                onClick={() => handleSelect(food)}
-              >
-                <div className="line-clamp-1 font-medium">
-                  {food.description}
-                </div>
-                <div className="text-muted-foreground text-xs">
-                  {food.brandOwner || "General Food"}
-                </div>
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
+      {!readOnly && (
+        <div className="relative">
+          <Search
+            className="text-muted-foreground absolute top-1/2 left-3
+              -translate-y-1/2"
+            size={14}
+          />
+          <Input
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            className="pl-10"
+            placeholder={`Search ${meal}...`}
+          />
+          {searchResults.length > 0 && (
+            <div
+              className="bg-card absolute z-50 mt-1 w-full overflow-hidden
+                rounded-md border shadow-xl"
+            >
+              {searchResults.map((food) => (
+                <button
+                  key={food.fdcId}
+                  className="hover:bg-muted w-full border-b p-3 text-left
+                    text-sm last:border-0"
+                  onClick={() => handleSelect(food)}
+                >
+                  <div className="line-clamp-1 font-medium">
+                    {food.description}
+                  </div>
+                  <div className="text-muted-foreground text-xs">
+                    {food.brandOwner || "General Food"}
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
       <div className="mt-4 space-y-3">
         {localLog.map((f, i) => (
           <div
@@ -324,7 +339,7 @@ const MealSection = ({
                 >
                   <CheckCircle2 size={14} /> Logged
                 </span>
-              ) : (
+              ) : readOnly ? null : (
                 <Button
                   size="sm"
                   className="h-8"
@@ -339,7 +354,7 @@ const MealSection = ({
                 </Button>
               )}
             </div>
-            {!f.isLogged && (
+            {!readOnly && !f.isLogged && (
               <div className="mt-2 flex items-center gap-2">
                 <Input
                   type="number"
@@ -364,22 +379,27 @@ const MealSection = ({
   );
 };
 
-const NutritionPage = () => {
-  const currentUserId = localStorage.getItem("userId");
+const NutritionPage = ({ viewedUserId = null, readOnly = false }) => {
+  const currentUserId = viewedUserId || localStorage.getItem("userId");
   const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
   const [loggedCalories, setLoggedCalories] = useState(0);
-  const [mealPlanIds, setMealPlanIds] = useState(emptyMealPlanIds());
+  const [mealPlanIds, setMealPlanIds] = useState(emptyMealPlanIds);
   const [persistedFoodsByMeal, setPersistedFoodsByMeal] = useState(
-    emptyPersistedFoodsByMeal()
+    emptyPersistedFoodsByMeal
   );
 
+  const hydrateRef = useRef(false);
   const { data: todayData, loading } = useGetFromAPI(
     currentUserId
       ? `/nutrition/today?user_id=${currentUserId}&timezone=${encodeURIComponent(userTimezone)}`
       : null
   );
   const { postFunction: apiPost } = usePostToAPI();
+
+  useEffect(() => {
+    hydrateRef.current = false;
+  }, [currentUserId, readOnly]);
 
   const createMealPlan = useCallback(
     async (mealTypeId) => {
@@ -407,8 +427,9 @@ const NutritionPage = () => {
     [createMealPlan]
   );
 
-  useEffect(() => {
-    if (loading || !todayData) return;
+  const hydrate = useCallback(async () => {
+    if (hydrateRef.current || !todayData) return;
+    hydrateRef.current = true;
 
     const groupedFoods = emptyPersistedFoodsByMeal();
     const groupedIds = emptyMealPlanIds();
@@ -421,18 +442,19 @@ const NutritionPage = () => {
       }
     });
 
-    // Resetting state based on fresh data from the day's query
-    setMealPlanIds(groupedIds);
-    setPersistedFoodsByMeal(groupedFoods);
-    setLoggedCalories(Math.round(todayData?.daily_total_calories || 0));
-
-    const initializeDay = async () => {
+    if (readOnly) {
+      setMealPlanIds(groupedIds);
+    } else {
       const finalIds = await ensurePlans(groupedIds);
       setMealPlanIds(finalIds);
-    };
+    }
+    setPersistedFoodsByMeal(groupedFoods);
+    setLoggedCalories(Math.round(todayData?.daily_total_calories || 0));
+  }, [todayData, ensurePlans, readOnly]);
 
-    initializeDay();
-  }, [todayData, loading, ensurePlans]);
+  useEffect(() => {
+    if (todayData && !loading) hydrate();
+  }, [todayData, loading, hydrate]);
 
   if (loading) {
     return (
@@ -444,8 +466,16 @@ const NutritionPage = () => {
 
   return (
     <div className="mx-auto w-full max-w-7xl space-y-6 px-6 py-8">
-      <div className="flex items-center justify-between">
+      <div
+        className="flex flex-col gap-1 sm:flex-row sm:items-baseline
+          sm:justify-between"
+      >
         <h1 className="text-3xl font-bold">Nutrition</h1>
+        {readOnly && (
+          <p className="text-muted-foreground text-sm font-medium">
+            Read-only (client view)
+          </p>
+        )}
       </div>
 
       <Tabs defaultValue="today" className="w-full">
@@ -495,6 +525,7 @@ const NutritionPage = () => {
                 foodPost={apiPost}
                 onLogFood={(c) => setLoggedCalories((p) => p + c)}
                 persistedFoods={persistedFoodsByMeal[meal]}
+                readOnly={readOnly}
               />
             ))}
           </div>

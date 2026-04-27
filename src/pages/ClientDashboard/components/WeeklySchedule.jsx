@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect } from "react";
 import useGetFromAPI from "@/hooks/useGetFromAPI";
 
-const WeeklySchedule = () => {
+const WeeklySchedule = ({ viewedUserId = null }) => {
   const daysOfTheWeek = [
     "Sunday",
     "Monday",
@@ -11,7 +11,7 @@ const WeeklySchedule = () => {
     "Friday",
     "Saturday",
   ];
-  const resolvedUserId = localStorage.getItem("userId");
+  const resolvedUserId = viewedUserId || localStorage.getItem("userId");
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [weeklyScheduleURI, setWeeklyScheduleURI] = useState(null);
   const [selectedDateWorkouts, setSelectedDateWorkouts] = useState(null);

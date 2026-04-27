@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import useGetFromAPI from "@/hooks/useGetFromAPI";
 import usePatchToAPI from "@/hooks/usePatchToAPI";
+import DeleteAccount from "./components/DeleteAccount";
 
 const GOALS = [
   { id: 0, label: "Lose weight" },
@@ -50,7 +51,10 @@ function formatExerciseDisplay(hours, minutes) {
 function DetailRow({ label, value }) {
   return (
     <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-4">
-      <dt className="text-muted-foreground w-full shrink-0 text-sm sm:max-w-[10rem]">
+      <dt
+        className="text-muted-foreground w-full shrink-0 text-sm
+          sm:max-w-[10rem]"
+      >
         {label}
       </dt>
       <dd className="text-foreground text-sm font-medium">{value || "—"}</dd>
@@ -281,36 +285,48 @@ export default function EditClientProfile() {
 
       <section className="border-border bg-card rounded-xl border p-6">
         <div className="flex items-start justify-between">
-        <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-center">
-          <Avatar className="size-24 text-2xl">
-            <AvatarImage
-              src="https://www.gravatar.com/avatar?d=mp&f=y&s=128"
-              alt=""
-            />
-            <AvatarFallback className="text-2xl">{initials}</AvatarFallback>
-          </Avatar>
-          <div className="flex flex-col items-center text-center sm:items-start sm:text-left">
-            <h2 className="text-foreground text-2xl font-semibold">
-              {displayName}
-            </h2>
-            <p className="text-muted-foreground mt-1 text-sm">
-              {email || "No email on file"}
-            </p>
+          <div
+            className="flex flex-col items-center gap-4 sm:flex-row
+              sm:items-center"
+          >
+            <Avatar className="size-24 text-2xl">
+              <AvatarImage
+                src="https://www.gravatar.com/avatar?d=mp&f=y&s=128"
+                alt=""
+              />
+              <AvatarFallback className="text-2xl">{initials}</AvatarFallback>
+            </Avatar>
+            <div
+              className="flex flex-col items-center text-center sm:items-start
+                sm:text-left"
+            >
+              <h2 className="text-foreground text-2xl font-semibold">
+                {displayName}
+              </h2>
+              <p className="text-muted-foreground mt-1 text-sm">
+                {email || "No email on file"}
+              </p>
+            </div>
+          </div>
+          <div className="flex flex-col justify-between gap-8">
+            <Button
+              type="button"
+              variant="outline"
+              className="shrink-0"
+              onClick={() => setAccountDialogOpen(true)}
+            >
+              Edit profile
+            </Button>
+            <DeleteAccount />
           </div>
         </div>
-                       <Button
-            type="button"
-            variant="outline"
-            className="shrink-0"
-            onClick={() => setAccountDialogOpen(true)}
-          >
-            Edit profile
-          </Button>
-          </div>
       </section>
 
       <section className="border-border bg-card space-y-4 rounded-xl border p-6">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div
+          className="flex flex-col gap-3 sm:flex-row sm:items-start
+            sm:justify-between"
+        >
           <div>
             <h2 className="text-foreground text-lg font-semibold">
               Fitness goals
@@ -336,12 +352,13 @@ export default function EditClientProfile() {
           />
           <DetailRow
             label="Weight goal"
-            value={
-              weightGoalLbs === "" ? "—" : `${weightGoalLbs} lbs`
-            }
+            value={weightGoalLbs === "" ? "—" : `${weightGoalLbs} lbs`}
           />
           <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-4">
-            <dt className="text-muted-foreground w-full shrink-0 text-sm sm:max-w-[10rem]">
+            <dt
+              className="text-muted-foreground w-full shrink-0 text-sm
+                sm:max-w-[10rem]"
+            >
               Primary goals
             </dt>
             <dd className="text-foreground text-sm font-medium">
@@ -351,10 +368,16 @@ export default function EditClientProfile() {
             </dd>
           </div>
           <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-4">
-            <dt className="text-muted-foreground w-full shrink-0 text-sm sm:max-w-[10rem]">
+            <dt
+              className="text-muted-foreground w-full shrink-0 text-sm
+                sm:max-w-[10rem]"
+            >
               Personal goals
             </dt>
-            <dd className="text-foreground text-sm font-medium whitespace-pre-wrap">
+            <dd
+              className="text-foreground text-sm font-medium
+                whitespace-pre-wrap"
+            >
               {personalGoals.trim() || "—"}
             </dd>
           </div>
@@ -367,7 +390,6 @@ export default function EditClientProfile() {
           />
         </dl>
       </section>
-
       {submitError && (
         <p className="text-destructive text-sm" role="alert">
           {submitError}
@@ -392,9 +414,7 @@ export default function EditClientProfile() {
                   size="icon"
                   className="size-8 shrink-0"
                   aria-label="Close"
-                >
-  
-                </Button>
+                ></Button>
               </Dialog.Close>
             </div>
             <Dialog.Description className="text-muted-foreground text-sm">
@@ -475,8 +495,7 @@ export default function EditClientProfile() {
                   size="icon"
                   className="size-8 shrink-0"
                   aria-label="Close"
-                >
-                </Button>
+                ></Button>
               </Dialog.Close>
             </div>
             <Dialog.Description className="text-muted-foreground text-sm">
