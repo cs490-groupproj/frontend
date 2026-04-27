@@ -20,18 +20,19 @@ import Nutrition from "./pages/Nutrition/nutrition.jsx";
 import PaymentPage from "./pages/Payment/PaymentPage.jsx";
 import EditProfile from "./pages/Profile/EditClientProfile.jsx";
 import Chat from "./pages/Chat/Chat.jsx";
+import ClientManagement from "./pages/Coach/ClientManagement.jsx";
+import CoachClientView from "./pages/Coach/CoachClientView.jsx";
 
 import EditCoachProfile from "./pages/Profile/EditCoachProfile.jsx";
 
-// ONLY PUT ROUTES IN HERE. DON'T STYLE. IF YOU WANT TO STYLE, GO TO THE LAYOUT
+import AdminDashboard from "./pages/Admin/AdminDashboard.jsx";
 const App = () => {
   return (
     <Routes>
-      {/* Put things that need the navbar in here */}
       <Route element={<PublicLayout />}>
         <Route path="/" element={<LandingPage />} />
       </Route>
-      {/* put things that need the sidebar in here */}
+
       <Route element={<DashboardLayout />}>
         <Route element={<RoleProtectedRoute requiredRoles={["client"]} />}>
           <Route path="/clientDashboard" element={<ClientDashboard />} />
@@ -43,26 +44,33 @@ const App = () => {
           <Route path="/payment" element={<PaymentPage />} />
           <Route path="/profile" element={<EditProfile />} />
         </Route>
+
         <Route
           element={<RoleProtectedRoute requiredRoles={["coach", "client"]} />}
         >
           <Route path="/chat" element={<Chat />} />
         </Route>
+
         <Route element={<RoleProtectedRoute requiredRoles={["coach"]} />}>
           <Route path="/coachDashboard" element={<div>Coach Dashboard</div>} />
-          <Route path="/clientManagement" element={<div>My Clients</div>} />
           <Route path="/assignWorkouts" element={<Workouts />} />
+          <Route path="/clientManagement" element={<ClientManagement />} />
+          <Route
+            path="/clientManagement/:clientId/view"
+            element={<CoachClientView />}
+          />
           <Route
             path="/viewClientProgress"
             element={<div>View Client Progress</div>}
           />
           <Route path="/coachProfile" element={<EditCoachProfile />} />
         </Route>
+
         <Route element={<RoleProtectedRoute requiredRoles={["admin"]} />}>
-          <Route path="/adminDashboard" element={<div>Admin Dashboard</div>} />
+          <Route path="/adminDashboard" element={<AdminDashboard />} />
         </Route>
       </Route>
-      {/* Put things that need neither here */}
+
       <Route path="/login" element={<LogIn />} />
       <Route path="/signup" element={<SignUp />} />
       <Route path="/clientSurvey" element={<ClientSurvey />} />

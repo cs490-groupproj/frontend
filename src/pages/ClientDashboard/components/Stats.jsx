@@ -153,12 +153,12 @@ function WorkoutMetricChart({
   );
 }
 
-const Stats = () => {
+const Stats = ({ viewedUserId = null }) => {
   const [range, setRange] = useState(7);
   const [calRange, setCalRange] = useState(7);
   const [workoutRange, setWorkoutRange] = useState(30);
 
-  const [userId, setUserId] = useState(localStorage.getItem("userId"));
+  const userId = viewedUserId || localStorage.getItem("userId");
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const uri = userId ? `/clients/${userId}/daily_survey/history?days=${range}` : null;
   const { data, loading, error } = useGetFromAPI(uri, undefined, false);

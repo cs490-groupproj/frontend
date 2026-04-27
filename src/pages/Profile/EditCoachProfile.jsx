@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import useGetFromAPI from "@/hooks/useGetFromAPI";
 import usePatchToAPI from "@/hooks/usePatchToAPI";
+import DeleteAccount from "./components/DeleteAccount";
 
 const SPECIALIZATIONS = [
   { value: "EXERCISE", label: "Exercise" },
@@ -19,7 +20,10 @@ function specializationLabel(value) {
 function DetailRow({ label, value }) {
   return (
     <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-4">
-      <dt className="text-muted-foreground w-full shrink-0 text-sm sm:max-w-[10rem]">
+      <dt
+        className="text-muted-foreground w-full shrink-0 text-sm
+          sm:max-w-[10rem]"
+      >
         {label}
       </dt>
       <dd className="text-foreground text-sm font-medium">{value || "—"}</dd>
@@ -54,7 +58,9 @@ export default function EditCoachProfile() {
   const [email, setEmail] = useState("");
 
   const [coachSurveyId, setCoachSurveyId] = useState(null);
-  const [specialization, setSpecialization] = useState(SPECIALIZATIONS[0].value);
+  const [specialization, setSpecialization] = useState(
+    SPECIALIZATIONS[0].value
+  );
   const [qualifications, setQualifications] = useState("");
   const [coachCost, setCoachCost] = useState("");
 
@@ -147,7 +153,9 @@ export default function EditCoachProfile() {
       return;
     }
     if (!coachSurveyId) {
-      setSubmitError("No coach survey on file. Complete the coach survey first.");
+      setSubmitError(
+        "No coach survey on file. Complete the coach survey first."
+      );
       return;
     }
 
@@ -158,8 +166,9 @@ export default function EditCoachProfile() {
       coach_survey_id: coachSurveyId,
       specialization,
       qualifications: qualifications.trim() || null,
-      coach_cost:
-        Number.isFinite(Number(coachCost)) ? Math.max(0, Math.round(Number(coachCost))) : null,
+      coach_cost: Number.isFinite(Number(coachCost))
+        ? Math.max(0, Math.round(Number(coachCost)))
+        : null,
     };
 
     try {
@@ -209,7 +218,10 @@ export default function EditCoachProfile() {
 
       <section className="border-border bg-card rounded-xl border p-6">
         <div className="flex items-start justify-between">
-          <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-center">
+          <div
+            className="flex flex-col items-center gap-4 sm:flex-row
+              sm:items-center"
+          >
             <Avatar className="size-24 text-2xl">
               <AvatarImage
                 src="https://www.gravatar.com/avatar?d=mp&f=y&s=128"
@@ -217,7 +229,10 @@ export default function EditCoachProfile() {
               />
               <AvatarFallback className="text-2xl">{initials}</AvatarFallback>
             </Avatar>
-            <div className="flex flex-col items-center text-center sm:items-start sm:text-left">
+            <div
+              className="flex flex-col items-center text-center sm:items-start
+                sm:text-left"
+            >
               <h2 className="text-foreground text-2xl font-semibold">
                 {displayName}
               </h2>
@@ -226,19 +241,25 @@ export default function EditCoachProfile() {
               </p>
             </div>
           </div>
-          <Button
-            type="button"
-            variant="outline"
-            className="shrink-0"
-            onClick={() => setAccountDialogOpen(true)}
-          >
-            Edit profile
-          </Button>
+          <div className="flex flex-col justify-between gap-8">
+            <Button
+              type="button"
+              variant="outline"
+              className="shrink-0"
+              onClick={() => setAccountDialogOpen(true)}
+            >
+              Edit profile
+            </Button>
+            <DeleteAccount />
+          </div>
         </div>
       </section>
 
       <section className="border-border bg-card space-y-4 rounded-xl border p-6">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div
+          className="flex flex-col gap-3 sm:flex-row sm:items-start
+            sm:justify-between"
+        >
           <div>
             <h2 className="text-foreground text-lg font-semibold">
               Coach survey
@@ -257,7 +278,12 @@ export default function EditCoachProfile() {
               Edit coach details
             </Button>
           ) : (
-            <Button type="button" variant="default" className="shrink-0" asChild>
+            <Button
+              type="button"
+              variant="default"
+              className="shrink-0"
+              asChild
+            >
               <Link to="/coachSurvey">Complete coach survey</Link>
             </Button>
           )}
@@ -266,13 +292,21 @@ export default function EditCoachProfile() {
         <dl className="border-border space-y-3 border-t pt-4">
           <DetailRow
             label="Specialization"
-            value={specializationLabel(profileData?.coach_survey?.specialization)}
+            value={specializationLabel(
+              profileData?.coach_survey?.specialization
+            )}
           />
           <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-4">
-            <dt className="text-muted-foreground w-full shrink-0 text-sm sm:max-w-[10rem]">
+            <dt
+              className="text-muted-foreground w-full shrink-0 text-sm
+                sm:max-w-[10rem]"
+            >
               Qualifications
             </dt>
-            <dd className="text-foreground text-sm font-medium whitespace-pre-wrap">
+            <dd
+              className="text-foreground text-sm font-medium
+                whitespace-pre-wrap"
+            >
               {profileData?.coach_survey?.qualifications?.trim() || "—"}
             </dd>
           </div>

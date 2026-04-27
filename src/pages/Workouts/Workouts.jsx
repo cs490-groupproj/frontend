@@ -80,7 +80,9 @@ const Workouts = () => {
   const userId = user?.user_id;
   const isCoachAssignScreen = location.pathname === "/assignWorkouts";
 
-  const [activeTab, setActiveTab] = useState(TABS.PLANS);
+  const [activeTab, setActiveTab] = useState(
+    isReadOnlyView ? TABS.HISTORY : TABS.PLANS
+  );
   const [plansRefreshKey, setPlansRefreshKey] = useState(0);
   const [expandedPlanId, setExpandedPlanId] = useState(null);
   const [assigningPlanId, setAssigningPlanId] = useState(null);
@@ -872,7 +874,7 @@ const Workouts = () => {
         )}
       </div>
 
-      {activeTab === TABS.PLANS && (
+      {!isReadOnlyView && activeTab === TABS.PLANS && (
         <WorkoutPlansTab
           pageTitle={isCoachAssignScreen ? "Assign Workouts" : "Create and Manage Workout Plans"}
           isCoachAssignScreen={isCoachAssignScreen}
