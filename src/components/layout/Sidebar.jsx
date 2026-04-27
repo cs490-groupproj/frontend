@@ -150,6 +150,19 @@ const Sidebar = ({
                     >
                       My Coach
                     </NavLink>
+
+                    <NavLink
+                  to="/coaches/client-management"
+                  className={({ isActive }) =>
+                    `block rounded-lg px-3 py-2 text-sm ${
+                      isActive
+                        ? "bg-sidebar-primary text-sidebar-primary-foreground"
+                        : "hover:bg-sidebar/80"
+                    }`
+                  }
+                >
+                  Client Management
+                </NavLink>
                   </div>
                 )}
               </div>

@@ -15,6 +15,7 @@ import CoachSurvey from "./pages/SignUp_Login/CoachSurvey.jsx";
 import BrowseCoaches from "./pages/Coaches/BrowseCoaches.jsx";
 import ClientDashboard from "./pages/ClientDashboard/ClientDashboard.jsx";
 import MyCoach from "./pages/coaches/MyCoach.jsx";
+import ClientManagement from "./pages/coaches/ClientManagement.jsx";
 import Workouts from "./pages/Workouts/Workouts.jsx";
 import Nutrition from "./pages/Nutrition/nutrition.jsx";
 import PaymentPage from "./pages/Payment/PaymentPage.jsx";
@@ -35,6 +36,7 @@ const App = () => {
           <Route path="/clientDashboard" element={<ClientDashboard />} />
           <Route path="/coaches/browse" element={<BrowseCoaches />} />
           <Route path="/coaches/my-coach" element={<MyCoach />} />
+          <Route path="/coaches/client-management" element={<ClientManagement />} />
           <Route path="/exercises" element={<Workouts />} />
           <Route path="/nutrition" element={<Nutrition />} />
           <Route path="/workouts" element={<Workouts />} />
