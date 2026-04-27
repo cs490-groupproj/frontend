@@ -21,12 +21,16 @@ import Nutrition from "./pages/Nutrition/nutrition.jsx";
 import PaymentPage from "./pages/Payment/PaymentPage.jsx";
 import EditProfile from "./pages/Profile/EditClientProfile.jsx";
 import Chat from "./pages/Chat/Chat.jsx";
-import ClientManagement from "./pages/Coach/ClientManagement.jsx";
-import CoachClientView from "./pages/Coach/CoachClientView.jsx";
 
 import EditCoachProfile from "./pages/Profile/EditCoachProfile.jsx";
 
 import AdminDashboard from "./pages/Admin/AdminDashboard.jsx";
+import AdminCoachApplications from "./pages/Admin/AdminCoachApplications.jsx";
+import CoachDashboard from "./pages/Coaches/CoachDashboard.jsx";
+import CoachReports from "./pages/Admin/CoachReports.jsx";
+import ClientManagement from "./pages/Coach/ClientManagement.jsx";
+import CoachClientView from "./pages/Coach/CoachClientView.jsx";
+
 const App = () => {
   return (
     <Routes>
@@ -57,13 +61,11 @@ const App = () => {
         </Route>
 
         <Route element={<RoleProtectedRoute requiredRoles={["coach"]} />}>
-          <Route path="/coachDashboard" element={<div>Coach Dashboard</div>} />
-          <Route path="/assignWorkouts" element={<Workouts />} />
+          <Route path="/coachDashboard" element={<CoachDashboard />} />
           <Route path="/clientManagement" element={<ClientManagement />} />
-          <Route
-            path="/clientManagement/:clientId/view"
-            element={<CoachClientView />}
-          />
+          <Route path="/clientManagement/:clientId/view"
+          element={<CoachClientView />} />
+          <Route path="/assignWorkouts" element={<Workouts />} />
           <Route
             path="/viewClientProgress"
             element={<div>View Client Progress</div>}
@@ -73,6 +75,11 @@ const App = () => {
 
         <Route element={<RoleProtectedRoute requiredRoles={["admin"]} />}>
           <Route path="/adminDashboard" element={<AdminDashboard />} />
+          <Route
+            path="/admin/coach-applications"
+            element={<AdminCoachApplications />}
+          />
+          <Route path="/admin/reports" element={<CoachReports />} />
         </Route>
       </Route>
 
