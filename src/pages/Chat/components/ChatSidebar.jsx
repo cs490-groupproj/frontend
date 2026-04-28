@@ -3,14 +3,15 @@ import { Button } from "@/components/ui/button";
 import ChatCard from "./ChatCard";
 
 const ChatSidebar = ({
-  userCoachesError,
-  userCoachesLoading,
-  userCoachesData,
+  userChattersData,
+  userChattersLoading,
+  userChattersError,
   handleSwitchConversation,
   selectedChatUserID,
   unreadChatNotifications,
   handleMarkMessagesAsRead,
 }) => {
+  const chatters = userChattersData?.chatters ?? [];
   return (
     <div
       id="Chat Sidebar"
@@ -26,16 +27,18 @@ const ChatSidebar = ({
         className="no-scrollbar mx-2 my-4 flex flex-1 flex-col items-center
           gap-4 overflow-x-hidden overflow-y-auto"
       >
-        {userCoachesError ? (
-          <p>error: {userCoachesError}</p>
-        ) : userCoachesLoading ? (
+        {userChattersError ? (
+          <p>error: {userChattersError}</p>
+        ) : userChattersLoading || userChattersData === null ? (
           <p>Loading Contacts</p>
+        ) : chatters?.length === 0 ? (
+          <p>No contacts yet</p>
         ) : (
-          userCoachesData?.coaches.map((coach) => {
+          chatters.map((chatter) => {
             return (
               <ChatCard
-                key={coach.coach_user_id}
-                coach={coach}
+                key={chatter?.user_id}
+                chatter={chatter}
                 handleSwitchConversation={handleSwitchConversation}
                 selectedChatUserID={selectedChatUserID}
                 unreadChatNotifications={unreadChatNotifications}

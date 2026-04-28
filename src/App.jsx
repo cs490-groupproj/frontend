@@ -2,6 +2,7 @@ import React from "react";
 import { Routes, Route } from "react-router-dom";
 
 import LandingPage from "./pages/LandingPage/LandingPage.jsx";
+import VisitorExerciseBankView from "./pages/VisitorExerciseBank/VisitorExerciseBankView.jsx";
 
 import DashboardLayout from "./components/layout/DashboardLayout.jsx";
 import PublicLayout from "./components/layout/PublicLayout.jsx";
@@ -26,11 +27,21 @@ import CoachClientView from "./pages/Coaches_CoachView/CoachClientView.jsx";
 import EditCoachProfile from "./pages/Profile/EditCoachProfile.jsx";
 
 import AdminDashboard from "./pages/Admin/AdminDashboard.jsx";
+import AdminCoachApplications from "./pages/Admin/AdminCoachApplications.jsx";
+import CoachDashboard from "./pages/Coaches/CoachDashboard.jsx";
+import CoachReports from "./pages/Admin/CoachReports.jsx";
+import ClientManagement from "./pages/Coach/ClientManagement.jsx";
+import CoachClientView from "./pages/Coach/CoachClientView.jsx";
+
 const App = () => {
   return (
     <Routes>
       <Route element={<PublicLayout />}>
         <Route path="/" element={<LandingPage />} />
+        <Route
+          path="/visitorExerciseBank"
+          element={<VisitorExerciseBankView />}
+        />
       </Route>
 
       <Route element={<DashboardLayout />}>
@@ -68,6 +79,11 @@ const App = () => {
 
         <Route element={<RoleProtectedRoute requiredRoles={["admin"]} />}>
           <Route path="/adminDashboard" element={<AdminDashboard />} />
+          <Route
+            path="/admin/coach-applications"
+            element={<AdminCoachApplications />}
+          />
+          <Route path="/admin/reports" element={<CoachReports />} />
         </Route>
       </Route>
 

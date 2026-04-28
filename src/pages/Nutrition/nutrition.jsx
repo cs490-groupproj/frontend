@@ -303,8 +303,8 @@ const MealSection = ({
               {searchResults.map((food) => (
                 <button
                   key={food.fdcId}
-                  className="hover:bg-muted w-full border-b p-3 text-left text-sm
-                    last:border-0"
+                  className="hover:bg-muted w-full border-b p-3 text-left
+                    text-sm last:border-0"
                   onClick={() => handleSelect(food)}
                 >
                   <div className="line-clamp-1 font-medium">
@@ -466,7 +466,10 @@ const NutritionPage = ({ viewedUserId = null, readOnly = false }) => {
 
   return (
     <div className="mx-auto w-full max-w-7xl space-y-6 px-6 py-8">
-      <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
+      <div
+        className="flex flex-col gap-1 sm:flex-row sm:items-baseline
+          sm:justify-between"
+      >
         <h1 className="text-3xl font-bold">Nutrition</h1>
         {readOnly && (
           <p className="text-muted-foreground text-sm font-medium">
