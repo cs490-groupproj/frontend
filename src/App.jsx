@@ -30,8 +30,6 @@ import AdminDashboard from "./pages/Admin/AdminDashboard.jsx";
 import AdminCoachApplications from "./pages/Admin/AdminCoachApplications.jsx";
 import CoachDashboard from "./pages/Coaches/CoachDashboard.jsx";
 import CoachReports from "./pages/Admin/CoachReports.jsx";
-import ClientManagement from "./pages/Coach/ClientManagement.jsx";
-import CoachClientView from "./pages/Coach/CoachClientView.jsx";
 
 const App = () => {
   return (
