@@ -15,7 +15,7 @@ import CoachSurvey from "./pages/SignUp_Login/CoachSurvey.jsx";
 import BrowseCoaches from "./pages/Coaches_ClientView/BrowseCoaches.jsx";
 import ClientDashboard from "./pages/ClientDashboard/ClientDashboard.jsx";
 import MyCoach from "./pages/Coaches_ClientView/MyCoach.jsx";
-import CoachRequestsManagement from "./pages/Coaches_ClientView/ClientManagement.jsx";
+import CoachClientManagement from "./pages/Coaches_CoachView/ClientManagement.jsx";
 import Workouts from "./pages/Workouts/Workouts.jsx";
 import Nutrition from "./pages/Nutrition/nutrition.jsx";
 import PaymentPage from "./pages/Payment/PaymentPage.jsx";
@@ -53,7 +53,7 @@ const App = () => {
 
         <Route element={<RoleProtectedRoute requiredRoles={["coach"]} />}>
           <Route path="/coachDashboard" element={<div>Coach Dashboard</div>} />
-          <Route path="/clientManagement" element={<CoachRequestsManagement />} />
+          <Route path="/clientManagement" element={<CoachClientManagement />} />
           <Route
             path="/clientManagement/:clientId/view"
             element={<CoachClientView />}

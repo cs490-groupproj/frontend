@@ -1,86 +1,218 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { API_BASE_URL } from "../../../config";
+import { Button } from "../../components/ui/button.jsx";
+import useGetFromAPI from "@/hooks/useGetFromAPI";
+import usePostToAPI from "@/hooks/usePostToAPI";
+
+const mapRequestFromBackend = (r) => ({
+  id: r.request_id ?? r.coach_request_id,
+  initials:
+    (r.client.client_first_name?.[0] || "") +
+    (r.client.client_last_name?.[0] || ""),
+  name: `${r.client.client_first_name} ${r.client.client_last_name}`,
+  message: "Incoming coaching request",
+});
 
 export default function ClientManagement() {
-  const [clients, setClients] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [tab, setTab] = useState("requests");
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [notification, setNotification] = useState(null);
 
-  useEffect(() => {
-    const fetchClients = async () => {
-      try {
-        setError("");
+  const { data: requestsData, loading: requestsLoading } = useGetFromAPI(
+    "/coaches/requests?limit=20&offset=0",
+    refreshTrigger
+  );
+  const { data: clientsData, loading: clientsLoading } = useGetFromAPI(
+    "/coaches/clients",
+    refreshTrigger
+  );
+  const { postFunction } = usePostToAPI();
 
-        const response = await fetch(`${API_BASE_URL}/coaches/clients`, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        });
+  const requests = requestsData?.requests
+    ? requestsData.requests.map(mapRequestFromBackend)
+    : [];
+  const activeClients = clientsData?.clients ?? [];
 
-        const data = await response.json();
+  const showNotification = (text, type = "info") => {
+    setNotification({ text, type });
+    window.setTimeout(() => setNotification(null), 3500);
+  };
 
-        if (!response.ok) {
-          throw new Error(data?.message || "Failed to load clients.");
-        }
+  const acceptRequest = async (requestId) => {
+    try {
+      await postFunction(`/coaches/requests/${requestId}/accept`, {});
+      setRefreshTrigger((prev) => prev + 1);
+      showNotification("Client request accepted.", "success");
+    } catch (err) {
+      console.error("Error accepting request:", err);
+      showNotification("Failed to accept request.", "danger");
+    }
+  };
 
-        setClients(Array.isArray(data.clients) ? data.clients : []);
-      } catch (err) {
-        setError(err.message || "Could not load your clients right now.");
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const declineRequest = async (requestId) => {
+    try {
+      await postFunction(`/coaches/requests/${requestId}/reject`, {});
+      setRefreshTrigger((prev) => prev + 1);
+      showNotification("Client request declined.", "info");
+    } catch (err) {
+      console.error("Error rejecting request:", err);
+      showNotification("Failed to decline request.", "danger");
+    }
+  };
 
-    fetchClients();
-  }, []);
+  const removeClient = async (clientId) => {
+    const confirmRemove = window.confirm(
+      "Are you sure you want to remove this client?"
+    );
+    if (!confirmRemove) return;
+
+    try {
+      await postFunction("/coaches/remove_client", { client_id: clientId });
+      setRefreshTrigger((prev) => prev + 1);
+      showNotification("Client removed successfully.", "success");
+    } catch (err) {
+      console.error("Error removing client:", err);
+      showNotification("Failed to remove client.", "danger");
+    }
+  };
+
+  const ENABLE_REMOVE_CLIENT = false;
 
   return (
     <div className="space-y-6">
+      {notification && (
+        <div
+          className={`rounded-lg border px-4 py-2 text-sm ${
+            notification.type === "success"
+              ? "border-emerald-300 bg-emerald-100 text-emerald-900"
+              : notification.type === "danger"
+                ? "border-rose-300 bg-rose-100 text-rose-900"
+                : "border-slate-300 bg-slate-100 text-slate-900"
+          }`}
+        >
+          {notification.text}
+        </div>
+      )}
+
       <div>
         <h1 className="text-3xl font-bold">My Clients</h1>
         <p className="text-muted-foreground mt-1">
-          See the clients currently assigned to you.
+          Manage incoming requests and active clients.
         </p>
       </div>
 
-      {isLoading && (
-        <div className="text-muted-foreground">Loading your clients...</div>
-      )}
+      <div className="flex gap-3">
+        <Button
+          variant={tab === "requests" ? "default" : "outline"}
+          onClick={() => setTab("requests")}
+        >
+          Incoming Requests ({requests.length})
+        </Button>
 
-      {!isLoading && error && (
-        <div className="rounded-xl border border-rose-300 bg-rose-100 p-4 text-rose-900">
-          {error}
-        </div>
-      )}
+        <Button
+          variant={tab === "active" ? "default" : "outline"}
+          onClick={() => setTab("active")}
+        >
+          Active Clients ({activeClients.length})
+        </Button>
+      </div>
 
-      {!isLoading && !error && clients.length === 0 && (
-        <div className="text-muted-foreground rounded-xl border p-6 text-center">
-          You do not have any clients yet.
-        </div>
-      )}
-
-      {!isLoading && !error && clients.length > 0 && (
-        <section className="flex max-w-4xl flex-col gap-3">
-          {clients.map((client) => (
-            <article
-              key={client.client_id}
-              className="border-border bg-card flex flex-row items-center justify-between
-                gap-4 rounded-xl border px-6 py-4 shadow-sm sm:px-8 sm:py-5"
-            >
-              <h2 className="text-lg font-semibold sm:text-xl">
-                {client.first_name} {client.last_name}
-              </h2>
-              <Link
-                to={`/clientManagement/${client.client_id}/view`}
-                className="shrink-0 rounded-lg border px-4 py-2.5 text-sm font-medium
-                  hover:bg-muted"
+      {tab === "requests" && (
+        <div className="space-y-4">
+          {requestsLoading ? (
+            <div className="text-muted-foreground rounded-xl border p-6">
+              Loading incoming requests...
+            </div>
+          ) : requests.length === 0 ? (
+            <div className="text-muted-foreground rounded-xl border p-6">
+              No incoming requests
+            </div>
+          ) : (
+            requests.map((r) => (
+              <div
+                key={r.id}
+                className="bg-card flex items-center justify-between rounded-xl
+                  border p-5 shadow-sm"
               >
-                View Client
-              </Link>
-            </article>
-          ))}
-        </section>
+                <div className="flex items-start gap-4">
+                  <div
+                    className="flex h-10 w-10 items-center justify-center rounded-full
+                      bg-gray-200 font-semibold"
+                  >
+                    {r.initials}
+                  </div>
+                  <div>
+                    <div className="font-semibold">{r.name}</div>
+                    <div className="text-muted-foreground text-sm">{r.message}</div>
+                  </div>
+                </div>
+
+                <div className="flex gap-2">
+                  <Button
+                    className="bg-green-600 hover:bg-green-700"
+                    onClick={() => acceptRequest(r.id)}
+                  >
+                    Accept
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    onClick={() => declineRequest(r.id)}
+                  >
+                    Decline
+                  </Button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      )}
+
+      {tab === "active" && (
+        <div className="space-y-4">
+          {clientsLoading ? (
+            <div className="text-muted-foreground rounded-xl border p-6">
+              Loading active clients...
+            </div>
+          ) : activeClients.length === 0 ? (
+            <div className="text-muted-foreground rounded-xl border p-6">
+              You do not have any active clients yet.
+            </div>
+          ) : (
+            activeClients.map((client) => (
+              <article
+                key={client.client_id}
+                className="border-border bg-card flex items-center justify-between
+                  gap-4 rounded-xl border px-6 py-4 shadow-sm"
+              >
+                <h2 className="text-lg font-semibold">
+                  {client.first_name} {client.last_name}
+                </h2>
+
+                <div className="flex gap-2">
+                  <Link
+                    to={`/clientManagement/${client.client_id}/view`}
+                    className="shrink-0 rounded-lg border px-4 py-2.5 text-sm
+                      font-medium hover:bg-muted"
+                  >
+                    View Client
+                  </Link>
+                  <Button
+                    variant="destructive"
+                    disabled={!ENABLE_REMOVE_CLIENT}
+                    onClick={() => removeClient(client.client_id)}
+                  >
+                    Remove Client
+                  </Button>
+                </div>
+              </article>
+            ))
+          )}
+          {!ENABLE_REMOVE_CLIENT && activeClients.length > 0 && (
+            <div className="text-muted-foreground rounded-lg border px-4 py-3 text-sm">
+              Remove Client is temporarily unavailable.
+            </div>
+          )}
+        </div>
       )}
     </div>
   );

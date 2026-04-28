@@ -372,7 +372,7 @@
 //     }, 4500);
 //   };
 
-//  
+//
 
 //   const filteredCoaches = useMemo(() => {
 //     const query = search.trim().toLowerCase();
@@ -774,6 +774,7 @@ export default function BrowseCoaches() {
   ];
 
   const mapCoachFromBackend = (coach) => {
+    const rating = Number(coach.avg_rating ?? 0);
     return {
       id: coach.coach_user_id,
       name: `${coach.first_name} ${coach.last_name}`,
@@ -787,7 +788,8 @@ export default function BrowseCoaches() {
 
       costPerHour: coach.coach_cost,
 
-      rating: Number(coach.avg_rating ?? 5),
+      rating: rating,
+      isUnrated: rating === 0,
     };
   };
 
@@ -1065,7 +1067,9 @@ export default function BrowseCoaches() {
                       className="text-muted-foreground mt-1 inline-flex
                         items-center gap-1 text-sm"
                     >
-                      ⭐ {coach.rating.toFixed(1)}
+                      {coach.isUnrated
+                        ? "⭐ Unrated"
+                        : `⭐ ${coach.rating.toFixed(1)}`}
                     </span>
                   </div>
                 </div>
@@ -1130,7 +1134,11 @@ export default function BrowseCoaches() {
                   <Button
                     variant={isActive ? "outline" : "secondary"}
                     size="sm"
-                    disabled={isActive || isPending || Boolean(activeCoachId && activeCoachId !== coach.id)}
+                    disabled={
+                      isActive ||
+                      isPending ||
+                      Boolean(activeCoachId && activeCoachId !== coach.id)
+                    }
                     onClick={() => requestCoach(coach)}
                   >
                     {isActive
