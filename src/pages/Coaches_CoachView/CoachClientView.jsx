@@ -17,17 +17,25 @@ export default function CoachClientView() {
 
   const validClientId = useMemo(() => clientId || "", [clientId]);
 
-  const { data: profileData, loading: profileLoading } = useGetFromAPI(
-    validClientId ? `/users/${validClientId}/profile` : null
+  const { data: coachClientsData, loading: coachClientsLoading } = useGetFromAPI(
+    "/coaches/clients"
   );
+  const profileLoading = coachClientsLoading;
+
+  const selectedClient = useMemo(() => {
+    const clients = Array.isArray(coachClientsData?.clients)
+      ? coachClientsData.clients
+      : [];
+    return clients.find((client) => client.client_id === validClientId) || null;
+  }, [coachClientsData, validClientId]);
 
   const clientDisplayName = useMemo(() => {
-    if (!profileData?.first_name && !profileData?.last_name) return null;
-    return [profileData.first_name, profileData.last_name]
+    if (!selectedClient?.first_name && !selectedClient?.last_name) return null;
+    return [selectedClient.first_name, selectedClient.last_name]
       .filter(Boolean)
       .join(" ")
       .trim();
-  }, [profileData]);
+  }, [selectedClient]);
 
   return (
     <div className="flex w-full max-w-none flex-col">
