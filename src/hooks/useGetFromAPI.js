@@ -24,19 +24,14 @@ function useGetFromAPI(requestURI, refreshTrigger) {
     //       headers: { ...(await getAuthHeader()) },
     //     });
 
-        const getFunction = async () => {
+    const getFunction = async () => {
       setLoading(true);
       try {
-        // 1. Get the headers first
         const authHeaders = await getAuthHeader();
         
-        // 2. Log them to the console
-        console.log("DEBUG: Final Headers being sent:", authHeaders);
-
         const response = await fetch(`${API_BASE_URL}${requestURI}`, {
           method: "GET",
           signal: controller.signal,
-          // 3. Use the variable you just logged
           headers: { ...authHeaders }, 
         });
 
@@ -50,8 +45,8 @@ function useGetFromAPI(requestURI, refreshTrigger) {
           return true;
         }
 
-        const postsData = await response.json();
-        setData(postsData);
+        const responseData = await response.json();
+        setData(responseData);
         setError(null);
       } catch (err) {
         if (err.name === "AbortError") {
