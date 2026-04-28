@@ -13,14 +13,16 @@ import SignUp from "./pages/SignUp_Login/SignUp.jsx";
 import ClientSurvey from "./pages/SignUp_Login/ClientSurvey.jsx";
 import CoachSurvey from "./pages/SignUp_Login/CoachSurvey.jsx";
 
-import BrowseCoaches from "./pages/Coaches/BrowseCoaches.jsx";
+import BrowseCoaches from "./pages/Coaches_ClientView/BrowseCoaches.jsx";
 import ClientDashboard from "./pages/ClientDashboard/ClientDashboard.jsx";
-import MyCoach from "./pages/coaches/MyCoach.jsx";
+import MyCoach from "./pages/Coaches_ClientView/MyCoach.jsx";
+import CoachClientManagement from "./pages/Coaches_CoachView/ClientManagement.jsx";
 import Workouts from "./pages/Workouts/Workouts.jsx";
 import Nutrition from "./pages/Nutrition/nutrition.jsx";
 import PaymentPage from "./pages/Payment/PaymentPage.jsx";
 import EditProfile from "./pages/Profile/EditClientProfile.jsx";
 import Chat from "./pages/Chat/Chat.jsx";
+import CoachClientView from "./pages/Coaches_CoachView/CoachClientView.jsx";
 
 import EditCoachProfile from "./pages/Profile/EditCoachProfile.jsx";
 
@@ -62,9 +64,11 @@ const App = () => {
 
         <Route element={<RoleProtectedRoute requiredRoles={["coach"]} />}>
           <Route path="/coachDashboard" element={<CoachDashboard />} />
-          <Route path="/clientManagement" element={<ClientManagement />} />
-          <Route path="/clientManagement/:clientId/view"
-          element={<CoachClientView />} />
+          <Route path="/clientManagement" element={<CoachClientManagement />} />
+          <Route
+            path="/clientManagement/:clientId/view"
+            element={<CoachClientView />}
+          />
           <Route path="/assignWorkouts" element={<Workouts />} />
           <Route
             path="/viewClientProgress"
