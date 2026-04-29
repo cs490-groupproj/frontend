@@ -189,8 +189,8 @@ const WorkoutPlansTab = ({
                     key={`${index}-${row.workout_plan_exercise_id || "new"}`}
                     className="space-y-2 rounded-md border p-3"
                   >
-                    <div className="grid grid-cols-12 gap-2">
-                      <MetricField label="Exercise" className="col-span-5">
+                    <div className="grid grid-cols-12 gap-3">
+                      <MetricField label="Exercise" className="col-span-12 md:col-span-4">
                         <select
                           className="border-input bg-background text-foreground h-10 w-full rounded-md border px-3 text-sm"
                           value={row.exercise_id}
@@ -207,8 +207,9 @@ const WorkoutPlansTab = ({
                         </select>
                       </MetricField>
                       {categoryKey === "duration" ? (
-                        <MetricField label="Duration (sec)" className="col-span-2">
+                        <MetricField label="Duration (sec)" className="col-span-12 md:col-span-4">
                           <Input
+                            className="w-full min-w-[8rem]"
                             type="number"
                             step="1"
                             min="0"
@@ -222,8 +223,9 @@ const WorkoutPlansTab = ({
                         </MetricField>
                       ) : categoryKey === "cardio" ? (
                         <>
-                          <MetricField label="Distance (miles)" className="col-span-1">
+                          <MetricField label="Distance (miles)" className="col-span-12 sm:col-span-6 md:col-span-3">
                             <Input
+                              className="w-full min-w-[8rem]"
                               type="number"
                               step="0.01"
                               min="0"
@@ -235,8 +237,9 @@ const WorkoutPlansTab = ({
                               }
                             />
                           </MetricField>
-                          <MetricField label="Pace (sec/mile)" className="col-span-1">
+                          <MetricField label="Pace (sec/mile)" className="col-span-12 sm:col-span-6 md:col-span-3">
                             <Input
+                              className="w-full min-w-[8rem]"
                               type="number"
                               step="0.01"
                               min="0"
@@ -250,8 +253,9 @@ const WorkoutPlansTab = ({
                           </MetricField>
                         </>
                       ) : categoryKey === "repsOnly" ? (
-                        <MetricField label="Reps" className="col-span-2">
+                        <MetricField label="Reps" className="col-span-12 md:col-span-6">
                           <Input
+                            className="w-full min-w-[8rem]"
                             type="number"
                             step="1"
                             min="0"
@@ -265,8 +269,9 @@ const WorkoutPlansTab = ({
                         </MetricField>
                       ) : (
                         <>
-                          <MetricField label="Sets" className="col-span-1">
+                          <MetricField label="Sets" className="col-span-6 md:col-span-3">
                             <Input
+                              className="w-full min-w-[8rem]"
                               type="number"
                               step="1"
                               min="0"
@@ -278,8 +283,9 @@ const WorkoutPlansTab = ({
                               }
                             />
                           </MetricField>
-                          <MetricField label="Reps" className="col-span-1">
+                          <MetricField label="Reps" className="col-span-6 md:col-span-3">
                             <Input
+                              className="w-full min-w-[8rem]"
                               type="number"
                               step="1"
                               min="0"
@@ -293,7 +299,12 @@ const WorkoutPlansTab = ({
                           </MetricField>
                         </>
                       )}
-                      <MetricField label="Action" className="col-span-3">
+                      <MetricField
+                        label="Action"
+                        className={`col-span-12 ${
+                          categoryKey === "duration" ? "md:col-span-4" : "md:col-span-2"
+                        }`}
+                      >
                         <button
                           type="button"
                           className="text-muted-foreground hover:text-destructive inline-flex h-10 w-full items-center justify-center rounded-md border text-sm transition-colors"
