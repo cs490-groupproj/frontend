@@ -25,7 +25,6 @@ export default function CoachDashboard() {
 
   return (
     <div className="w-full space-y-8 p-6">
-      {/* Header */}
       <div>
         <h1 className="text-4xl font-bold tracking-tight text-white">
           Welcome back, {clientsLoading ? "..." : coachName}
@@ -35,30 +34,43 @@ export default function CoachDashboard() {
         </p>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-        <div className="border-border bg-card rounded-xl border p-8 shadow-sm">
-          <h3
-            className="text-secondary-foreground text-xs font-semibold
-              tracking-widest uppercase"
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
+        <div className="lg:col-span-5">
+          <div
+            className="border-border bg-card h-full rounded-xl border p-8
+              shadow-sm"
           >
-            Active Roster
-          </h3>
-          <p className="text-foreground mt-4 text-4xl font-bold tracking-tight">
-            {clientsLoading ? "..." : clients.length.toLocaleString()}
-          </p>
+            <h3
+              className="text-secondary-foreground text-xs font-semibold
+                tracking-widest uppercase"
+            >
+              Pending Requests
+            </h3>
+            <p
+              className="text-foreground mt-4 text-4xl font-bold tracking-tight"
+            >
+              {requestsLoading ? "..." : requests.length}
+            </p>
+          </div>
         </div>
 
-        <div className="border-border bg-card rounded-xl border p-8 shadow-sm">
-          <h3
-            className="text-secondary-foreground text-xs font-semibold
-              tracking-widest uppercase"
+        <div className="lg:col-span-7">
+          <div
+            className="border-border bg-card h-full rounded-xl border p-8
+              shadow-sm"
           >
-            Pending Requests
-          </h3>
-          <p className="text-foreground mt-4 text-4xl font-bold tracking-tight">
-            {requestsLoading ? "..." : requests.length}
-          </p>
+            <h3
+              className="text-secondary-foreground text-xs font-semibold
+                tracking-widest uppercase"
+            >
+              Active Roster
+            </h3>
+            <p
+              className="text-foreground mt-4 text-4xl font-bold tracking-tight"
+            >
+              {clientsLoading ? "..." : clients.length.toLocaleString()}
+            </p>
+          </div>
         </div>
       </div>
 
@@ -107,7 +119,6 @@ export default function CoachDashboard() {
           </div>
         </div>
 
-        {/* Client Directory - Right Column (takes up 7/12) */}
         <div className="space-y-4 lg:col-span-7">
           <h2 className="text-xl font-semibold text-white">Current Roster</h2>
           <div
