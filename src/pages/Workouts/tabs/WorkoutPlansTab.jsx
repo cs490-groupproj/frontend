@@ -2,6 +2,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Progress } from "@/components/ui/progress";
 import { Plus, Trash2, Minus } from "lucide-react";
 
 const MetricField = ({ label, className = "", children }) => (
@@ -24,6 +25,7 @@ const formatScheduleTime = (scheduleTime) => {
 
 const WorkoutPlansTab = ({
   pageTitle = "Create and Manage Workout Plans",
+  isLoading = false,
   isCoachAssignScreen = false,
   coachClients = [],
   coachClientsLoading = false,
@@ -72,6 +74,24 @@ const WorkoutPlansTab = ({
   removeScheduleDraftEntry,
   assignScheduleToPlan,
 }) => {
+  if (isLoading) {
+    return (
+      <div className="space-y-5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h1 className="text-3xl font-bold">{pageTitle}</h1>
+          </div>
+        </div>
+        <Card>
+          <CardContent className="space-y-3 p-4">
+            <p className="text-muted-foreground text-sm">Loading workout plans...</p>
+            <Progress value={70} />
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">

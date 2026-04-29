@@ -162,10 +162,22 @@ const Workouts = () => {
   const { putFunction } = usePutToAPI();
   const { deleteFunction } = useDeleteFromAPI();
 
-  const { data: workoutTypes } = useGetFromAPI("/workout-types", null);
-  const { data: exercisesCatalog } = useGetFromAPI("/exercises", null);
-  const { data: bodyParts } = useGetFromAPI("/body-parts", null);
-  const { data: exerciseCategories } = useGetFromAPI("/exercise-categories", null);
+  const { data: workoutTypes, loading: workoutTypesLoading } = useGetFromAPI(
+    "/workout-types",
+    null
+  );
+  const { data: exercisesCatalog, loading: exercisesCatalogLoading } = useGetFromAPI(
+    "/exercises",
+    null
+  );
+  const { data: bodyParts, loading: bodyPartsLoading } = useGetFromAPI(
+    "/body-parts",
+    null
+  );
+  const { data: exerciseCategories, loading: exerciseCategoriesLoading } = useGetFromAPI(
+    "/exercise-categories",
+    null
+  );
   const { data: coachClientsData, loading: coachClientsLoading } = useGetFromAPI(
     isCoachAssignScreen ? "/coaches/clients" : null,
     null
@@ -174,7 +186,10 @@ const Workouts = () => {
     isCoachAssignScreen || !userId
       ? "/workout-plans?created_by=me"
       : `/workout-plans/available?user_id=${userId}`;
-  const { data: plansData } = useGetFromAPI(plansRequestUri, plansRefreshKey);
+  const { data: plansData, loading: plansLoading } = useGetFromAPI(
+    plansRequestUri,
+    plansRefreshKey
+  );
   const { data: selectedClientScheduleData } = useGetFromAPI(
     isCoachAssignScreen && selectedClientId
       ? `/workouts/my_schedule?user_id=${selectedClientId}`
@@ -187,11 +202,14 @@ const Workouts = () => {
   );
 
   const [planDetailsById, setPlanDetailsById] = useState({});
+  const [planDetailsLoading, setPlanDetailsLoading] = useState(false);
 
   useEffect(() => {
     const loadPlanDetails = async () => {
+      setPlanDetailsLoading(true);
       if (!Array.isArray(plansData) || plansData.length === 0) {
         setPlanDetailsById({});
+        setPlanDetailsLoading(false);
         return;
       }
 
@@ -207,10 +225,20 @@ const Workouts = () => {
         })
       );
       setPlanDetailsById(details);
+      setPlanDetailsLoading(false);
     };
 
     loadPlanDetails();
   }, [plansData]);
+
+  const isWorkoutPlansTabLoading =
+    plansLoading ||
+    planDetailsLoading ||
+    workoutTypesLoading ||
+    exercisesCatalogLoading ||
+    bodyPartsLoading ||
+    exerciseCategoriesLoading ||
+    (isCoachAssignScreen && coachClientsLoading);
 
   const bodyPartNameById = useMemo(() => {
     if (!Array.isArray(bodyParts)) return {};
@@ -1078,6 +1106,7 @@ const Workouts = () => {
       {activeTab === TABS.PLANS && (
         <WorkoutPlansTab
           pageTitle={isCoachAssignScreen ? "Assign Workouts" : "Create and Manage Workout Plans"}
+          isLoading={isWorkoutPlansTabLoading}
           isCoachAssignScreen={isCoachAssignScreen}
           coachClients={coachClients}
           coachClientsLoading={coachClientsLoading}
