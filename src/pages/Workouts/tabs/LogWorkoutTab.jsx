@@ -131,6 +131,10 @@ const LogWorkoutTab = ({
                         return (
                           <MetricField label="Duration (sec)" className="col-span-7">
                             <Input
+                              type="number"
+                              step="1"
+                              min="0"
+                              max="86400"
                               placeholder="e.g. 1800"
                               value={row.duration_sec}
                               onChange={(event) =>
@@ -145,6 +149,10 @@ const LogWorkoutTab = ({
                           <>
                             <MetricField label="Distance (miles)" className="col-span-4">
                               <Input
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                max="1000"
                                 placeholder="e.g. 5000"
                                 value={row.distance_m}
                                 onChange={(event) =>
@@ -154,6 +162,10 @@ const LogWorkoutTab = ({
                             </MetricField>
                             <MetricField label="Pace (sec/mile)" className="col-span-3">
                               <Input
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                max="3600"
                                 placeholder="e.g. 300"
                                 value={row.pace_sec_per_km}
                                 onChange={(event) =>
@@ -168,6 +180,10 @@ const LogWorkoutTab = ({
                         return (
                           <MetricField label="Reps" className="col-span-7">
                             <Input
+                              type="number"
+                              step="1"
+                              min="0"
+                              max="1000"
                               placeholder="e.g. 20"
                               value={row.reps}
                               onChange={(event) => updateLogRow(index, "reps", event.target.value)}
@@ -179,6 +195,10 @@ const LogWorkoutTab = ({
                         <>
                           <MetricField label="Sets" className="col-span-2">
                             <Input
+                              type="number"
+                              step="1"
+                              min="0"
+                              max="100"
                               placeholder="e.g. 4"
                               value={row.sets}
                               onChange={(event) => updateLogRow(index, "sets", event.target.value)}
@@ -186,6 +206,10 @@ const LogWorkoutTab = ({
                           </MetricField>
                           <MetricField label="Reps" className="col-span-2">
                             <Input
+                              type="number"
+                              step="1"
+                              min="0"
+                              max="1000"
                               placeholder="e.g. 10"
                               value={row.reps}
                               onChange={(event) => updateLogRow(index, "reps", event.target.value)}
@@ -193,6 +217,10 @@ const LogWorkoutTab = ({
                           </MetricField>
                           <MetricField label="Weight (lbs)" className="col-span-3">
                             <Input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              max="2000"
                               placeholder="e.g. 135"
                               value={row.lbs}
                               onChange={(event) => updateLogRow(index, "lbs", event.target.value)}
@@ -223,6 +251,10 @@ const LogWorkoutTab = ({
               <CardContent className="space-y-2 p-5">
                 <p className="text-muted-foreground text-sm font-medium">Duration (minutes)</p>
                 <Input
+                  type="number"
+                  step="1"
+                  min="0"
+                  max="1440"
                   value={logDuration}
                   onChange={(event) => setLogDuration(event.target.value)}
                   placeholder="e.g. 45"
