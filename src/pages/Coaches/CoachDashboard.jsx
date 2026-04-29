@@ -1,14 +1,23 @@
 import React from "react";
 import useGetFromAPI from "../../hooks/useGetFromAPI";
 
-const mapRequestFromBackend = (r) => ({
+const mapRequestFromBackend = (r) => {
+  if (!r) {
+    console.warn("Invalid request object:", r);
+    return null;
+  }
+  const first_name = r.client?.client_first_name || "";
+  const last_name = r.client?.client_last_name || "";
+  
+  return {
   id: r.request_id ?? r.coach_request_id,
   initials:
-    (r.client.client_first_name?.[0] || "") +
-    (r.client.client_last_name?.[0] || ""),
-  name: `${r.client.client_first_name} ${r.client.client_last_name}`,
+    (first_name[0] || "") +
+    (last_name[0] || ""),
+  name: `${first_name} ${last_name}`,
   message: "Incoming coaching request",
-});
+  }
+};
 
 export default function CoachDashboard() {
   const { data: clientData, loading: clientsLoading } =
@@ -20,7 +29,7 @@ export default function CoachDashboard() {
   const coachName = clientData?.coach_name || "Coach";
   const clients = clientData?.clients || [];
   const requests = requestsData?.requests
-    ? requestsData.requests.map(mapRequestFromBackend)
+    ? requestsData.requests.map(mapRequestFromBackend).filter(Boolean)
     : [];
 
   return (
