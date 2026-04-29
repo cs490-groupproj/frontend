@@ -1162,6 +1162,7 @@ const Workouts = () => {
           loadPlanIntoLog={loadPlanIntoLog}
           selectedPlanToLoad={selectedPlanToLoad}
           plans={plans}
+          exercisesCatalog={exercisesCatalog}
           logRows={logRows}
           updateLogRow={updateLogRow}
           removeLogRow={removeLogRow}

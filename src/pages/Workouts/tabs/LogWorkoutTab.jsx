@@ -19,6 +19,7 @@ const LogWorkoutTab = ({
   loadPlanIntoLog,
   selectedPlanToLoad,
   plans,
+  exercisesCatalog,
   logRows,
   updateLogRow,
   removeLogRow,
@@ -119,10 +120,26 @@ const LogWorkoutTab = ({
               {logRows.map((row, index) => (
                 <div key={`${index}-${row.exercise}`} className="grid grid-cols-12 gap-3">
                   <MetricField label="Exercise" className="col-span-4">
-                    <Input
-                      value={row.exercise}
-                      onChange={(event) => updateLogRow(index, "exercise", event.target.value)}
-                    />
+                    <select
+                      className="border-input bg-background text-foreground h-10 w-full rounded-md border px-3 text-sm"
+                      value={row.exercise_id || ""}
+                      onChange={(event) => {
+                        const nextExerciseId = event.target.value;
+                        const selectedExercise = (exercisesCatalog || []).find(
+                          (exercise) =>
+                            String(exercise.exercise_id) === String(nextExerciseId)
+                        );
+                        updateLogRow(index, "exercise_id", nextExerciseId);
+                        updateLogRow(index, "exercise", selectedExercise?.name || "");
+                      }}
+                    >
+                      <option value="">Select exercise</option>
+                      {(exercisesCatalog || []).map((exercise) => (
+                        <option key={exercise.exercise_id} value={exercise.exercise_id}>
+                          {exercise.name}
+                        </option>
+                      ))}
+                    </select>
                   </MetricField>
                   <div className="col-span-7 grid grid-cols-7 gap-2">
                     {(() => {
