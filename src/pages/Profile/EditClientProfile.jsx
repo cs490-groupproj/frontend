@@ -5,6 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import useGetFromAPI from "@/hooks/useGetFromAPI";
 import usePatchToAPI from "@/hooks/usePatchToAPI";
 import DeleteAccount from "./components/DeleteAccount";
+import { useNavigate } from "react-router-dom";
 
 const GOALS = [
   { id: 0, label: "Lose weight" },
@@ -68,6 +69,8 @@ const dialogContentClass =
   "bg-card border-border fixed top-1/2 left-1/2 z-50 grid w-[calc(100%-2rem)] max-w-lg max-h-[min(90vh,720px)] -translate-x-1/2 -translate-y-1/2 gap-4 overflow-y-auto rounded-xl border p-6 shadow-lg";
 
 export default function EditClientProfile() {
+  const navigate = useNavigate();
+
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const { loading: meLoading, error: meError } = useGetFromAPI(
     "/users/me",
@@ -80,6 +83,7 @@ export default function EditClientProfile() {
     refreshTrigger
   );
   const { patchFunction, loading: saving } = usePatchToAPI();
+  const hasCoachSurvey = Boolean(profileData?.coach_survey);
 
   const [accountDialogOpen, setAccountDialogOpen] = useState(false);
   const [goalsDialogOpen, setGoalsDialogOpen] = useState(false);
@@ -317,6 +321,19 @@ export default function EditClientProfile() {
             >
               Edit profile
             </Button>
+            {!hasCoachSurvey && (
+              <Button
+                type="button"
+                variant="default"
+                onClick={() =>
+                  navigate("/coachSurvey", {
+                    state: { next: "/profile" },
+                  })
+                }
+              >
+                Apply to be a Coach
+              </Button>
+            )}
             <DeleteAccount />
           </div>
         </div>
