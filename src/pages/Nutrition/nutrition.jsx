@@ -26,6 +26,15 @@ const MEAL_NAMES = ["Breakfast", "Lunch", "Dinner", "Snacks"];
 const mealTypeToName = { 1: "Breakfast", 2: "Lunch", 3: "Dinner", 4: "Snacks" };
 const mealNameToType = { Breakfast: 1, Lunch: 2, Dinner: 3, Snacks: 4 };
 
+const formatTime = (isoString) => {
+  if (!isoString) return "";
+  const date = new Date(isoString.endsWith("Z") ? isoString : isoString + "Z");
+  return date.toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+};
+
 const emptyMealPlanIds = () => ({
   Breakfast: null,
   Lunch: null,
@@ -41,7 +50,6 @@ const emptyPersistedFoodsByMeal = () => ({
 
 /**
  * Detailed Weekly History Component
- * Fetches specific meal plans and food items from the last 7 days using /week
  */
 const WeeklyHistory = ({ userId, timezone }) => {
   const { data: historyData, loading } = useGetFromAPI(
@@ -57,8 +65,8 @@ const WeeklyHistory = ({ userId, timezone }) => {
       </div>
     );
 
-  // Group meals by date
   const groupedByDate = (historyData?.meal_plans || []).reduce((acc, plan) => {
+    // Also use the fix here if needed, but grouping relies on the date part
     const date = new Date(plan.meal_logged_at).toLocaleDateString(undefined, {
       weekday: "long",
       month: "short",
@@ -121,10 +129,8 @@ const WeeklyHistory = ({ userId, timezone }) => {
                           text-xs"
                       >
                         <Clock size={12} />
-                        {new Date(plan.meal_logged_at).toLocaleTimeString([], {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
+                        {/* Corrected Time Display */}
+                        {formatTime(plan.meal_logged_at)}
                       </div>
                     </div>
                     <div className="p-4">
