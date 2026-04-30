@@ -1,5 +1,5 @@
 ﻿import React, { useEffect, useMemo, useState } from "react";
-import { useOutletContext } from "react-router-dom";
+import { useLocation, useOutletContext } from "react-router-dom";
 import useGetFromAPI from "@/hooks/useGetFromAPI";
 import usePostToAPI from "@/hooks/usePostToAPI";
 import usePatchToAPI from "@/hooks/usePatchToAPI";
@@ -74,9 +74,48 @@ const emptyLogRow = {
   pace_sec_per_km: "",
 };
 
+const defaultScheduleEntry = () => ({
+  day: DAYS_OF_WEEK[0],
+  time: "09:00",
+});
+
+const MAX_LIMITS = {
+  DURATION_MIN: 1440,
+  DURATION_SEC: 86400,
+  SETS: 100,
+  REPS: 1000,
+  WEIGHT: 2000,
+  DISTANCE: 1000,
+  PACE: 3600,
+};
+
+const parseOptionalNumberStrict = (value, { integer = false, min = 0, max } = {}) => {
+  if (value === null || value === undefined || value === "") {
+    return { provided: false, valid: true, parsed: undefined };
+  }
+  const raw = String(value).trim();
+  const pattern = integer ? /^\d+$/ : /^\d+(\.\d+)?$/;
+  if (!pattern.test(raw)) {
+    return { provided: true, valid: false, parsed: undefined };
+  }
+  const parsed = Number(raw);
+  if (!Number.isFinite(parsed)) {
+    return { provided: true, valid: false, parsed: undefined };
+  }
+  if (parsed < min) {
+    return { provided: true, valid: false, parsed: undefined };
+  }
+  if (max !== undefined && parsed > max) {
+    return { provided: true, valid: false, parsed: undefined };
+  }
+  return { provided: true, valid: true, parsed };
+};
+
 const Workouts = () => {
+  const location = useLocation();
   const { user } = useOutletContext();
   const userId = user?.user_id;
+  const isCoachAssignScreen = location.pathname === "/assignWorkouts";
 
   const [activeTab, setActiveTab] = useState(TABS.PLANS);
   const [plansRefreshKey, setPlansRefreshKey] = useState(0);
@@ -106,19 +145,56 @@ const Workouts = () => {
   const [logDuration, setLogDuration] = useState("");
   const [mood, setMood] = useState("");
   const [sessionNotes, setSessionNotes] = useState("");
+  const [selectedClientId, setSelectedClientId] = useState("");
+  const [selectedClientScheduleRefreshKey, setSelectedClientScheduleRefreshKey] = useState(0);
+
+  useEffect(() => {
+    if (
+      isCoachAssignScreen &&
+      (activeTab === TABS.HISTORY || activeTab === TABS.LOG)
+    ) {
+      setActiveTab(TABS.PLANS);
+    }
+  }, [isCoachAssignScreen, activeTab]);
 
   const { postFunction } = usePostToAPI();
   const { patchFunction } = usePatchToAPI();
   const { putFunction } = usePutToAPI();
   const { deleteFunction } = useDeleteFromAPI();
 
-  const { data: workoutTypes } = useGetFromAPI("/workout-types", null);
-  const { data: exercisesCatalog } = useGetFromAPI("/exercises", null);
-  const { data: bodyParts } = useGetFromAPI("/body-parts", null);
-  const { data: exerciseCategories } = useGetFromAPI("/exercise-categories", null);
-  const { data: plansData } = useGetFromAPI(
-    "/workout-plans?created_by=me",
+  const { data: workoutTypes, loading: workoutTypesLoading } = useGetFromAPI(
+    "/workout-types",
+    null
+  );
+  const { data: exercisesCatalog, loading: exercisesCatalogLoading } = useGetFromAPI(
+    "/exercises",
+    null
+  );
+  const { data: bodyParts, loading: bodyPartsLoading } = useGetFromAPI(
+    "/body-parts",
+    null
+  );
+  const { data: exerciseCategories, loading: exerciseCategoriesLoading } = useGetFromAPI(
+    "/exercise-categories",
+    null
+  );
+  const { data: coachClientsData, loading: coachClientsLoading } = useGetFromAPI(
+    isCoachAssignScreen ? "/coaches/clients" : null,
+    null
+  );
+  const plansRequestUri =
+    isCoachAssignScreen || !userId
+      ? "/workout-plans?created_by=me"
+      : `/workout-plans/available?user_id=${userId}`;
+  const { data: plansData, loading: plansLoading } = useGetFromAPI(
+    plansRequestUri,
     plansRefreshKey
+  );
+  const { data: selectedClientScheduleData } = useGetFromAPI(
+    isCoachAssignScreen && selectedClientId
+      ? `/workouts/my_schedule?user_id=${selectedClientId}`
+      : null,
+    selectedClientScheduleRefreshKey
   );
   const { data: workoutsData } = useGetFromAPI(
     userId ? `/workouts?user_id=${userId}` : null,
@@ -126,11 +202,14 @@ const Workouts = () => {
   );
 
   const [planDetailsById, setPlanDetailsById] = useState({});
+  const [planDetailsLoading, setPlanDetailsLoading] = useState(false);
 
   useEffect(() => {
     const loadPlanDetails = async () => {
+      setPlanDetailsLoading(true);
       if (!Array.isArray(plansData) || plansData.length === 0) {
         setPlanDetailsById({});
+        setPlanDetailsLoading(false);
         return;
       }
 
@@ -146,10 +225,20 @@ const Workouts = () => {
         })
       );
       setPlanDetailsById(details);
+      setPlanDetailsLoading(false);
     };
 
     loadPlanDetails();
   }, [plansData]);
+
+  const isWorkoutPlansTabLoading =
+    plansLoading ||
+    planDetailsLoading ||
+    workoutTypesLoading ||
+    exercisesCatalogLoading ||
+    bodyPartsLoading ||
+    exerciseCategoriesLoading ||
+    (isCoachAssignScreen && coachClientsLoading);
 
   const bodyPartNameById = useMemo(() => {
     if (!Array.isArray(bodyParts)) return {};
@@ -231,11 +320,41 @@ const Workouts = () => {
     bankCategoryFilter,
   ]);
 
+  const selectedClientAssignmentsByPlanId = useMemo(() => {
+    const scheduleItems = Array.isArray(selectedClientScheduleData?.my_schedule)
+      ? selectedClientScheduleData.my_schedule
+      : [];
+    return scheduleItems.reduce((acc, item) => {
+      const planId = item.workout_plan_id;
+      if (!planId) return acc;
+      if (!acc[planId]) acc[planId] = [];
+      acc[planId].push({
+        id: item.assignment_day_id ?? item.id ?? item.assignment_id ?? null,
+        workout_plan_id: item.workout_plan_id,
+        weekday: item.weekday || "",
+        schedule_time: item.schedule_time || "",
+        source: item.source || null,
+      });
+      return acc;
+    }, {});
+  }, [selectedClientScheduleData]);
+
   const plans = useMemo(() => {
     if (!Array.isArray(plansData)) return [];
     return plansData.map((plan) => {
       const detail = planDetailsById[plan.workout_plan_id];
       const detailExercises = Array.isArray(detail?.exercises) ? detail.exercises : [];
+      const baseAssignments = Array.isArray(detail?.assignments) ? detail.assignments : [];
+      const assignmentsForView =
+        isCoachAssignScreen && selectedClientId
+          ? selectedClientAssignmentsByPlanId[plan.workout_plan_id] || []
+          : isCoachAssignScreen
+            ? []
+            : baseAssignments;
+      const isCreatedByUser = Boolean(plan?.is_created_by_user);
+      const isAssignedToUser = Boolean(plan?.is_assigned_to_user);
+      const isLockedAssignedPlan =
+        !isCoachAssignScreen && isAssignedToUser && !isCreatedByUser;
       return {
         workout_plan_id: plan.workout_plan_id,
         title: detail?.title || plan.title || "",
@@ -246,11 +365,57 @@ const Workouts = () => {
             : plan.duration_min || 0,
         workout_type_id: detail?.workout_type_id ?? null,
         created_by: detail?.created_by || plan.created_by || null,
+        is_created_by_user: isCreatedByUser,
+        is_assigned_to_user: isAssignedToUser,
+        is_locked_assigned_plan: isLockedAssignedPlan,
         exercises: detailExercises,
-        assignments: Array.isArray(detail?.assignments) ? detail.assignments : [],
+        assignments: assignmentsForView,
       };
     });
-  }, [plansData, planDetailsById]);
+  }, [
+    plansData,
+    planDetailsById,
+    isCoachAssignScreen,
+    selectedClientId,
+    selectedClientAssignmentsByPlanId,
+  ]);
+
+  const coachClients = useMemo(() => {
+    const rawClients = Array.isArray(coachClientsData)
+      ? coachClientsData
+      : coachClientsData?.clients || [];
+
+    return rawClients
+      .map((client) => {
+        const clientUserId = client.client_id ?? client.client_user_id ?? client.user_id ?? client.id;
+        if (!clientUserId) return null;
+        const firstName = client.first_name || "";
+        const lastName = client.last_name || "";
+        const fallbackName = client.name || client.email || `Client ${clientUserId}`;
+        const fullName = `${firstName} ${lastName}`.trim() || fallbackName;
+        return {
+          client_id: String(clientUserId),
+          name: fullName,
+        };
+      })
+      .filter(Boolean);
+  }, [coachClientsData]);
+
+  useEffect(() => {
+    if (!isCoachAssignScreen) {
+      setSelectedClientId("");
+      return;
+    }
+
+    if (selectedClientId) {
+      const selectedStillExists = coachClients.some(
+        (client) => String(client.client_id) === String(selectedClientId)
+      );
+      if (!selectedStillExists) {
+        setSelectedClientId("");
+      }
+    }
+  }, [isCoachAssignScreen, selectedClientId, coachClients]);
 
   const todayWeekday = useMemo(
     () => new Date().toLocaleDateString("en-US", { weekday: "long" }),
@@ -287,6 +452,64 @@ const Workouts = () => {
     if (value === null || value === undefined || value === "") return undefined;
     const parsed = Number(value);
     return Number.isFinite(parsed) ? parsed : undefined;
+  };
+
+  const validateMetricRow = (row, exerciseMeta, { includeWeight = false } = {}) => {
+    const categoryKey = resolveCategoryKey(exerciseMeta, categoryNameById);
+
+    const validateField = (
+      fieldValue,
+      fieldName,
+      { integer = false, max } = {}
+    ) => {
+      const result = parseOptionalNumberStrict(fieldValue, { integer, min: 0, max });
+      if (!result.valid) {
+        return `${fieldName} must be a valid ${integer ? "integer" : "number"}${max !== undefined ? ` between 0 and ${max}` : ""}.`;
+      }
+      return null;
+    };
+
+    if (categoryKey === CATEGORY_KEYS.DURATION) {
+      return validateField(row.duration_sec, "Duration (sec)", {
+        integer: true,
+        max: MAX_LIMITS.DURATION_SEC,
+      });
+    }
+    if (categoryKey === CATEGORY_KEYS.CARDIO) {
+      return (
+        validateField(row.distance_m, "Distance", {
+          integer: false,
+          max: MAX_LIMITS.DISTANCE,
+        }) ||
+        validateField(row.pace_sec_per_km, "Pace", {
+          integer: false,
+          max: MAX_LIMITS.PACE,
+        })
+      );
+    }
+    if (categoryKey === CATEGORY_KEYS.REPS_ONLY) {
+      return validateField(row.reps, "Reps", {
+        integer: true,
+        max: MAX_LIMITS.REPS,
+      });
+    }
+
+    return (
+      validateField(row.sets, "Sets", {
+        integer: true,
+        max: MAX_LIMITS.SETS,
+      }) ||
+      validateField(row.reps, "Reps", {
+        integer: true,
+        max: MAX_LIMITS.REPS,
+      }) ||
+      (includeWeight
+        ? validateField(row.lbs, "Weight", {
+            integer: false,
+            max: MAX_LIMITS.WEIGHT,
+          })
+        : null)
+    );
   };
 
   const buildMetricPayload = (row, exerciseMeta, { includeWeight = false } = {}) => {
@@ -358,23 +581,97 @@ const Workouts = () => {
     setScheduleDraftsByPlan((prev) => ({
       ...prev,
       [planId]: {
-        ...(prev[planId] || { day: DAYS_OF_WEEK[0], time: "09:00" }),
-        [key]: value,
+        entries:
+          prev[planId]?.entries?.length > 0
+            ? prev[planId].entries.map((entry, index) =>
+                index === 0 ? { ...entry, [key]: value } : entry
+              )
+            : [{ ...defaultScheduleEntry(), [key]: value }],
       },
     }));
   };
 
+  const updateScheduleDraftEntry = (planId, index, key, value) => {
+    setScheduleDraftsByPlan((prev) => ({
+      ...prev,
+      [planId]: {
+        entries: (prev[planId]?.entries || [defaultScheduleEntry()]).map((entry, entryIndex) =>
+          entryIndex === index ? { ...entry, [key]: value } : entry
+        ),
+      },
+    }));
+  };
+
+  const addScheduleDraftEntry = (planId) => {
+    setScheduleDraftsByPlan((prev) => ({
+      ...prev,
+      [planId]: {
+        entries: [...(prev[planId]?.entries || [defaultScheduleEntry()]), defaultScheduleEntry()],
+      },
+    }));
+  };
+
+  const removeScheduleDraftEntry = (planId, index) => {
+    setScheduleDraftsByPlan((prev) => {
+      const nextEntries = (prev[planId]?.entries || [defaultScheduleEntry()]).filter(
+        (_, entryIndex) => entryIndex !== index
+      );
+      return {
+        ...prev,
+        [planId]: {
+          entries: nextEntries.length > 0 ? nextEntries : [defaultScheduleEntry()],
+        },
+      };
+    });
+  };
+
   const assignScheduleToPlan = async (planId) => {
+    const selectedPlan = plans.find(
+      (plan) => String(plan.workout_plan_id) === String(planId)
+    );
+    if (selectedPlan?.is_locked_assigned_plan) {
+      setFormError("Assigned plans cannot be modified.");
+      return;
+    }
+
+    if (isCoachAssignScreen && !selectedClientId) {
+      setFormError("Select a client before assigning this workout.");
+      return;
+    }
+
     const draft = scheduleDraftsByPlan[planId];
-    if (!draft?.day || !draft?.time) return;
-    const scheduleTime = draft.time.length === 5 ? `${draft.time}:00` : draft.time;
+    const draftEntries =
+      draft?.entries?.length > 0
+        ? draft.entries
+        : draft?.day && draft?.time
+          ? [{ day: draft.day, time: draft.time }]
+          : [];
+    const cleanedAssignments = draftEntries
+      .filter((entry) => entry?.day && entry?.time)
+      .map((entry) => ({
+        weekday: entry.day,
+        schedule_time: entry.time.length === 5 ? `${entry.time}:00` : entry.time,
+      }));
+    if (cleanedAssignments.length === 0) return;
     try {
-      await postFunction(`/workout-plans/${planId}/assignments`, {
-        weekday: draft.day,
-        schedule_time: scheduleTime,
-      });
+      if (isCoachAssignScreen) {
+        await postFunction(`/workout-plans/${planId}/assignments`, {
+          client_id: String(selectedClientId),
+          assignments: cleanedAssignments,
+        });
+      } else {
+        const firstAssignment = cleanedAssignments[0];
+        await postFunction(`/workout-plans/${planId}/assignments`, {
+          weekday: firstAssignment.weekday,
+          schedule_time: firstAssignment.schedule_time,
+        });
+      }
+      setFormError("");
       setAssigningPlanId(null);
       setPlansRefreshKey((prev) => prev + 1);
+      if (isCoachAssignScreen) {
+        setSelectedClientScheduleRefreshKey((prev) => prev + 1);
+      }
     } catch (error) {
       setFormError(error?.message || "Failed to assign workout.");
     }
@@ -382,9 +679,27 @@ const Workouts = () => {
 
   const removePlanAssignment = async (assignmentId) => {
     if (!assignmentId) return;
+    if (isCoachAssignScreen && !selectedClientId) {
+      setFormError("Select a client before changing assignments.");
+      return;
+    }
+    const hasLockedPlanWithAssignment = plans.some(
+      (plan) =>
+        plan.is_locked_assigned_plan &&
+        (plan.assignments || []).some(
+          (assignment) => String(assignment.id) === String(assignmentId)
+        )
+    );
+    if (hasLockedPlanWithAssignment) {
+      setFormError("Assigned plans cannot be modified.");
+      return;
+    }
     try {
       await deleteFunction(`/workout-plan-assignments/${assignmentId}`);
       setPlansRefreshKey((prev) => prev + 1);
+      if (isCoachAssignScreen) {
+        setSelectedClientScheduleRefreshKey((prev) => prev + 1);
+      }
     } catch (error) {
       setFormError(error?.message || "Failed to delete assignment.");
     }
@@ -407,6 +722,10 @@ const Workouts = () => {
   };
 
   const openEditForm = (plan) => {
+    if (plan?.is_locked_assigned_plan) {
+      setFormError("Assigned plans cannot be edited.");
+      return;
+    }
     setEditingPlanId(plan.workout_plan_id);
     setPlanTitle(plan.title || "");
     setPlanWorkoutTypeId(
@@ -478,7 +797,26 @@ const Workouts = () => {
       return;
     }
 
+    const durationValidation = parseOptionalNumberStrict(planDurationMin, {
+      integer: true,
+      min: 0,
+      max: MAX_LIMITS.DURATION_MIN,
+    });
+    if (!durationValidation.valid) {
+      setFormError(`Plan duration must be a valid integer between 0 and ${MAX_LIMITS.DURATION_MIN}.`);
+      return;
+    }
+
     const cleanedRows = planExercises.filter((row) => row.exercise_id);
+    for (let index = 0; index < cleanedRows.length; index += 1) {
+      const row = cleanedRows[index];
+      const exerciseMeta = exerciseById[row.exercise_id];
+      const validationError = validateMetricRow(row, exerciseMeta);
+      if (validationError) {
+        setFormError(`Exercise row ${index + 1}: ${validationError}`);
+        return;
+      }
+    }
     const payload = {
       title: trimmedTitle,
       workout_type_id: planWorkoutTypeId ? Number(planWorkoutTypeId) : null,
@@ -544,6 +882,13 @@ const Workouts = () => {
   };
 
   const removePlan = async (planId) => {
+    const selectedPlan = plans.find(
+      (plan) => String(plan.workout_plan_id) === String(planId)
+    );
+    if (selectedPlan?.is_locked_assigned_plan) {
+      setFormError("Assigned plans cannot be deleted.");
+      return;
+    }
     try {
       await deleteFunction(`/workout-plans/${planId}`);
       if (editingPlanId === planId) {
@@ -559,6 +904,16 @@ const Workouts = () => {
   const saveWorkoutLog = async () => {
     if (!userId) {
       setLogSaveError("Unable to log workout: missing user.");
+      return;
+    }
+
+    const logDurationValidation = parseOptionalNumberStrict(logDuration, {
+      integer: true,
+      min: 0,
+      max: MAX_LIMITS.DURATION_MIN,
+    });
+    if (!logDurationValidation.valid) {
+      setLogSaveError(`Duration must be a valid integer between 0 and ${MAX_LIMITS.DURATION_MIN}.`);
       return;
     }
 
@@ -593,6 +948,17 @@ const Workouts = () => {
     if (rowsWithExerciseIds.length === 0) {
       setLogSaveError("Add at least one valid exercise before saving.");
       return;
+    }
+
+    for (let index = 0; index < rowsWithExerciseIds.length; index += 1) {
+      const row = rowsWithExerciseIds[index];
+      const validationError = validateMetricRow(row, row.resolved_exercise_meta, {
+        includeWeight: true,
+      });
+      if (validationError) {
+        setLogSaveError(`Exercise row ${index + 1}: ${validationError}`);
+        return;
+      }
     }
 
     setLogSaveError("");
@@ -696,7 +1062,7 @@ const Workouts = () => {
               : "text-muted-foreground hover:text-foreground"
           }`}
         >
-          Workout Plans
+          {isCoachAssignScreen ? "Assign Workouts" : "Workout Plans"}
         </button>
         <button
           type="button"
@@ -709,32 +1075,43 @@ const Workouts = () => {
         >
           Exercise Bank
         </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab(TABS.HISTORY)}
-          className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
-            activeTab === TABS.HISTORY
-              ? "bg-primary text-primary-foreground"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          Workout History
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab(TABS.LOG)}
-          className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
-            activeTab === TABS.LOG
-              ? "bg-primary text-primary-foreground"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          Log Workout
-        </button>
+        {!isCoachAssignScreen && (
+          <button
+            type="button"
+            onClick={() => setActiveTab(TABS.HISTORY)}
+            className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+              activeTab === TABS.HISTORY
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Workout History
+          </button>
+        )}
+        {!isCoachAssignScreen && (
+          <button
+            type="button"
+            onClick={() => setActiveTab(TABS.LOG)}
+            className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+              activeTab === TABS.LOG
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Log Workout
+          </button>
+        )}
       </div>
 
       {activeTab === TABS.PLANS && (
         <WorkoutPlansTab
+          pageTitle={isCoachAssignScreen ? "Assign Workouts" : "Create and Manage Workout Plans"}
+          isLoading={isWorkoutPlansTabLoading}
+          isCoachAssignScreen={isCoachAssignScreen}
+          coachClients={coachClients}
+          coachClientsLoading={coachClientsLoading}
+          selectedClientId={selectedClientId}
+          setSelectedClientId={setSelectedClientId}
           openCreateForm={openCreateForm}
           isFormOpen={isFormOpen}
           planTitle={planTitle}
@@ -773,6 +1150,9 @@ const Workouts = () => {
           scheduleDraftsByPlan={scheduleDraftsByPlan}
           DAYS_OF_WEEK={DAYS_OF_WEEK}
           updateScheduleDraft={updateScheduleDraft}
+          updateScheduleDraftEntry={updateScheduleDraftEntry}
+          addScheduleDraftEntry={addScheduleDraftEntry}
+          removeScheduleDraftEntry={removeScheduleDraftEntry}
           assignScheduleToPlan={assignScheduleToPlan}
         />
       )}
@@ -791,7 +1171,7 @@ const Workouts = () => {
         />
       )}
 
-      {activeTab === TABS.HISTORY && (
+      {!isCoachAssignScreen && activeTab === TABS.HISTORY && (
         <WorkoutHistoryTab
           workoutsData={workoutsData}
           toggleHistoryWorkout={toggleHistoryWorkout}
@@ -802,7 +1182,7 @@ const Workouts = () => {
         />
       )}
 
-      {activeTab === TABS.LOG && (
+      {!isCoachAssignScreen && activeTab === TABS.LOG && (
         <LogWorkoutTab
           hasWorkoutScheduledToday={hasWorkoutScheduledToday}
           todayWeekday={todayWeekday}
@@ -811,6 +1191,7 @@ const Workouts = () => {
           loadPlanIntoLog={loadPlanIntoLog}
           selectedPlanToLoad={selectedPlanToLoad}
           plans={plans}
+          exercisesCatalog={exercisesCatalog}
           logRows={logRows}
           updateLogRow={updateLogRow}
           removeLogRow={removeLogRow}

@@ -1,59 +1,75 @@
-import React from "react";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import Sidebar from "./Sidebar";
 import { Outlet } from "react-router-dom";
-import { io } from "socket.io-client";
-import { API_BASE_URL } from "../../../config.js";
-import { onAuthStateChanged } from "firebase/auth";
-import { auth } from "@/firebase";
-import useGetFromAPI from "@/hooks/useGetFromAPI";
+import { useSocketNotifications } from "@/hooks/useSocketNotifications";
+import { ACTIVE_MODE_MODES } from "../../../config";
 
 const DashboardLayout = () => {
-  const [socket, setSocket] = useState(null);
-  const [authToken, setAuthToken] = useState(null);
-  const [requestURI, setRequestURI] = useState(null);
+  // activeMode is ui only for displaying the correct sidebar. it IS NOT ALWAYS
+  // RIGHT, so you MUST NOT USE IT for checking the user's role, use user.is_*
+  // for that
+  const [activeMode, setActiveMode] = useState(() => {
+    return localStorage.getItem("activeMode");
+  });
+  const {
+    authToken,
+    socket,
+    user,
+    notifications,
+    handleMarkMessagesAsRead,
+    isAppLoading,
+  } = useSocketNotifications();
 
-  //gets the userID, requestURI will be null until the auth token is gotten
-  const { data: user } = useGetFromAPI(requestURI, null);
-
-  //Paused until auth loads to prevent 401 errors
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        const token = await user.getIdToken();
-        setAuthToken(token);
-        //since we have auth, we can change the requestURI to the one to fetch the user id
-        setRequestURI("/users/me");
-      }
-    });
-    return () => unsubscribe();
-  }, []);
-
-  //when we get the authToken, get sockets
+    if (activeMode) {
+      localStorage.setItem("activeMode", activeMode);
+    }
+  }, [activeMode]);
   useEffect(() => {
-    if (!authToken) {
+    if (!user) {
       return;
     }
-    const newSocket = io(API_BASE_URL, {
-      query: { token: authToken },
-    });
+    if (activeMode) return;
 
-    setSocket(newSocket);
-
-    return () => {
-      newSocket.disconnect();
-    };
-  }, [authToken]);
+    if (user?.is_coach) {
+      setActiveMode(ACTIVE_MODE_MODES.COACH);
+    } else if (user?.is_client) {
+      setActiveMode(ACTIVE_MODE_MODES.CLIENT);
+    } else if (user?.is_admin) {
+      setActiveMode(ACTIVE_MODE_MODES.ADMIN);
+    } else {
+      console.log("'Ey Jimmy. Gimme a user with nuthin'");
+    }
+  }, [user]);
 
   return (
     <div className="bg-background text-foreground min-h-screen">
-      <Sidebar />
-      {authToken && user ? (
-        <main className="flex min-h-screen overflow-y-auto p-8 pl-72">
-          <Outlet context={{ socket, user, authToken }} />
-        </main>
+      {!isAppLoading ? (
+        <div>
+          <Sidebar
+            notifications={notifications}
+            activeMode={activeMode}
+            user={user}
+            socket={socket}
+            setActiveMode={setActiveMode}
+          />
+
+          <main className="flex min-h-screen overflow-y-auto p-8 pl-64">
+            <Outlet
+              context={{
+                socket,
+                user,
+                notifications,
+                handleMarkMessagesAsRead,
+                authToken,
+              }}
+            />
+          </main>
+        </div>
       ) : (
-        <p>content loading</p>
+        <p className="flex min-h-screen items-center justify-center">
+          content loading
+        </p>
       )}
     </div>
   );

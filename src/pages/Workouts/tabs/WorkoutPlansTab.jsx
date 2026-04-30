@@ -2,7 +2,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Trash2 } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import { Plus, Trash2, Minus } from "lucide-react";
 
 const MetricField = ({ label, className = "", children }) => (
   <div className={className}>
@@ -11,7 +12,25 @@ const MetricField = ({ label, className = "", children }) => (
   </div>
 );
 
+const formatScheduleTime = (scheduleTime) => {
+  if (!scheduleTime) return "Time TBD";
+  const [rawHour, rawMinute] = String(scheduleTime).split(":");
+  const hour = Number(rawHour);
+  const minute = Number(rawMinute);
+  if (!Number.isFinite(hour) || !Number.isFinite(minute)) return scheduleTime;
+  const period = hour >= 12 ? "PM" : "AM";
+  const hour12 = hour % 12 || 12;
+  return `${hour12}:${String(minute).padStart(2, "0")} ${period}`;
+};
+
 const WorkoutPlansTab = ({
+  pageTitle = "Create and Manage Workout Plans",
+  isLoading = false,
+  isCoachAssignScreen = false,
+  coachClients = [],
+  coachClientsLoading = false,
+  selectedClientId = "",
+  setSelectedClientId,
   openCreateForm,
   isFormOpen,
   planTitle,
@@ -50,19 +69,65 @@ const WorkoutPlansTab = ({
   scheduleDraftsByPlan,
   DAYS_OF_WEEK,
   updateScheduleDraft,
+  updateScheduleDraftEntry,
+  addScheduleDraftEntry,
+  removeScheduleDraftEntry,
   assignScheduleToPlan,
 }) => {
+  if (isLoading) {
+    return (
+      <div className="space-y-5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h1 className="text-3xl font-bold">{pageTitle}</h1>
+          </div>
+        </div>
+        <Card>
+          <CardContent className="space-y-3 p-4">
+            <p className="text-muted-foreground text-sm">Loading workout plans...</p>
+            <Progress value={70} />
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-bold">Create and Manage Workout Plans</h1>
+          <h1 className="text-3xl font-bold">{pageTitle}</h1>
         </div>
         <Button onClick={openCreateForm} className="gap-2">
           <Plus className="h-4 w-4" />
           Create Workout
         </Button>
       </div>
+
+      {isCoachAssignScreen && (
+        <Card>
+          <CardContent className="pt-4">
+            <div className="space-y-1 md:max-w-sm">
+              <label className="text-sm font-medium">Select client</label>
+              <select
+                className="border-input bg-background text-foreground h-10 w-full rounded-md border px-3 text-sm"
+                value={selectedClientId}
+                onChange={(event) => setSelectedClientId?.(event.target.value)}
+                disabled={coachClientsLoading || coachClients.length === 0}
+              >
+                <option value="">
+                  {coachClientsLoading ? "Loading clients..." : "Select client"}
+                </option>
+                {coachClients.map((client) => (
+                  <option key={client.client_id} value={client.client_id}>
+                    {client.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {isFormOpen && (
         <Card>
@@ -94,6 +159,10 @@ const WorkoutPlansTab = ({
               <div className="space-y-1">
                 <label className="text-sm font-medium">Duration (minutes)</label>
                 <Input
+                  type="number"
+                  step="1"
+                  min="0"
+                  max="1440"
                   value={planDurationMin}
                   onChange={(event) => setPlanDurationMin(event.target.value)}
                   placeholder="60"
@@ -120,8 +189,8 @@ const WorkoutPlansTab = ({
                     key={`${index}-${row.workout_plan_exercise_id || "new"}`}
                     className="space-y-2 rounded-md border p-3"
                   >
-                    <div className="grid grid-cols-12 gap-2">
-                      <MetricField label="Exercise" className="col-span-5">
+                    <div className="grid grid-cols-12 gap-3">
+                      <MetricField label="Exercise" className="col-span-12 md:col-span-4">
                         <select
                           className="border-input bg-background text-foreground h-10 w-full rounded-md border px-3 text-sm"
                           value={row.exercise_id}
@@ -138,8 +207,13 @@ const WorkoutPlansTab = ({
                         </select>
                       </MetricField>
                       {categoryKey === "duration" ? (
-                        <MetricField label="Duration (sec)" className="col-span-2">
+                        <MetricField label="Duration (sec)" className="col-span-12 md:col-span-4">
                           <Input
+                            className="w-full min-w-[8rem]"
+                            type="number"
+                            step="1"
+                            min="0"
+                            max="86400"
                             value={row.duration_sec}
                             placeholder="e.g. 1200"
                             onChange={(event) =>
@@ -149,8 +223,13 @@ const WorkoutPlansTab = ({
                         </MetricField>
                       ) : categoryKey === "cardio" ? (
                         <>
-                          <MetricField label="Distance (miles)" className="col-span-1">
+                          <MetricField label="Distance (miles)" className="col-span-12 sm:col-span-6 md:col-span-3">
                             <Input
+                              className="w-full min-w-[8rem]"
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              max="1000"
                               value={row.distance_m}
                               placeholder="e.g. 5000"
                               onChange={(event) =>
@@ -158,8 +237,13 @@ const WorkoutPlansTab = ({
                               }
                             />
                           </MetricField>
-                          <MetricField label="Pace (sec/mile)" className="col-span-1">
+                          <MetricField label="Pace (sec/mile)" className="col-span-12 sm:col-span-6 md:col-span-3">
                             <Input
+                              className="w-full min-w-[8rem]"
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              max="3600"
                               value={row.pace_sec_per_km}
                               placeholder="e.g. 300"
                               onChange={(event) =>
@@ -169,8 +253,13 @@ const WorkoutPlansTab = ({
                           </MetricField>
                         </>
                       ) : categoryKey === "repsOnly" ? (
-                        <MetricField label="Reps" className="col-span-2">
+                        <MetricField label="Reps" className="col-span-12 md:col-span-6">
                           <Input
+                            className="w-full min-w-[8rem]"
+                            type="number"
+                            step="1"
+                            min="0"
+                            max="1000"
                             value={row.reps}
                             placeholder="e.g. 20"
                             onChange={(event) =>
@@ -180,8 +269,13 @@ const WorkoutPlansTab = ({
                         </MetricField>
                       ) : (
                         <>
-                          <MetricField label="Sets" className="col-span-1">
+                          <MetricField label="Sets" className="col-span-6 md:col-span-3">
                             <Input
+                              className="w-full min-w-[8rem]"
+                              type="number"
+                              step="1"
+                              min="0"
+                              max="100"
                               value={row.sets}
                               placeholder="e.g. 4"
                               onChange={(event) =>
@@ -189,8 +283,13 @@ const WorkoutPlansTab = ({
                               }
                             />
                           </MetricField>
-                          <MetricField label="Reps" className="col-span-1">
+                          <MetricField label="Reps" className="col-span-6 md:col-span-3">
                             <Input
+                              className="w-full min-w-[8rem]"
+                              type="number"
+                              step="1"
+                              min="0"
+                              max="1000"
                               value={row.reps}
                               placeholder="e.g. 10"
                               onChange={(event) =>
@@ -200,7 +299,12 @@ const WorkoutPlansTab = ({
                           </MetricField>
                         </>
                       )}
-                      <MetricField label="Action" className="col-span-3">
+                      <MetricField
+                        label="Action"
+                        className={`col-span-12 ${
+                          categoryKey === "duration" ? "md:col-span-4" : "md:col-span-2"
+                        }`}
+                      >
                         <button
                           type="button"
                           className="text-muted-foreground hover:text-destructive inline-flex h-10 w-full items-center justify-center rounded-md border text-sm transition-colors"
@@ -255,6 +359,12 @@ const WorkoutPlansTab = ({
         {plans.map((plan) => (
           <Card key={plan.workout_plan_id}>
             <CardContent className="space-y-4 p-4">
+              {(() => {
+                const isGlobalTemplate = plan.created_by == null;
+                const isRestrictedTemplate = plan.is_locked_assigned_plan || isGlobalTemplate;
+                const canAssignPlan = !plan.is_locked_assigned_plan;
+                return (
+                  <>
               <div className="flex flex-wrap items-center gap-3">
                 <div className="min-w-[220px] flex-1">
                   <h3 className="text-lg font-semibold">{plan.title}</h3>
@@ -284,31 +394,64 @@ const WorkoutPlansTab = ({
                         {bodyPart}
                       </span>
                     ))}
+                    {plan.is_locked_assigned_plan && (
+                      <span className="bg-destructive/15 text-destructive rounded-full px-2.5 py-1 text-xs">
+                        Assigned
+                      </span>
+                    )}
+                    {isGlobalTemplate && (
+                      <span className="bg-primary/15 text-primary rounded-full px-2.5 py-1 text-xs">
+                        Global Template
+                      </span>
+                    )}
                   </div>
                 </div>
-                <Button variant="outline" onClick={() => openEditForm(plan)}>
-                  Edit
-                </Button>
-                <Button variant="outline" onClick={() => removePlan(plan.workout_plan_id)}>
-                  Delete
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setScheduleDraftsByPlan((prev) => ({
-                      ...prev,
-                      [plan.workout_plan_id]: prev[plan.workout_plan_id] || {
-                        day: DAYS_OF_WEEK[0],
-                        time: "09:00",
-                      },
-                    }));
-                    setAssigningPlanId((prev) =>
-                      prev === plan.workout_plan_id ? null : plan.workout_plan_id
-                    );
-                  }}
-                >
-                  {assigningPlanId === plan.workout_plan_id ? "Hide Assign" : "Assign Workout"}
-                </Button>
+                {!isRestrictedTemplate && (
+                  <Button variant="outline" onClick={() => openEditForm(plan)}>
+                    Edit
+                  </Button>
+                )}
+                {!isRestrictedTemplate && (
+                  <Button variant="outline" onClick={() => removePlan(plan.workout_plan_id)}>
+                    Delete
+                  </Button>
+                )}
+                {canAssignPlan && (
+                  <Button
+                    variant="outline"
+                    disabled={isCoachAssignScreen && !selectedClientId}
+                    onClick={() => {
+                      const existingDraftEntries = (plan.assignments || [])
+                        .map((assignment) => {
+                          const normalizedTime = String(
+                            assignment?.schedule_time || "09:00"
+                          )
+                            .slice(0, 5)
+                            .trim();
+                          return {
+                            day: assignment?.weekday || DAYS_OF_WEEK[0],
+                            time: normalizedTime || "09:00",
+                          };
+                        })
+                        .filter((entry) => entry.day && entry.time);
+
+                      setScheduleDraftsByPlan((prev) => ({
+                        ...prev,
+                        [plan.workout_plan_id]: prev[plan.workout_plan_id] || {
+                          entries:
+                            existingDraftEntries.length > 0
+                              ? existingDraftEntries
+                              : [{ day: DAYS_OF_WEEK[0], time: "09:00" }],
+                        },
+                      }));
+                      setAssigningPlanId((prev) =>
+                        prev === plan.workout_plan_id ? null : plan.workout_plan_id
+                      );
+                    }}
+                  >
+                    {assigningPlanId === plan.workout_plan_id ? "Hide Assign" : "Assign Workout"}
+                  </Button>
+                )}
                 <Button
                   variant="outline"
                   onClick={() =>
@@ -328,17 +471,20 @@ const WorkoutPlansTab = ({
                       key={`${plan.workout_plan_id}-${entry.id || index}`}
                       className="bg-muted/40 border-border flex items-center justify-between gap-2 rounded-md border px-3 py-2 text-xs"
                     >
-                      <span className="font-medium">{entry.weekday}</span>
-                      <span className="text-muted-foreground">{entry.schedule_time}</span>
-                      <button
-                        type="button"
-                        className="text-muted-foreground hover:text-foreground"
-                        onClick={() => removePlanAssignment(entry.id)}
-                        disabled={!entry.id}
-                        aria-label="Delete assignment"
-                      >
-                        ×
-                      </button>
+                      <span className="font-medium">
+                        {entry.weekday} {formatScheduleTime(entry.schedule_time)}
+                      </span>
+                      {!isRestrictedTemplate && (
+                        <button
+                          type="button"
+                          className="text-muted-foreground hover:text-foreground"
+                          onClick={() => removePlanAssignment(entry.id)}
+                          disabled={!entry.id || (isCoachAssignScreen && !selectedClientId)}
+                          aria-label="Delete assignment"
+                        >
+                          ×
+                        </button>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -347,45 +493,122 @@ const WorkoutPlansTab = ({
               {assigningPlanId === plan.workout_plan_id && (
                 <Card>
                   <CardContent className="grid grid-cols-1 gap-3 p-3 md:grid-cols-2">
-                    <div className="space-y-1">
-                      <label className="text-sm font-medium">Weekday</label>
-                      <select
-                        className="border-input bg-background h-10 w-full rounded-md border px-3 text-sm"
-                        value={scheduleDraftsByPlan[plan.workout_plan_id]?.day || DAYS_OF_WEEK[0]}
-                        onChange={(event) =>
-                          updateScheduleDraft(
-                            plan.workout_plan_id,
-                            "day",
-                            event.target.value
-                          )
-                        }
-                      >
-                        {DAYS_OF_WEEK.map((day) => (
-                          <option key={day} value={day}>
-                            {day}
-                          </option>
+                    {isCoachAssignScreen ? (
+                      <div className="md:col-span-2 space-y-3">
+                        {(scheduleDraftsByPlan[plan.workout_plan_id]?.entries || [
+                          { day: DAYS_OF_WEEK[0], time: "09:00" },
+                        ]).map((entry, index) => (
+                          <div
+                            key={`${plan.workout_plan_id}-draft-${index}`}
+                            className="grid grid-cols-1 gap-2 md:grid-cols-[1fr_1fr_auto]"
+                          >
+                            <select
+                              className="border-input bg-background h-10 w-full rounded-md border px-3 text-sm"
+                              value={entry.day || DAYS_OF_WEEK[0]}
+                              onChange={(event) =>
+                                updateScheduleDraftEntry(
+                                  plan.workout_plan_id,
+                                  index,
+                                  "day",
+                                  event.target.value
+                                )
+                              }
+                            >
+                              {DAYS_OF_WEEK.map((day) => (
+                                <option key={day} value={day}>
+                                  {day}
+                                </option>
+                              ))}
+                            </select>
+                            <Input
+                              type="time"
+                              value={entry.time || "09:00"}
+                              onChange={(event) =>
+                                updateScheduleDraftEntry(
+                                  plan.workout_plan_id,
+                                  index,
+                                  "time",
+                                  event.target.value
+                                )
+                              }
+                            />
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={() => removeScheduleDraftEntry(plan.workout_plan_id, index)}
+                              disabled={
+                                (scheduleDraftsByPlan[plan.workout_plan_id]?.entries || []).length <=
+                                1
+                              }
+                              className="gap-1"
+                            >
+                              <Minus className="h-4 w-4" />
+                              Remove
+                            </Button>
+                          </div>
                         ))}
-                      </select>
-                    </div>
-                    <div className="space-y-1">
-                      <label className="text-sm font-medium">Time</label>
-                      <Input
-                        type="time"
-                        value={scheduleDraftsByPlan[plan.workout_plan_id]?.time || "09:00"}
-                        onChange={(event) =>
-                          updateScheduleDraft(
-                            plan.workout_plan_id,
-                            "time",
-                            event.target.value
-                          )
-                        }
-                      />
-                    </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => addScheduleDraftEntry(plan.workout_plan_id)}
+                          className="gap-1"
+                        >
+                          <Plus className="h-4 w-4" />
+                          Add Day
+                        </Button>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="space-y-1">
+                          <label className="text-sm font-medium">Weekday</label>
+                          <select
+                            className="border-input bg-background h-10 w-full rounded-md border px-3 text-sm"
+                            value={
+                              scheduleDraftsByPlan[plan.workout_plan_id]?.entries?.[0]?.day ||
+                              DAYS_OF_WEEK[0]
+                            }
+                            onChange={(event) =>
+                              updateScheduleDraft(
+                                plan.workout_plan_id,
+                                "day",
+                                event.target.value
+                              )
+                            }
+                          >
+                            {DAYS_OF_WEEK.map((day) => (
+                              <option key={day} value={day}>
+                                {day}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-sm font-medium">Time</label>
+                          <Input
+                            type="time"
+                            value={
+                              scheduleDraftsByPlan[plan.workout_plan_id]?.entries?.[0]?.time ||
+                              "09:00"
+                            }
+                            onChange={(event) =>
+                              updateScheduleDraft(
+                                plan.workout_plan_id,
+                                "time",
+                                event.target.value
+                              )
+                            }
+                          />
+                        </div>
+                      </>
+                    )}
                     <div className="md:col-span-2 flex justify-end gap-2">
                       <Button variant="outline" onClick={() => setAssigningPlanId(null)}>
                         Cancel
                       </Button>
-                      <Button onClick={() => assignScheduleToPlan(plan.workout_plan_id)}>
+                      <Button
+                        onClick={() => assignScheduleToPlan(plan.workout_plan_id)}
+                        disabled={isCoachAssignScreen && !selectedClientId}
+                      >
                         Submit
                       </Button>
                     </div>
@@ -436,6 +659,9 @@ const WorkoutPlansTab = ({
                   )}
                 </div>
               )}
+                  </>
+                );
+              })()}
             </CardContent>
           </Card>
         ))}

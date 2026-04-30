@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import useGetFromAPI from "@/hooks/useGetFromAPI";
 import usePatchToAPI from "@/hooks/usePatchToAPI";
+import DeleteAccount from "./components/DeleteAccount";
+import { useNavigate } from "react-router-dom";
 
 const GOALS = [
   { id: 0, label: "Lose weight" },
@@ -50,7 +52,10 @@ function formatExerciseDisplay(hours, minutes) {
 function DetailRow({ label, value }) {
   return (
     <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-4">
-      <dt className="text-muted-foreground w-full shrink-0 text-sm sm:max-w-[10rem]">
+      <dt
+        className="text-muted-foreground w-full shrink-0 text-sm
+          sm:max-w-[10rem]"
+      >
         {label}
       </dt>
       <dd className="text-foreground text-sm font-medium">{value || "—"}</dd>
@@ -64,6 +69,8 @@ const dialogContentClass =
   "bg-card border-border fixed top-1/2 left-1/2 z-50 grid w-[calc(100%-2rem)] max-w-lg max-h-[min(90vh,720px)] -translate-x-1/2 -translate-y-1/2 gap-4 overflow-y-auto rounded-xl border p-6 shadow-lg";
 
 export default function EditClientProfile() {
+  const navigate = useNavigate();
+
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const { loading: meLoading, error: meError } = useGetFromAPI(
     "/users/me",
@@ -76,6 +83,7 @@ export default function EditClientProfile() {
     refreshTrigger
   );
   const { patchFunction, loading: saving } = usePatchToAPI();
+  const hasCoachSurvey = Boolean(profileData?.coach_survey);
 
   const [accountDialogOpen, setAccountDialogOpen] = useState(false);
   const [goalsDialogOpen, setGoalsDialogOpen] = useState(false);
@@ -281,36 +289,61 @@ export default function EditClientProfile() {
 
       <section className="border-border bg-card rounded-xl border p-6">
         <div className="flex items-start justify-between">
-        <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-center">
-          <Avatar className="size-24 text-2xl">
-            <AvatarImage
-              src="https://www.gravatar.com/avatar?d=mp&f=y&s=128"
-              alt=""
-            />
-            <AvatarFallback className="text-2xl">{initials}</AvatarFallback>
-          </Avatar>
-          <div className="flex flex-col items-center text-center sm:items-start sm:text-left">
-            <h2 className="text-foreground text-2xl font-semibold">
-              {displayName}
-            </h2>
-            <p className="text-muted-foreground mt-1 text-sm">
-              {email || "No email on file"}
-            </p>
+          <div
+            className="flex flex-col items-center gap-4 sm:flex-row
+              sm:items-center"
+          >
+            <Avatar className="size-24 text-2xl">
+              <AvatarImage
+                src="https://www.gravatar.com/avatar?d=mp&f=y&s=128"
+                alt=""
+              />
+              <AvatarFallback className="text-2xl">{initials}</AvatarFallback>
+            </Avatar>
+            <div
+              className="flex flex-col items-center text-center sm:items-start
+                sm:text-left"
+            >
+              <h2 className="text-foreground text-2xl font-semibold">
+                {displayName}
+              </h2>
+              <p className="text-muted-foreground mt-1 text-sm">
+                {email || "No email on file"}
+              </p>
+            </div>
+          </div>
+          <div className="flex flex-col justify-between gap-8">
+            <Button
+              type="button"
+              variant="outline"
+              className="shrink-0"
+              onClick={() => setAccountDialogOpen(true)}
+            >
+              Edit profile
+            </Button>
+            {!hasCoachSurvey && (
+              <Button
+                type="button"
+                variant="default"
+                onClick={() =>
+                  navigate("/coachSurvey", {
+                    state: { next: "/profile" },
+                  })
+                }
+              >
+                Apply to be a Coach
+              </Button>
+            )}
+            <DeleteAccount />
           </div>
         </div>
-                       <Button
-            type="button"
-            variant="outline"
-            className="shrink-0"
-            onClick={() => setAccountDialogOpen(true)}
-          >
-            Edit profile
-          </Button>
-          </div>
       </section>
 
       <section className="border-border bg-card space-y-4 rounded-xl border p-6">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div
+          className="flex flex-col gap-3 sm:flex-row sm:items-start
+            sm:justify-between"
+        >
           <div>
             <h2 className="text-foreground text-lg font-semibold">
               Fitness goals
@@ -336,12 +369,13 @@ export default function EditClientProfile() {
           />
           <DetailRow
             label="Weight goal"
-            value={
-              weightGoalLbs === "" ? "—" : `${weightGoalLbs} lbs`
-            }
+            value={weightGoalLbs === "" ? "—" : `${weightGoalLbs} lbs`}
           />
           <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-4">
-            <dt className="text-muted-foreground w-full shrink-0 text-sm sm:max-w-[10rem]">
+            <dt
+              className="text-muted-foreground w-full shrink-0 text-sm
+                sm:max-w-[10rem]"
+            >
               Primary goals
             </dt>
             <dd className="text-foreground text-sm font-medium">
@@ -351,10 +385,16 @@ export default function EditClientProfile() {
             </dd>
           </div>
           <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-4">
-            <dt className="text-muted-foreground w-full shrink-0 text-sm sm:max-w-[10rem]">
+            <dt
+              className="text-muted-foreground w-full shrink-0 text-sm
+                sm:max-w-[10rem]"
+            >
               Personal goals
             </dt>
-            <dd className="text-foreground text-sm font-medium whitespace-pre-wrap">
+            <dd
+              className="text-foreground text-sm font-medium
+                whitespace-pre-wrap"
+            >
               {personalGoals.trim() || "—"}
             </dd>
           </div>
@@ -367,7 +407,6 @@ export default function EditClientProfile() {
           />
         </dl>
       </section>
-
       {submitError && (
         <p className="text-destructive text-sm" role="alert">
           {submitError}
@@ -392,9 +431,7 @@ export default function EditClientProfile() {
                   size="icon"
                   className="size-8 shrink-0"
                   aria-label="Close"
-                >
-  
-                </Button>
+                ></Button>
               </Dialog.Close>
             </div>
             <Dialog.Description className="text-muted-foreground text-sm">
@@ -475,8 +512,7 @@ export default function EditClientProfile() {
                   size="icon"
                   className="size-8 shrink-0"
                   aria-label="Close"
-                >
-                </Button>
+                ></Button>
               </Dialog.Close>
             </div>
             <Dialog.Description className="text-muted-foreground text-sm">
