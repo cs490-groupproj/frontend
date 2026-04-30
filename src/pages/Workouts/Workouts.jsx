@@ -79,6 +79,38 @@ const defaultScheduleEntry = () => ({
   time: "09:00",
 });
 
+const MAX_LIMITS = {
+  DURATION_MIN: 1440,
+  DURATION_SEC: 86400,
+  SETS: 100,
+  REPS: 1000,
+  WEIGHT: 2000,
+  DISTANCE: 1000,
+  PACE: 3600,
+};
+
+const parseOptionalNumberStrict = (value, { integer = false, min = 0, max } = {}) => {
+  if (value === null || value === undefined || value === "") {
+    return { provided: false, valid: true, parsed: undefined };
+  }
+  const raw = String(value).trim();
+  const pattern = integer ? /^\d+$/ : /^\d+(\.\d+)?$/;
+  if (!pattern.test(raw)) {
+    return { provided: true, valid: false, parsed: undefined };
+  }
+  const parsed = Number(raw);
+  if (!Number.isFinite(parsed)) {
+    return { provided: true, valid: false, parsed: undefined };
+  }
+  if (parsed < min) {
+    return { provided: true, valid: false, parsed: undefined };
+  }
+  if (max !== undefined && parsed > max) {
+    return { provided: true, valid: false, parsed: undefined };
+  }
+  return { provided: true, valid: true, parsed };
+};
+
 const Workouts = () => {
   const location = useLocation();
   const { user } = useOutletContext();
@@ -130,10 +162,22 @@ const Workouts = () => {
   const { putFunction } = usePutToAPI();
   const { deleteFunction } = useDeleteFromAPI();
 
-  const { data: workoutTypes } = useGetFromAPI("/workout-types", null);
-  const { data: exercisesCatalog } = useGetFromAPI("/exercises", null);
-  const { data: bodyParts } = useGetFromAPI("/body-parts", null);
-  const { data: exerciseCategories } = useGetFromAPI("/exercise-categories", null);
+  const { data: workoutTypes, loading: workoutTypesLoading } = useGetFromAPI(
+    "/workout-types",
+    null
+  );
+  const { data: exercisesCatalog, loading: exercisesCatalogLoading } = useGetFromAPI(
+    "/exercises",
+    null
+  );
+  const { data: bodyParts, loading: bodyPartsLoading } = useGetFromAPI(
+    "/body-parts",
+    null
+  );
+  const { data: exerciseCategories, loading: exerciseCategoriesLoading } = useGetFromAPI(
+    "/exercise-categories",
+    null
+  );
   const { data: coachClientsData, loading: coachClientsLoading } = useGetFromAPI(
     isCoachAssignScreen ? "/coaches/clients" : null,
     null
@@ -142,7 +186,10 @@ const Workouts = () => {
     isCoachAssignScreen || !userId
       ? "/workout-plans?created_by=me"
       : `/workout-plans/available?user_id=${userId}`;
-  const { data: plansData } = useGetFromAPI(plansRequestUri, plansRefreshKey);
+  const { data: plansData, loading: plansLoading } = useGetFromAPI(
+    plansRequestUri,
+    plansRefreshKey
+  );
   const { data: selectedClientScheduleData } = useGetFromAPI(
     isCoachAssignScreen && selectedClientId
       ? `/workouts/my_schedule?user_id=${selectedClientId}`
@@ -155,11 +202,14 @@ const Workouts = () => {
   );
 
   const [planDetailsById, setPlanDetailsById] = useState({});
+  const [planDetailsLoading, setPlanDetailsLoading] = useState(false);
 
   useEffect(() => {
     const loadPlanDetails = async () => {
+      setPlanDetailsLoading(true);
       if (!Array.isArray(plansData) || plansData.length === 0) {
         setPlanDetailsById({});
+        setPlanDetailsLoading(false);
         return;
       }
 
@@ -175,10 +225,20 @@ const Workouts = () => {
         })
       );
       setPlanDetailsById(details);
+      setPlanDetailsLoading(false);
     };
 
     loadPlanDetails();
   }, [plansData]);
+
+  const isWorkoutPlansTabLoading =
+    plansLoading ||
+    planDetailsLoading ||
+    workoutTypesLoading ||
+    exercisesCatalogLoading ||
+    bodyPartsLoading ||
+    exerciseCategoriesLoading ||
+    (isCoachAssignScreen && coachClientsLoading);
 
   const bodyPartNameById = useMemo(() => {
     if (!Array.isArray(bodyParts)) return {};
@@ -392,6 +452,64 @@ const Workouts = () => {
     if (value === null || value === undefined || value === "") return undefined;
     const parsed = Number(value);
     return Number.isFinite(parsed) ? parsed : undefined;
+  };
+
+  const validateMetricRow = (row, exerciseMeta, { includeWeight = false } = {}) => {
+    const categoryKey = resolveCategoryKey(exerciseMeta, categoryNameById);
+
+    const validateField = (
+      fieldValue,
+      fieldName,
+      { integer = false, max } = {}
+    ) => {
+      const result = parseOptionalNumberStrict(fieldValue, { integer, min: 0, max });
+      if (!result.valid) {
+        return `${fieldName} must be a valid ${integer ? "integer" : "number"}${max !== undefined ? ` between 0 and ${max}` : ""}.`;
+      }
+      return null;
+    };
+
+    if (categoryKey === CATEGORY_KEYS.DURATION) {
+      return validateField(row.duration_sec, "Duration (sec)", {
+        integer: true,
+        max: MAX_LIMITS.DURATION_SEC,
+      });
+    }
+    if (categoryKey === CATEGORY_KEYS.CARDIO) {
+      return (
+        validateField(row.distance_m, "Distance", {
+          integer: false,
+          max: MAX_LIMITS.DISTANCE,
+        }) ||
+        validateField(row.pace_sec_per_km, "Pace", {
+          integer: false,
+          max: MAX_LIMITS.PACE,
+        })
+      );
+    }
+    if (categoryKey === CATEGORY_KEYS.REPS_ONLY) {
+      return validateField(row.reps, "Reps", {
+        integer: true,
+        max: MAX_LIMITS.REPS,
+      });
+    }
+
+    return (
+      validateField(row.sets, "Sets", {
+        integer: true,
+        max: MAX_LIMITS.SETS,
+      }) ||
+      validateField(row.reps, "Reps", {
+        integer: true,
+        max: MAX_LIMITS.REPS,
+      }) ||
+      (includeWeight
+        ? validateField(row.lbs, "Weight", {
+            integer: false,
+            max: MAX_LIMITS.WEIGHT,
+          })
+        : null)
+    );
   };
 
   const buildMetricPayload = (row, exerciseMeta, { includeWeight = false } = {}) => {
@@ -679,7 +797,26 @@ const Workouts = () => {
       return;
     }
 
+    const durationValidation = parseOptionalNumberStrict(planDurationMin, {
+      integer: true,
+      min: 0,
+      max: MAX_LIMITS.DURATION_MIN,
+    });
+    if (!durationValidation.valid) {
+      setFormError(`Plan duration must be a valid integer between 0 and ${MAX_LIMITS.DURATION_MIN}.`);
+      return;
+    }
+
     const cleanedRows = planExercises.filter((row) => row.exercise_id);
+    for (let index = 0; index < cleanedRows.length; index += 1) {
+      const row = cleanedRows[index];
+      const exerciseMeta = exerciseById[row.exercise_id];
+      const validationError = validateMetricRow(row, exerciseMeta);
+      if (validationError) {
+        setFormError(`Exercise row ${index + 1}: ${validationError}`);
+        return;
+      }
+    }
     const payload = {
       title: trimmedTitle,
       workout_type_id: planWorkoutTypeId ? Number(planWorkoutTypeId) : null,
@@ -770,6 +907,16 @@ const Workouts = () => {
       return;
     }
 
+    const logDurationValidation = parseOptionalNumberStrict(logDuration, {
+      integer: true,
+      min: 0,
+      max: MAX_LIMITS.DURATION_MIN,
+    });
+    if (!logDurationValidation.valid) {
+      setLogSaveError(`Duration must be a valid integer between 0 and ${MAX_LIMITS.DURATION_MIN}.`);
+      return;
+    }
+
     const selectedPlan = plans.find(
       (plan) => String(plan.workout_plan_id) === String(selectedPlanToLoad)
     );
@@ -801,6 +948,17 @@ const Workouts = () => {
     if (rowsWithExerciseIds.length === 0) {
       setLogSaveError("Add at least one valid exercise before saving.");
       return;
+    }
+
+    for (let index = 0; index < rowsWithExerciseIds.length; index += 1) {
+      const row = rowsWithExerciseIds[index];
+      const validationError = validateMetricRow(row, row.resolved_exercise_meta, {
+        includeWeight: true,
+      });
+      if (validationError) {
+        setLogSaveError(`Exercise row ${index + 1}: ${validationError}`);
+        return;
+      }
     }
 
     setLogSaveError("");
@@ -948,6 +1106,7 @@ const Workouts = () => {
       {activeTab === TABS.PLANS && (
         <WorkoutPlansTab
           pageTitle={isCoachAssignScreen ? "Assign Workouts" : "Create and Manage Workout Plans"}
+          isLoading={isWorkoutPlansTabLoading}
           isCoachAssignScreen={isCoachAssignScreen}
           coachClients={coachClients}
           coachClientsLoading={coachClientsLoading}
@@ -1032,6 +1191,7 @@ const Workouts = () => {
           loadPlanIntoLog={loadPlanIntoLog}
           selectedPlanToLoad={selectedPlanToLoad}
           plans={plans}
+          exercisesCatalog={exercisesCatalog}
           logRows={logRows}
           updateLogRow={updateLogRow}
           removeLogRow={removeLogRow}
