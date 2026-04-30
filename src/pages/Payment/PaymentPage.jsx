@@ -14,14 +14,14 @@ import {
   AlertCircle,
   Users,
 } from "lucide-react";
-import usePostToAPI from "@/hooks/usePostToAPI";
+import usePutToAPI from "@/hooks/usePutToAPI";
 
 const PaymentPage = () => {
   const {
-    postFunction,
+    putFunction,
     loading: cardSubmitLoading,
     error: cardSubmitError,
-  } = usePostToAPI();
+  } = usePutToAPI();
 
   const navigate = useNavigate();
 
@@ -116,18 +116,12 @@ const PaymentPage = () => {
       return;
     }
 
-    console.log("Payload ready for backend:", paymentPayload());
-
-    setTimeout(() => {
+    try {
+      await putFunction(`/payments/`, paymentPayload());
       setRecorded(true);
-    }, 2000);
-
-    // try {
-    //   await postFunction(`/users/payment`, paymentPayload());
-    //   setRecorded(true)
-    // } catch (err) {
-    //   console.error("Failed to submit payment method.", err);
-    // }
+    } catch (err) {
+      console.error("Failed to submit payment method.", err);
+    }
   };
 
   return (
@@ -176,7 +170,7 @@ const PaymentPage = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="flex flex-grow flex-col">
-            {recorded ? (
+            {recorded && (
               <div
                 className="flex flex-grow flex-col items-center justify-center
                   space-y-6 py-12 text-center"
@@ -199,7 +193,8 @@ const PaymentPage = () => {
                   <Users className="h-4 w-4" /> Browse Coaches
                 </Button>
               </div>
-            ) : (
+            )}
+            {!recorded && !cardSubmitError && (
               <form onSubmit={handleProcessPayment} className="space-y-4">
                 {/* Name Field */}
                 <div
@@ -230,9 +225,9 @@ const PaymentPage = () => {
                   <div className="relative">
                     <input
                       className={`bg-background focus:ring-primary flex h-10
-                        w-full rounded-md border px-3 py-2 pr-16 text-sm
-                        focus:ring-2 focus:outline-none
-                        ${luhnError ? "border-destructive" : ""}`}
+                      w-full rounded-md border px-3 py-2 pr-16 text-sm
+                      focus:ring-2 focus:outline-none
+                      ${luhnError ? "border-destructive" : ""}`}
                       value={cardNumber}
                       onChange={(e) =>
                         setCardNumber(e.target.value.replace(/\D/g, ""))
@@ -292,7 +287,7 @@ const PaymentPage = () => {
                       maxLength={ccvRequiredLength}
                       minLength={ccvRequiredLength}
                       type="text"
-                      inputMode="number"
+                      inputMode="numeric"
                       required
                     />
                   </div>
@@ -390,6 +385,11 @@ const PaymentPage = () => {
                   )}
                 </Button>
               </form>
+            )}
+            {!recorded && cardSubmitError && (
+              <div className="flex flex-grow items-center justify-center">
+                <div>{`Error, ${cardSubmitError}, Please try again.`}</div>
+              </div>
             )}
           </CardContent>
         </Card>
