@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import usePostToAPI from "@/hooks/usePostToAPI";
 
@@ -11,8 +11,12 @@ const SPECIALIZATIONS = [
 
 const CoachSurvey = ({ onSubmitted }) => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const redirectTo = location.state?.next || "/clientSurvey";
 
-  const [specialization, setSpecialization] = useState(SPECIALIZATIONS[0].value);
+  const [specialization, setSpecialization] = useState(
+    SPECIALIZATIONS[0].value
+  );
   const [qualifications, setQualifications] = useState("");
   const [costPerHour, setCostPerHour] = useState("");
 
@@ -37,7 +41,7 @@ const CoachSurvey = ({ onSubmitted }) => {
     try {
       await postFunction(endpoint, payload);
       onSubmitted?.();
-      navigate("/coachDashboard", { replace: true });
+      navigate(redirectTo, { replace: true });
     } catch (err) {
       setSubmitError(err?.message || "Could not save your coach survey.");
     }
@@ -136,7 +140,12 @@ const CoachSurvey = ({ onSubmitted }) => {
             />
           </div>
 
-          <Button type="submit" className="mt-2 w-full" size="lg" disabled={loading}>
+          <Button
+            type="submit"
+            className="mt-2 w-full"
+            size="lg"
+            disabled={loading}
+          >
             {loading ? "Saving…" : "Save and continue"}
           </Button>
         </form>

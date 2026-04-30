@@ -359,6 +359,12 @@ const WorkoutPlansTab = ({
         {plans.map((plan) => (
           <Card key={plan.workout_plan_id}>
             <CardContent className="space-y-4 p-4">
+              {(() => {
+                const isGlobalTemplate = plan.created_by == null;
+                const isRestrictedTemplate = plan.is_locked_assigned_plan || isGlobalTemplate;
+                const canAssignPlan = !plan.is_locked_assigned_plan;
+                return (
+                  <>
               <div className="flex flex-wrap items-center gap-3">
                 <div className="min-w-[220px] flex-1">
                   <h3 className="text-lg font-semibold">{plan.title}</h3>
@@ -393,19 +399,24 @@ const WorkoutPlansTab = ({
                         Assigned
                       </span>
                     )}
+                    {isGlobalTemplate && (
+                      <span className="bg-primary/15 text-primary rounded-full px-2.5 py-1 text-xs">
+                        Global Template
+                      </span>
+                    )}
                   </div>
                 </div>
-                {!plan.is_locked_assigned_plan && (
+                {!isRestrictedTemplate && (
                   <Button variant="outline" onClick={() => openEditForm(plan)}>
                     Edit
                   </Button>
                 )}
-                {!plan.is_locked_assigned_plan && (
+                {!isRestrictedTemplate && (
                   <Button variant="outline" onClick={() => removePlan(plan.workout_plan_id)}>
                     Delete
                   </Button>
                 )}
-                {!plan.is_locked_assigned_plan && (
+                {canAssignPlan && (
                   <Button
                     variant="outline"
                     disabled={isCoachAssignScreen && !selectedClientId}
@@ -463,7 +474,7 @@ const WorkoutPlansTab = ({
                       <span className="font-medium">
                         {entry.weekday} {formatScheduleTime(entry.schedule_time)}
                       </span>
-                      {!plan.is_locked_assigned_plan && (
+                      {!isRestrictedTemplate && (
                         <button
                           type="button"
                           className="text-muted-foreground hover:text-foreground"
@@ -648,6 +659,9 @@ const WorkoutPlansTab = ({
                   )}
                 </div>
               )}
+                  </>
+                );
+              })()}
             </CardContent>
           </Card>
         ))}

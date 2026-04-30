@@ -232,6 +232,16 @@
 
 import React, { useEffect, useState } from "react";
 import { Button } from "../../components/ui/button.jsx";
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 import useGetFromAPI from "@/hooks/useGetFromAPI";
 import usePutToAPI from "@/hooks/usePutToAPI";
@@ -264,6 +274,11 @@ export default function MyCoach() {
   const [rating, setRating] = useState(0);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [notification, setNotification] = useState(null);
+  const [reportDialogOpen, setReportDialogOpen] = useState(false);
+  const [reportReason, setReportReason] = useState("");
+  const [reportSubmitting, setReportSubmitting] = useState(false);
+  const [fireDialogOpen, setFireDialogOpen] = useState(false);
+  const [fireSubmitting, setFireSubmitting] = useState(false);
 
   const userId = localStorage.getItem("userId");
 
@@ -319,38 +334,40 @@ export default function MyCoach() {
   const fireCoach = async () => {
     if (!coach) return;
 
-    const confirmFire = window.confirm(
-      "Are you sure you want to fire your coach?"
-    );
-
-    if (!confirmFire) return;
-
     try {
+      setFireSubmitting(true);
       await fireCoachAPI(`/coaches/${coach.id}/fire`);
 
+      setFireDialogOpen(false);
       setRefreshTrigger((prev) => prev + 1);
       showNotification("Coach removed successfully.", "success");
     } catch (err) {
       console.error("Error firing coach:", err);
       showNotification("Failed to remove coach. Please try again.", "danger");
+    } finally {
+      setFireSubmitting(false);
     }
   };
 
-  const reportCoach = async () => {
+  const submitCoachReport = async () => {
     if (!coach) return;
-
-    const reason = window.prompt(`Why are you reporting ${coach.name}?`);
-    if (!reason?.trim()) return;
+    const reason = reportReason.trim();
+    if (!reason) return;
 
     try {
+      setReportSubmitting(true);
       await postReport(`/coaches/${coach.id}/report`, {
-        report_body: reason.trim(),
+        report_body: reason,
       });
+      setReportDialogOpen(false);
+      setReportReason("");
       setRefreshTrigger((prev) => prev + 1);
       showNotification("Coach reported successfully.", "success");
     } catch (err) {
       console.error("Error reporting coach:", err);
       showNotification("Failed to report coach. Please try again.", "danger");
+    } finally {
+      setReportSubmitting(false);
     }
   };
 
@@ -450,13 +467,67 @@ export default function MyCoach() {
             Leave Review
           </Button>
 
-          <Button variant="ghost" onClick={reportCoach}>
-            Report coach
-          </Button>
+          <AlertDialog open={reportDialogOpen} onOpenChange={setReportDialogOpen}>
+            <AlertDialogTrigger asChild>
+              <Button variant="ghost">Report Coach</Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Report {coach.name}?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Share what happened. This report will be sent to admins for review.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
 
-          <Button variant="destructive" onClick={fireCoach}>
-            Fire Coach
-          </Button>
+              <textarea
+                value={reportReason}
+                onChange={(e) => setReportReason(e.target.value)}
+                placeholder="Describe the issue..."
+                className="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring min-h-28 w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:outline-none"
+              />
+
+              <AlertDialogFooter>
+                <AlertDialogCancel
+                  onClick={() => {
+                    setReportReason("");
+                  }}
+                >
+                  Cancel
+                </AlertDialogCancel>
+                <Button
+                  variant="destructive"
+                  onClick={submitCoachReport}
+                  disabled={reportSubmitting || !reportReason.trim()}
+                >
+                  {reportSubmitting ? "Submitting..." : "Submit Report"}
+                </Button>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+
+          <AlertDialog open={fireDialogOpen} onOpenChange={setFireDialogOpen}>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive">Fire Coach</Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Fire {coach.name}?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This will end your active coaching relationship immediately.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <Button
+                  variant="destructive"
+                  onClick={fireCoach}
+                  disabled={fireSubmitting}
+                >
+                  {fireSubmitting ? "Removing..." : "Yes, Fire Coach"}
+                </Button>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </div>
     </div>
