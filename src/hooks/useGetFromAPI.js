@@ -15,13 +15,24 @@ function useGetFromAPI(requestURI, refreshTrigger) {
     }
     const controller = new AbortController();
 
+    // const getFunction = async () => {
+    //   setLoading(true);
+    //   try {
+    //     const response = await fetch(`${API_BASE_URL}${requestURI}`, {
+    //       method: "GET",
+    //       signal: controller.signal,
+    //       headers: { ...(await getAuthHeader()) },
+    //     });
+
     const getFunction = async () => {
       setLoading(true);
       try {
+        const authHeaders = await getAuthHeader();
+        
         const response = await fetch(`${API_BASE_URL}${requestURI}`, {
           method: "GET",
           signal: controller.signal,
-          headers: { ...(await getAuthHeader()) },
+          headers: { ...authHeaders }, 
         });
 
         if (!response.ok) {
@@ -34,8 +45,8 @@ function useGetFromAPI(requestURI, refreshTrigger) {
           return true;
         }
 
-        const postsData = await response.json();
-        setData(postsData);
+        const responseData = await response.json();
+        setData(responseData);
         setError(null);
       } catch (err) {
         if (err.name === "AbortError") {

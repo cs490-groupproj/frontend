@@ -16,7 +16,6 @@ const mapApplicationFromBackend = (data) => {
 };
 
 export default function AdminCoachApplications() {
-  // refreshTrigger replaces the old 'refetch()' function
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [notifications, setNotifications] = useState([]);
   const [processingId, setProcessingId] = useState(null);
@@ -52,22 +51,14 @@ export default function AdminCoachApplications() {
     setProcessingId(app.surveyId);
 
     try {
-      const responseData = await handleApplicationAction(endpoint, payload);
-
-      console.log(`--- ${action.toUpperCase()} SUCCESS JSON ---`);
-      console.log(JSON.stringify(responseData, null, 2));
-
+      await handleApplicationAction(endpoint, payload);
       addNotification(
-        isAccept
-          ? `${app.name} is now a coach!`
-          : `Application for ${app.name} rejected.`,
-        isAccept ? "success" : "info"
+        isAccept ? `${app.name} promoted!` : `Application rejected.`,
+        isAccept ? "success" : "secondary"
       );
-
       setRefreshTrigger((prev) => prev + 1);
     } catch (err) {
-      console.error(`--- ${action.toUpperCase()} ERROR ---`, err);
-      addNotification("Action failed. The backend may have crashed.", "danger");
+      addNotification("Action failed.", "danger");
     } finally {
       setProcessingId(null);
     }
@@ -75,108 +66,122 @@ export default function AdminCoachApplications() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Coach Applications</h1>
-        <p className="text-muted-foreground mt-1">
+      <header>
+        <h1 className="text-3xl font-bold tracking-tight">
+          Coach Applications
+        </h1>
+        <p className="text-muted-foreground mt-1 text-sm">
           Review candidate surveys and promote users to the Coach role.
         </p>
-      </div>
+      </header>
 
-      <div className="fixed top-4 right-4 z-50 w-80 space-y-2">
-        {notifications.map((note) => (
-          <div
-            key={note.id}
-            className={`rounded-lg border px-4 py-3 text-sm shadow-lg
-            transition-all ${
-              note.type === "success"
-                ? "border-emerald-300 bg-emerald-50 text-emerald-900"
-                : note.type === "danger"
-                  ? "border-rose-300 bg-rose-50 text-rose-900"
-                  : "border-slate-300 bg-slate-50 text-slate-900"
-            }`}
-          >
-            {note.text}
-          </div>
-        ))}
-      </div>
-
-      <div className="grid gap-5 sm:grid-cols-1 lg:grid-cols-2">
+      {/* Identical grid logic to BrowseCoaches: 3 columns on XL, 2 on SM */}
+      <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
         {fetchLoading && applications.length === 0 ? (
-          <p className="text-muted-foreground italic">
+          <p className="text-muted-foreground col-span-full italic">
             Loading applications...
           </p>
         ) : applications.length > 0 ? (
           applications.map((app) => (
             <article
               key={app.surveyId}
-              className="border-border bg-card rounded-xl border p-6 shadow-sm
-                transition hover:shadow-md"
+              className="border-border bg-card flex h-full flex-col
+                justify-between rounded-xl border p-5 shadow-sm transition
+                hover:-translate-y-0.5 hover:shadow-md"
             >
-              <div className="flex items-start justify-between">
-                <div>
-                  <h2 className="text-xl font-bold">{app.name}</h2>
-                  <p className="text-muted-foreground text-sm">{app.email}</p>
-                  <div className="mt-3 flex flex-wrap gap-2">
+              <div>
+                <div className="flex items-start justify-between gap-4">
+                  <div className="min-w-0">
+                    <h2 className="truncate text-xl leading-tight font-semibold">
+                      {app.name}
+                    </h2>
+                    <p
+                      className="text-muted-foreground mt-1 truncate text-sm
+                        opacity-80"
+                    >
+                      {app.email}
+                    </p>
+                  </div>
+                  <div className="shrink-0 text-right">
+                    <span
+                      className="text-muted-foreground block text-[10px]
+                        font-bold uppercase opacity-60"
+                    >
+                      {new Date(app.dateSubmitted).toLocaleDateString()}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="mt-4">
+                  <h3
+                    className="text-secondary-foreground text-sm font-semibold
+                      tracking-wider uppercase"
+                  >
+                    Specialization
+                  </h3>
+                  <div className="mt-2 flex flex-wrap gap-2">
                     {app.specializations.map((spec) => (
                       <span
                         key={spec}
-                        className="bg-primary/10 text-primary rounded-full px-3
-                          py-1 text-xs font-semibold tracking-wider uppercase"
+                        className="border-muted text-muted-foreground
+                          rounded-full border px-2 py-1 text-xs font-medium"
                       >
                         {spec}
                       </span>
                     ))}
                   </div>
                 </div>
-                <div className="text-muted-foreground text-right text-xs">
-                  Submitted: {new Date(app.dateSubmitted).toLocaleDateString()}
+
+                <div className="mt-4">
+                  <h3
+                    className="text-secondary-foreground text-sm font-semibold
+                      tracking-wider uppercase"
+                  >
+                    Qualifications
+                  </h3>
+                  <div
+                    className="bg-muted/30 border-border/50 text-foreground/90
+                      mt-2 min-h-[80px] rounded-lg border p-4 text-sm
+                      leading-relaxed italic"
+                  >
+                    "{app.qualifications}"
+                  </div>
                 </div>
               </div>
 
-              <div className="mt-6">
-                <h3
-                  className="text-secondary-foreground text-xs font-bold
-                    tracking-widest uppercase"
-                >
-                  Qualifications & Experience
-                </h3>
-                <div
-                  className="bg-muted/30 text-muted-foreground mt-2 rounded-lg
-                    p-4 text-sm leading-relaxed"
-                >
-                  {app.qualifications}
-                </div>
-              </div>
-
-              <div className="mt-6 flex justify-end gap-3 border-t pt-4">
+              {/* Action Buttons using Neutral Grey and Brand Primary */}
+              <div
+                className="mt-5 flex flex-wrap items-center justify-end gap-2"
+              >
                 <Button
                   variant="outline"
-                  className="text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+                  size="sm"
+                  className="bg-muted/40 border-border text-foreground
+                    hover:bg-muted font-medium transition-colors"
                   disabled={processingId === app.surveyId}
                   onClick={() => handleAction(app, "reject")}
                 >
                   Reject
                 </Button>
                 <Button
-                  className="bg-emerald-600 text-white hover:bg-emerald-700"
+                  variant="default"
+                  size="sm"
+                  className="bg-primary text-primary-foreground
+                    hover:bg-primary/90 font-bold transition-all"
                   disabled={processingId === app.surveyId}
                   onClick={() => handleAction(app, "accept")}
                 >
-                  {processingId === app.surveyId
-                    ? "Processing..."
-                    : "Approve Candidate"}
+                  {processingId === app.surveyId ? "..." : "Approve Candidate"}
                 </Button>
               </div>
             </article>
           ))
         ) : (
           <div
-            className="col-span-full rounded-xl border-2 border-dashed p-12
-              text-center"
+            className="text-muted-foreground col-span-full rounded-xl border-2
+              border-dashed py-16 text-center"
           >
-            <p className="text-muted-foreground font-medium">
-              No pending coach applications found.
-            </p>
+            No pending coach applications found.
           </div>
         )}
       </div>

@@ -2,6 +2,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Progress } from "@/components/ui/progress";
 import { Plus, Trash2, Minus } from "lucide-react";
 
 const MetricField = ({ label, className = "", children }) => (
@@ -24,6 +25,7 @@ const formatScheduleTime = (scheduleTime) => {
 
 const WorkoutPlansTab = ({
   pageTitle = "Create and Manage Workout Plans",
+  isLoading = false,
   isCoachAssignScreen = false,
   coachClients = [],
   coachClientsLoading = false,
@@ -72,6 +74,24 @@ const WorkoutPlansTab = ({
   removeScheduleDraftEntry,
   assignScheduleToPlan,
 }) => {
+  if (isLoading) {
+    return (
+      <div className="space-y-5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h1 className="text-3xl font-bold">{pageTitle}</h1>
+          </div>
+        </div>
+        <Card>
+          <CardContent className="space-y-3 p-4">
+            <p className="text-muted-foreground text-sm">Loading workout plans...</p>
+            <Progress value={70} />
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -139,6 +159,10 @@ const WorkoutPlansTab = ({
               <div className="space-y-1">
                 <label className="text-sm font-medium">Duration (minutes)</label>
                 <Input
+                  type="number"
+                  step="1"
+                  min="0"
+                  max="1440"
                   value={planDurationMin}
                   onChange={(event) => setPlanDurationMin(event.target.value)}
                   placeholder="60"
@@ -165,8 +189,8 @@ const WorkoutPlansTab = ({
                     key={`${index}-${row.workout_plan_exercise_id || "new"}`}
                     className="space-y-2 rounded-md border p-3"
                   >
-                    <div className="grid grid-cols-12 gap-2">
-                      <MetricField label="Exercise" className="col-span-5">
+                    <div className="grid grid-cols-12 gap-3">
+                      <MetricField label="Exercise" className="col-span-12 md:col-span-4">
                         <select
                           className="border-input bg-background text-foreground h-10 w-full rounded-md border px-3 text-sm"
                           value={row.exercise_id}
@@ -183,8 +207,13 @@ const WorkoutPlansTab = ({
                         </select>
                       </MetricField>
                       {categoryKey === "duration" ? (
-                        <MetricField label="Duration (sec)" className="col-span-2">
+                        <MetricField label="Duration (sec)" className="col-span-12 md:col-span-4">
                           <Input
+                            className="w-full min-w-[8rem]"
+                            type="number"
+                            step="1"
+                            min="0"
+                            max="86400"
                             value={row.duration_sec}
                             placeholder="e.g. 1200"
                             onChange={(event) =>
@@ -194,8 +223,13 @@ const WorkoutPlansTab = ({
                         </MetricField>
                       ) : categoryKey === "cardio" ? (
                         <>
-                          <MetricField label="Distance (miles)" className="col-span-1">
+                          <MetricField label="Distance (miles)" className="col-span-12 sm:col-span-6 md:col-span-3">
                             <Input
+                              className="w-full min-w-[8rem]"
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              max="1000"
                               value={row.distance_m}
                               placeholder="e.g. 5000"
                               onChange={(event) =>
@@ -203,8 +237,13 @@ const WorkoutPlansTab = ({
                               }
                             />
                           </MetricField>
-                          <MetricField label="Pace (sec/mile)" className="col-span-1">
+                          <MetricField label="Pace (sec/mile)" className="col-span-12 sm:col-span-6 md:col-span-3">
                             <Input
+                              className="w-full min-w-[8rem]"
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              max="3600"
                               value={row.pace_sec_per_km}
                               placeholder="e.g. 300"
                               onChange={(event) =>
@@ -214,8 +253,13 @@ const WorkoutPlansTab = ({
                           </MetricField>
                         </>
                       ) : categoryKey === "repsOnly" ? (
-                        <MetricField label="Reps" className="col-span-2">
+                        <MetricField label="Reps" className="col-span-12 md:col-span-6">
                           <Input
+                            className="w-full min-w-[8rem]"
+                            type="number"
+                            step="1"
+                            min="0"
+                            max="1000"
                             value={row.reps}
                             placeholder="e.g. 20"
                             onChange={(event) =>
@@ -225,8 +269,13 @@ const WorkoutPlansTab = ({
                         </MetricField>
                       ) : (
                         <>
-                          <MetricField label="Sets" className="col-span-1">
+                          <MetricField label="Sets" className="col-span-6 md:col-span-3">
                             <Input
+                              className="w-full min-w-[8rem]"
+                              type="number"
+                              step="1"
+                              min="0"
+                              max="100"
                               value={row.sets}
                               placeholder="e.g. 4"
                               onChange={(event) =>
@@ -234,8 +283,13 @@ const WorkoutPlansTab = ({
                               }
                             />
                           </MetricField>
-                          <MetricField label="Reps" className="col-span-1">
+                          <MetricField label="Reps" className="col-span-6 md:col-span-3">
                             <Input
+                              className="w-full min-w-[8rem]"
+                              type="number"
+                              step="1"
+                              min="0"
+                              max="1000"
                               value={row.reps}
                               placeholder="e.g. 10"
                               onChange={(event) =>
@@ -245,7 +299,12 @@ const WorkoutPlansTab = ({
                           </MetricField>
                         </>
                       )}
-                      <MetricField label="Action" className="col-span-3">
+                      <MetricField
+                        label="Action"
+                        className={`col-span-12 ${
+                          categoryKey === "duration" ? "md:col-span-4" : "md:col-span-2"
+                        }`}
+                      >
                         <button
                           type="button"
                           className="text-muted-foreground hover:text-destructive inline-flex h-10 w-full items-center justify-center rounded-md border text-sm transition-colors"
