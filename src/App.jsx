@@ -69,10 +69,6 @@ const App = () => {
             element={<CoachClientView />}
           />
           <Route path="/assignWorkouts" element={<Workouts />} />
-          <Route
-            path="/viewClientProgress"
-            element={<div>View Client Progress</div>}
-          />
           <Route path="/coachProfile" element={<EditCoachProfile />} />
         </Route>
 

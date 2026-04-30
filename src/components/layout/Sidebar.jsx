@@ -84,15 +84,18 @@ const Sidebar = ({
         { to: "/coachDashboard", icon: LayoutDashboard, label: "Dashboard" },
         { to: "/clientManagement", icon: Users, label: "My Clients" },
         { to: "/assignWorkouts", icon: Dumbbell, label: "Assign Workouts" },
-        { to: "/viewClientProgress", icon: View, label: "View Progress" },
         { to: "/coachProfile", icon: User, label: "Edit Profile" },
         { to: "/chat", icon: MessageSquare, label: "Chat" },
       ];
     } else if (activeMode === ACTIVE_MODE_MODES.ADMIN) {
       return [
         { to: "/adminDashboard", icon: LayoutDashboard, label: "Dashboard" },
-        { to: "/admin/coach-applications", icon: ClipboardCheck, label: "Coach Applications", },
-        { to: "/admin/reports", icon: ShieldAlert, label: "Coach Reports", },
+        {
+          to: "/admin/coach-applications",
+          icon: ClipboardCheck,
+          label: "Coach Applications",
+        },
+        { to: "/admin/reports", icon: ShieldAlert, label: "Coach Reports" },
         { to: "/admin/exercise-bank", icon: Dumbbell, label: "Exercise Bank" },
       ];
     }
