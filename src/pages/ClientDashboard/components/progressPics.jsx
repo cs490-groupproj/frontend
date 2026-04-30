@@ -9,6 +9,11 @@ const PHOTO_TYPES = {
   AFTER: "AFTER",
 };
 
+const panelStyles =
+  "border-border bg-card/70 rounded-2xl border p-5 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-card/60";
+const imageFrameStyles =
+  "border-border bg-muted/20 ring-border/30 flex h-96 w-full items-center justify-center overflow-hidden rounded-xl border ring-1";
+
 function ProgressPics() {
   const userId = localStorage.getItem("userId");
   const [refreshKey, setRefreshKey] = useState(0);
@@ -17,6 +22,7 @@ function ProgressPics() {
   const [message, setMessage] = useState("");
   const [localError, setLocalError] = useState("");
   const [busyType, setBusyType] = useState("");
+  const [editingType, setEditingType] = useState("");
 
   const { deleteFunction } = useDeleteFromAPI();
 
@@ -69,6 +75,7 @@ function ProgressPics() {
 
       if (type === PHOTO_TYPES.BEFORE) setBeforeFile(null);
       if (type === PHOTO_TYPES.AFTER) setAfterFile(null);
+      setEditingType("");
       setMessage(`${type === PHOTO_TYPES.BEFORE ? "Before" : "After"} photo uploaded.`);
       setRefreshKey((value) => value + 1);
     } catch (error) {
@@ -87,6 +94,9 @@ function ProgressPics() {
     setMessage("");
     try {
       await deleteFunction(`/progress/delete?id=${imageToDelete.id}`);
+      if (type === PHOTO_TYPES.BEFORE) setBeforeFile(null);
+      if (type === PHOTO_TYPES.AFTER) setAfterFile(null);
+      setEditingType("");
       setMessage(`${type === PHOTO_TYPES.BEFORE ? "Before" : "After"} photo removed.`);
       setRefreshKey((value) => value + 1);
     } catch (error) {
@@ -97,118 +107,214 @@ function ProgressPics() {
   };
 
   const errorText = localError || beforeError || afterError;
+  const hasBefore = Boolean(beforeImage);
+  const hasAfter = Boolean(afterImage);
+  const isEditingBefore = editingType === PHOTO_TYPES.BEFORE;
+  const isEditingAfter = editingType === PHOTO_TYPES.AFTER;
 
   return (
-    <div className="space-y-6 p-4">
-      <section className="border-border bg-card rounded-xl border p-4">
-        <h2 className="text-foreground mb-2 text-xl font-semibold">Progress Pictures</h2>
-        <p className="text-muted-foreground mb-4 text-sm">
-          Upload one before photo and one after photo to track your current transformation.
-        </p>
+    <div className="space-y-6 p-4 md:p-6">
+      <section className={`${panelStyles} bg-gradient-to-br from-card via-card to-muted/20`}>
 
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <div className="border-border rounded-lg border p-3">
-            <p className="text-sm font-medium">Before</p>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(event) => setBeforeFile(event.target.files?.[0] || null)}
-              className="mt-2 block w-full cursor-pointer text-sm file:mr-3 file:cursor-pointer file:rounded-md file:border file:border-border file:bg-secondary file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-secondary-foreground hover:file:bg-secondary/80"
-            />
-            <div className="mt-3 flex gap-2">
-              <button
-                type="button"
-                onClick={() => uploadImage(PHOTO_TYPES.BEFORE)}
-                disabled={busyType === `upload-${PHOTO_TYPES.BEFORE}` || !beforeFile}
-                className="bg-primary text-primary-foreground rounded-lg px-4 py-2 text-sm font-medium hover:bg-primary/90 disabled:opacity-50"
+
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+          <div className="border-border bg-background/50 rounded-xl border p-4">
+            <div className="mb-3 flex items-center justify-between">
+              <p className="text-foreground text-2xl font-semibold tracking-tight">Before</p>
+              <span
+                className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+                  hasBefore
+                    ? "bg-emerald-500/15 text-emerald-400"
+                    : "bg-muted text-muted-foreground"
+                }`}
               >
-                {busyType === `upload-${PHOTO_TYPES.BEFORE}` ? "Uploading..." : "Upload"}
-              </button>
-              <button
-                type="button"
-                onClick={() => clearLatest(PHOTO_TYPES.BEFORE)}
-                disabled={busyType === `delete-${PHOTO_TYPES.BEFORE}` || !beforeImage}
-                className="text-destructive border-destructive/40 rounded-lg border px-4 py-2 text-sm font-medium hover:bg-destructive/10 disabled:opacity-50"
-              >
-                {busyType === `delete-${PHOTO_TYPES.BEFORE}` ? "Removing..." : "Remove"}
-              </button>
+                {hasBefore ? "Saved" : "Missing"}
+              </span>
+            </div>
+
+            {(isEditingBefore || !hasBefore) && (
+              <>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(event) => setBeforeFile(event.target.files?.[0] || null)}
+                  className="border-border bg-background/80 block w-full cursor-pointer rounded-lg border px-3 py-2 text-sm file:mr-3 file:cursor-pointer file:rounded-md file:border file:border-border file:bg-secondary file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-secondary-foreground hover:file:bg-secondary/80"
+                />
+                <div className="mt-3 flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => uploadImage(PHOTO_TYPES.BEFORE)}
+                    disabled={busyType === `upload-${PHOTO_TYPES.BEFORE}` || !beforeFile}
+                    className="bg-primary text-primary-foreground rounded-lg px-4 py-2 text-sm font-medium shadow-sm transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {busyType === `upload-${PHOTO_TYPES.BEFORE}` ? "Uploading..." : "Upload"}
+                  </button>
+                  {hasBefore && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditingType("");
+                        setBeforeFile(null);
+                      }}
+                      className="border-border text-foreground rounded-lg border px-4 py-2 text-sm font-medium transition hover:bg-muted"
+                    >
+                      Cancel
+                    </button>
+                  )}
+                </div>
+              </>
+            )}
+
+            {!isEditingBefore && hasBefore && (
+              <div className="mt-3 flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLocalError("");
+                    setMessage("");
+                    setEditingType(PHOTO_TYPES.BEFORE);
+                  }}
+                  className="bg-primary text-primary-foreground rounded-lg px-4 py-2 text-sm font-medium shadow-sm transition hover:bg-primary/90"
+                >
+                  Change
+                </button>
+                <button
+                  type="button"
+                  onClick={() => clearLatest(PHOTO_TYPES.BEFORE)}
+                  disabled={busyType === `delete-${PHOTO_TYPES.BEFORE}` || !beforeImage}
+                  className="text-destructive border-destructive/40 rounded-lg border px-4 py-2 text-sm font-medium transition hover:bg-destructive/10 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {busyType === `delete-${PHOTO_TYPES.BEFORE}` ? "Removing..." : "Remove"}
+                </button>
+              </div>
+            )}
+
+            <div className="mt-4">
+              {beforeImage ? (
+                <div className={imageFrameStyles}>
+                  <img
+                    src={beforeImage.url}
+                    alt="Latest before"
+                    className="h-full w-full object-contain"
+                  />
+                </div>
+              ) : (
+                <div className={`${imageFrameStyles} text-muted-foreground flex-col gap-1 text-sm`}>
+                  <span className="text-base">No before photo yet</span>
+                  <span className="text-muted-foreground/80 text-xs">
+                    Upload one to start tracking progress.
+                  </span>
+                </div>
+              )}
             </div>
           </div>
 
-          <div className="border-border rounded-lg border p-3">
-            <p className="text-sm font-medium">After</p>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(event) => setAfterFile(event.target.files?.[0] || null)}
-              className="mt-2 block w-full cursor-pointer text-sm file:mr-3 file:cursor-pointer file:rounded-md file:border file:border-border file:bg-secondary file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-secondary-foreground hover:file:bg-secondary/80"
-            />
-            <div className="mt-3 flex gap-2">
-              <button
-                type="button"
-                onClick={() => uploadImage(PHOTO_TYPES.AFTER)}
-                disabled={busyType === `upload-${PHOTO_TYPES.AFTER}` || !afterFile}
-                className="bg-primary text-primary-foreground rounded-lg px-4 py-2 text-sm font-medium hover:bg-primary/90 disabled:opacity-50"
+          <div className="border-border bg-background/50 rounded-xl border p-4">
+            <div className="mb-3 flex items-center justify-between">
+              <p className="text-foreground text-2xl font-semibold tracking-tight">After</p>
+              <span
+                className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+                  hasAfter
+                    ? "bg-emerald-500/15 text-emerald-400"
+                    : "bg-muted text-muted-foreground"
+                }`}
               >
-                {busyType === `upload-${PHOTO_TYPES.AFTER}` ? "Uploading..." : "Upload"}
-              </button>
-              <button
-                type="button"
-                onClick={() => clearLatest(PHOTO_TYPES.AFTER)}
-                disabled={busyType === `delete-${PHOTO_TYPES.AFTER}` || !afterImage}
-                className="text-destructive border-destructive/40 rounded-lg border px-4 py-2 text-sm font-medium hover:bg-destructive/10 disabled:opacity-50"
-              >
-                {busyType === `delete-${PHOTO_TYPES.AFTER}` ? "Removing..." : "Remove"}
-              </button>
+                {hasAfter ? "Saved" : "Missing"}
+              </span>
+            </div>
+            {(isEditingAfter || !hasAfter) && (
+              <>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(event) => setAfterFile(event.target.files?.[0] || null)}
+                  className="border-border bg-background/80 block w-full cursor-pointer rounded-lg border px-3 py-2 text-sm file:mr-3 file:cursor-pointer file:rounded-md file:border file:border-border file:bg-secondary file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-secondary-foreground hover:file:bg-secondary/80"
+                />
+                <div className="mt-3 flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => uploadImage(PHOTO_TYPES.AFTER)}
+                    disabled={busyType === `upload-${PHOTO_TYPES.AFTER}` || !afterFile}
+                    className="bg-primary text-primary-foreground rounded-lg px-4 py-2 text-sm font-medium shadow-sm transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {busyType === `upload-${PHOTO_TYPES.AFTER}` ? "Uploading..." : "Upload"}
+                  </button>
+                  {hasAfter && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditingType("");
+                        setAfterFile(null);
+                      }}
+                      className="border-border text-foreground rounded-lg border px-4 py-2 text-sm font-medium transition hover:bg-muted"
+                    >
+                      Cancel
+                    </button>
+                  )}
+                </div>
+              </>
+            )}
+
+            {!isEditingAfter && hasAfter && (
+              <div className="mt-3 flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLocalError("");
+                    setMessage("");
+                    setEditingType(PHOTO_TYPES.AFTER);
+                  }}
+                  className="bg-primary text-primary-foreground rounded-lg px-4 py-2 text-sm font-medium shadow-sm transition hover:bg-primary/90"
+                >
+                  Change
+                </button>
+                <button
+                  type="button"
+                  onClick={() => clearLatest(PHOTO_TYPES.AFTER)}
+                  disabled={busyType === `delete-${PHOTO_TYPES.AFTER}` || !afterImage}
+                  className="text-destructive border-destructive/40 rounded-lg border px-4 py-2 text-sm font-medium transition hover:bg-destructive/10 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {busyType === `delete-${PHOTO_TYPES.AFTER}` ? "Removing..." : "Remove"}
+                </button>
+              </div>
+            )}
+
+            <div className="mt-4">
+              {afterImage ? (
+                <div className={imageFrameStyles}>
+                  <img
+                    src={afterImage.url}
+                    alt="Latest after"
+                    className="h-full w-full object-contain"
+                  />
+                </div>
+              ) : (
+                <div className={`${imageFrameStyles} text-muted-foreground flex-col gap-1 text-sm`}>
+                  <span className="text-base">No after photo yet</span>
+                  <span className="text-muted-foreground/80 text-xs">
+                    Upload one when you are ready to compare.
+                  </span>
+                </div>
+              )}
             </div>
           </div>
         </div>
       </section>
 
       {(message || errorText) && (
-        <section className="border-border bg-card rounded-xl border p-4">
-          {message ? <p className="text-sm text-green-400">{message}</p> : null}
-          {errorText ? <p className="text-destructive text-sm">{errorText}</p> : null}
+        <section className={panelStyles}>
+          {message ? (
+            <p className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-400">
+              {message}
+            </p>
+          ) : null}
+          {errorText ? (
+            <p className="text-destructive mt-2 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm">
+              {errorText}
+            </p>
+          ) : null}
         </section>
       )}
-
-      <section className="border-border bg-card rounded-xl border p-4">
-        <h3 className="mb-4 text-lg font-semibold">Before / After</h3>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <div>
-            <p className="mb-2 text-sm font-medium">Before</p>
-            {beforeImage ? (
-              <div className="border-border bg-muted/20 flex h-96 w-full items-center justify-center overflow-hidden rounded-lg border">
-                <img
-                  src={beforeImage.url}
-                  alt="Latest before"
-                  className="h-full w-full object-contain"
-                />
-              </div>
-            ) : (
-              <div className="text-muted-foreground border-border flex h-96 items-center justify-center rounded-lg border text-sm">
-                No before photo yet.
-              </div>
-            )}
-          </div>
-          <div>
-            <p className="mb-2 text-sm font-medium">After</p>
-            {afterImage ? (
-              <div className="border-border bg-muted/20 flex h-96 w-full items-center justify-center overflow-hidden rounded-lg border">
-                <img
-                  src={afterImage.url}
-                  alt="Latest after"
-                  className="h-full w-full object-contain"
-                />
-              </div>
-            ) : (
-              <div className="text-muted-foreground border-border flex h-96 items-center justify-center rounded-lg border text-sm">
-                No after photo yet.
-              </div>
-            )}
-          </div>
-        </div>
-      </section>
     </div>
   );
 }
