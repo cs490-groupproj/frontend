@@ -739,20 +739,6 @@ import React, { useMemo, useState, useEffect } from "react";
 import { Button } from "../../components/ui/button.jsx";
 import useGetFromAPI from "@/hooks/useGetFromAPI.js";
 import usePostToAPI from "@/hooks/usePostToAPI.js";
-import usePutToAPI from "@/hooks/usePutToAPI.js";
-
-const ENABLE_MOCK_BILLING_ON_REQUEST = true;
-const MOCK_BILLING_DATA = {
-  card_number: "4242424242424242",
-  card_exp_month: 12,
-  card_exp_year: 2030,
-  card_security_number: 123,
-  card_name: "Mock Client Billing",
-  card_address: "123 Test St",
-  card_address_2: "",
-  card_city: "Newark",
-  card_postcode: "07102",
-};
 
 export default function BrowseCoaches() {
   const [coachData, setCoachData] = useState([]);
@@ -839,30 +825,12 @@ export default function BrowseCoaches() {
   const [activeCoachId, setActiveCoachId] = useState(null);
   const [pendingCoachId, setPendingCoachId] = useState(null);
   const [notifications, setNotifications] = useState([]);
-  const [mockBillingSynced, setMockBillingSynced] = useState(false);
   const { postFunction: requestCoachAPI } = usePostToAPI();
-  const { putFunction: saveBillingAPI } = usePutToAPI();
 
   useEffect(() => {
     const currentCoachId = myCoachData?.coaches?.[0]?.coach_user_id ?? null;
     setActiveCoachId(currentCoachId);
   }, [myCoachData]);
-
-  useEffect(() => {
-    if (!ENABLE_MOCK_BILLING_ON_REQUEST) return;
-    if (mockBillingSynced) return;
-
-    const syncMockBilling = async () => {
-      try {
-        await saveBillingAPI("/payments/", MOCK_BILLING_DATA);
-        setMockBillingSynced(true);
-      } catch (err) {
-        console.error("Error syncing mock billing:", err);
-      }
-    };
-
-    syncMockBilling();
-  }, [mockBillingSynced, saveBillingAPI]);
 
   const addNotification = (text, type = "info") => {
     const id = crypto.randomUUID?.() ?? Date.now().toString();
@@ -894,21 +862,26 @@ export default function BrowseCoaches() {
     try {
       setPendingCoachId(coach.id);
 
-      if (ENABLE_MOCK_BILLING_ON_REQUEST) {
-        await saveBillingAPI("/payments/", MOCK_BILLING_DATA);
-      }
-
-      await requestCoachAPI(`/coaches/${coach.id}/request`, {});
+      await requestCoachAPI(`/coaches/${coach.id}/request`);
       addNotification(
         `Coach request sent to ${coach.name}. It will appear in the coach's Client Management page.`,
         "success"
       );
     } catch (err) {
-      console.error("Error requesting coach:", err);
-      addNotification(
-        "Failed to request coach. Make sure you have billing set up and try again.",
-        "danger"
-      );
+      console.log("Error requesting coach:", err.message);
+      if (err.message.includes("400")) {
+        addNotification(
+          "Failed to request coach. You have already sent a coach request to this coach.",
+          "danger"
+        );
+      } else if (err.message.includes("402")) {
+        addNotification(
+          "Failed to request coach. Make sure you have billing set up and try again.",
+          "danger"
+        );
+      } else {
+        addNotification("Failed to request coach. Please try again.", "danger");
+      }
     } finally {
       setPendingCoachId(null);
     }
