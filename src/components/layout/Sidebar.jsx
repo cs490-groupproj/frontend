@@ -14,6 +14,8 @@ import {
   ArrowLeftRight,
   LogOut,
   View,
+  ClipboardCheck,
+  ShieldAlert,
 } from "lucide-react";
 import { signOut } from "firebase/auth";
 import { auth } from "@/firebase.js";
@@ -89,6 +91,8 @@ const Sidebar = ({
     } else if (activeMode === ACTIVE_MODE_MODES.ADMIN) {
       return [
         { to: "/adminDashboard", icon: LayoutDashboard, label: "Dashboard" },
+        { to: "/admin/coach-applications", icon: ClipboardCheck, label: "Coach Applications", },
+        { to: "/admin/reports", icon: ShieldAlert, label: "Coach Reports", },
         { to: "/admin/exercise-bank", icon: Dumbbell, label: "Exercise Bank" },
       ];
     }
