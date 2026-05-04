@@ -247,6 +247,7 @@ import useGetFromAPI from "@/hooks/useGetFromAPI";
 import usePutToAPI from "@/hooks/usePutToAPI";
 import useDeleteFromAPI from "@/hooks/useDeleteFromAPI";
 import usePostToAPI from "@/hooks/usePostToAPI.js";
+import { Spinner } from "@/components/ui/spinner.jsx";
 
 //backend response to frontend
 const mapCoachFromBackend = (coach) => {
@@ -282,14 +283,20 @@ export default function MyCoach() {
 
   const userId = localStorage.getItem("userId");
 
-  const { data, loading, error } = useGetFromAPI(
-    userId ? `/clients/${userId}/coaches` : null,
+  const coachesRequestUri = userId ? `/clients/${userId}/coaches` : null;
+
+  const { data, error } = useGetFromAPI(
+    coachesRequestUri,
     refreshTrigger
   );
   const coach =
     data?.coaches && data.coaches.length > 0
       ? mapCoachFromBackend(data.coaches[0])
       : null;
+
+  /** Wait for first response so we never flash “no coach” before fetch settles. */
+  const showInitialLoading =
+    Boolean(coachesRequestUri) && data == null && error == null;
 
   useEffect(() => {
     if (!coach) return;
@@ -371,9 +378,16 @@ export default function MyCoach() {
     }
   };
 
-  if (loading) {
+  if (showInitialLoading) {
     return (
-      <div className="text-muted-foreground p-6">Loading your coach...</div>
+      <div
+        aria-live="polite"
+        aria-busy="true"
+        className="text-muted-foreground flex w-full min-h-[calc(100dvh-12rem)]
+          items-center justify-center py-8"
+      >
+        <Spinner className="size-8" aria-label="Loading your coach" />
+      </div>
     );
   }
 

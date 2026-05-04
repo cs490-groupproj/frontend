@@ -1,12 +1,27 @@
 import React, { useMemo, useState, useEffect } from "react";
 import { Button } from "../../components/ui/button.jsx";
+import { Spinner } from "@/components/ui/spinner.jsx";
 import useGetFromAPI from "@/hooks/useGetFromAPI.js";
 import usePostToAPI from "@/hooks/usePostToAPI.js";
 
+function CoachesLoadingScreen() {
+  return (
+    <div
+      aria-live="polite"
+      aria-busy="true"
+      className="text-muted-foreground col-span-full flex min-h-[min(40vh,280px)]
+        flex-col items-center justify-center py-10 text-center"
+    >
+      <Spinner className="size-8" aria-label="Loading coaches" />
+    </div>
+  );
+}
+
 export default function BrowseCoaches() {
-  const [coachData, setCoachData] = useState([]);
   const [search, setSearch] = useState("");
-  const [coachesURI, setCoachesURI] = useState("");
+  const [coachesURI, setCoachesURI] = useState(
+    "/coaches/search?limit=20&offset=0&query="
+  );
 
   const SPECIALIZATIONS = {
     ALL: "ALL",
@@ -55,9 +70,6 @@ export default function BrowseCoaches() {
   }
 
   useEffect(() => {
-    //debugging!
-    console.log("SEARCH CHANGED:", search);
-
     const delay = setTimeout(() => {
       setCoachesURI(`/coaches/search?limit=20&offset=0&query=${search.trim()}`);
     }, 300);
@@ -65,13 +77,12 @@ export default function BrowseCoaches() {
     return () => clearTimeout(delay);
   }, [search]);
 
-  const { data: coachesData } = useGetFromAPI(coachesURI, null);
+  const { data: coachesData, loading: coachesLoading, error: coachesError } =
+    useGetFromAPI(coachesURI, null);
 
-  useEffect(() => {
-    if (!coachesData || !coachesData.coaches) {
-      return;
-    }
-    setCoachData(coachesData.coaches.map(mapCoachFromBackend));
+  const mappedCoaches = useMemo(() => {
+    if (!coachesData?.coaches) return [];
+    return coachesData.coaches.map(mapCoachFromBackend);
   }, [coachesData]);
 
   const userId = localStorage.getItem("userId");
@@ -153,17 +164,21 @@ export default function BrowseCoaches() {
   const filteredCoaches = useMemo(() => {
     const query = search.trim().toLowerCase();
 
-    return coachData.filter((coach) => {
+    return mappedCoaches.filter((coach) => {
       if (query && !coach?.name.toLowerCase().includes(query)) return false;
       if (!matchesSpecialization(coach, selectedSpecialization)) return false;
       if (coach?.costPerHour > maxPrice) return false;
       if ((coach?.rating ?? 0) < minRating) return false;
       return true;
     });
-  }, [coachData, search, selectedSpecialization, maxPrice, minRating]);
+  }, [mappedCoaches, search, selectedSpecialization, maxPrice, minRating]);
+
+  /** Show loading until we receive either data or an error. */
+  const hasCoachesResponse = coachesData != null || coachesError != null;
+  const showCoachesLoading = !hasCoachesResponse || coachesLoading;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 min-h-[calc(100dvh+2px)]">
       <div>
         <h1 className="text-3xl font-bold">Browse Coaches</h1>
         <p className="text-muted-foreground mt-1">
@@ -277,7 +292,16 @@ export default function BrowseCoaches() {
       </section>
 
       <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-        {filteredCoaches.length > 0 ? (
+        {coachesError && coachesData == null ? (
+          <div
+            className="border-destructive/30 bg-destructive/10 text-destructive
+              col-span-full rounded-xl border p-6 text-center text-sm"
+          >
+            Could not load coaches. Please try again.
+          </div>
+        ) : showCoachesLoading ? (
+          <CoachesLoadingScreen />
+        ) : filteredCoaches.length > 0 ? (
           filteredCoaches.map((coach) => {
             const isActive = activeCoachId === coach.id;
             const isPending = pendingCoachId === coach.id;
@@ -387,14 +411,14 @@ export default function BrowseCoaches() {
               </article>
             );
           })
-        ) : (
+        ) : !coachesLoading && coachesData != null ? (
           <div
             className="border-border bg-card text-muted-foreground col-span-full
               rounded-xl border p-6 text-center"
           >
             No coaches match your filters. Try adjusting your search criteria.
           </div>
-        )}
+        ) : null}
       </div>
     </div>
   );
