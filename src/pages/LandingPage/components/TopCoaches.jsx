@@ -46,7 +46,7 @@ const TopCoaches = () => {
       <div className="flex flex-col items-center gap-4 pb-4">
         <h1 className="text-4xl font-bold">Meet our Top Coaches</h1>
         <p className="text-muted-foreground text-xl">
-          Blah Blah Blah filler text
+          Coaches that change client lives, one optimal decision at a time.
         </p>
       </div>
       {coachesError ? (
