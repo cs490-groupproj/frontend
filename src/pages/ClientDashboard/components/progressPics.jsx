@@ -46,10 +46,25 @@ function ProgressPics() {
     [afterData]
   );
 
+  const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
+  const MAX_FILE_SIZE = 30 * 1024 * 1024; // Max file size would be 30MB
+
   const uploadImage = async (type) => {
     const file = type === PHOTO_TYPES.BEFORE ? beforeFile : afterFile;
     if (!file) {
       setLocalError(`Select a ${type.toLowerCase()} image first.`);
+      setMessage("");
+      return;
+    }
+
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      setLocalError("Invalid file type. Please upload a JPEG, PNG, or WebP image.");
+      setMessage("");
+      return;
+    }
+
+    if (file.size > MAX_FILE_SIZE) {
+      setLocalError("File is too large. Max size is 10MB.");
       setMessage("");
       return;
     }
@@ -114,7 +129,22 @@ function ProgressPics() {
 
   return (
     <div className="space-y-6 p-4 md:p-6">
+            {(message || errorText) && (
+        <section className={panelStyles}>
+          {message ? (
+            <p className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-400">
+              {message}
+            </p>
+          ) : null}
+          {errorText ? (
+            <p className="text-destructive mt-2 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm">
+              {errorText}
+            </p>
+          ) : null}
+        </section>
+      )}
       <section className={`${panelStyles} bg-gradient-to-br from-card via-card to-muted/20`}>
+
 
 
         <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
@@ -132,11 +162,12 @@ function ProgressPics() {
               </span>
             </div>
 
+
             {(isEditingBefore || !hasBefore) && (
               <>
                 <input
                   type="file"
-                  accept="image/*"
+                  accept="image/jpeg,image/png,image/webp"
                   onChange={(event) => setBeforeFile(event.target.files?.[0] || null)}
                   className="border-border bg-background/80 block w-full cursor-pointer rounded-lg border px-3 py-2 text-sm file:mr-3 file:cursor-pointer file:rounded-md file:border file:border-border file:bg-secondary file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-secondary-foreground hover:file:bg-secondary/80"
                 />
@@ -226,7 +257,7 @@ function ProgressPics() {
               <>
                 <input
                   type="file"
-                  accept="image/*"
+                  accept="image/jpeg,image/png,image/webp"
                   onChange={(event) => setAfterFile(event.target.files?.[0] || null)}
                   className="border-border bg-background/80 block w-full cursor-pointer rounded-lg border px-3 py-2 text-sm file:mr-3 file:cursor-pointer file:rounded-md file:border file:border-border file:bg-secondary file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-secondary-foreground hover:file:bg-secondary/80"
                 />
@@ -301,20 +332,7 @@ function ProgressPics() {
         </div>
       </section>
 
-      {(message || errorText) && (
-        <section className={panelStyles}>
-          {message ? (
-            <p className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-400">
-              {message}
-            </p>
-          ) : null}
-          {errorText ? (
-            <p className="text-destructive mt-2 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm">
-              {errorText}
-            </p>
-          ) : null}
-        </section>
-      )}
+
     </div>
   );
 }
