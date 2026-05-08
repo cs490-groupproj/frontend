@@ -3,7 +3,7 @@ import React from "react";
 const CoachCard = ({ coach_info }) => {
   return (
     <article
-      className="border-border bg-card rounded-xl border p-5 shadow-sm
+      className="border-border bg-card w-max-md rounded-xl border p-5 shadow-sm
         transition hover:-translate-y-0.5 hover:shadow-md"
     >
       <div className="flex items-start justify-between gap-4">
@@ -13,7 +13,7 @@ const CoachCard = ({ coach_info }) => {
         <div className="text-right">
           <span className="text-muted-foreground text-sm">
             {coach_info.isUnrated
-              ? "⭐ Unrated"
+              ? "⭐ New Coach"
               : `⭐ ${coach_info.rating.toFixed(1)}`}
           </span>
         </div>
