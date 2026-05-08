@@ -24,6 +24,7 @@ const MEAL_NAMES = ["Breakfast", "Lunch", "Dinner", "Snacks"];
 const mealTypeToName = { 1: "Breakfast", 2: "Lunch", 3: "Dinner", 4: "Snacks" };
 const mealNameToType = { Breakfast: 1, Lunch: 2, Dinner: 3, Snacks: 4 };
 
+// --- Helpers ---
 const parseUTCDate = (dateStr) => {
   if (!dateStr) return new Date();
   const standardized =
@@ -37,6 +38,7 @@ const formatTime = (isoString) => {
   return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 };
 
+// --- Weekly History ---
 const WeeklyHistory = ({ userId, timezone }) => {
   const { data: historyData, loading } = useGetFromAPI(
     userId
@@ -54,11 +56,7 @@ const WeeklyHistory = ({ userId, timezone }) => {
   const groupedByDate = (historyData?.meal_plans || []).reduce((acc, plan) => {
     const date = parseUTCDate(plan.meal_logged_at).toLocaleDateString(
       undefined,
-      {
-        weekday: "long",
-        month: "short",
-        day: "numeric",
-      }
+      { weekday: "long", month: "short", day: "numeric" }
     );
     if (!acc[date]) acc[date] = [];
     acc[date].push(plan);
@@ -160,6 +158,7 @@ const WeeklyHistory = ({ userId, timezone }) => {
   );
 };
 
+// --- Meal Section ---
 const MealSection = ({
   meal,
   mealPlanId,
@@ -204,7 +203,11 @@ const MealSection = ({
           const energy = food.foodNutrients?.find((n) =>
             n.nutrientName?.toLowerCase().includes("energy")
           );
-          return { ...food, energyValue: Math.round(energy?.value || 0) };
+          return {
+            ...food,
+            energyValue: Math.round(energy?.value || 0),
+            brand: food.brandOwner || food.brandName || "Generic Food",
+          };
         });
         setSearchResults(mapped);
       } catch (e) {
@@ -297,12 +300,20 @@ const MealSection = ({
                     justify-between border-b p-3 text-left text-sm"
                   onClick={() => handleSelect(food)}
                 >
-                  <div className="line-clamp-1 pr-4 font-medium">
-                    {food.description}
+                  <div className="flex min-w-0 flex-col pr-4">
+                    <span className="line-clamp-1 font-medium">
+                      {food.description}
+                    </span>
+                    <span
+                      className="text-muted-foreground text-[10px] font-bold
+                        tracking-tight uppercase"
+                    >
+                      {food.brand}
+                    </span>
                   </div>
                   <div
                     className="text-muted-foreground shrink-0 text-xs
-                      whitespace-nowrap"
+                      font-medium whitespace-nowrap"
                   >
                     {food.energyValue} kcal/100g
                   </div>
@@ -344,18 +355,21 @@ const MealSection = ({
               )}
             </div>
             {!readOnly && !f.isLogged && (
-              <Input
-                type="number"
-                value={f.portion}
-                onChange={(e) =>
-                  setLocalLog((p) =>
-                    p.map((item, idx) =>
-                      idx === i ? { ...item, portion: e.target.value } : item
+              <div className="mt-2 flex items-center gap-2">
+                <Input
+                  type="number"
+                  value={f.portion}
+                  onChange={(e) =>
+                    setLocalLog((p) =>
+                      p.map((item, idx) =>
+                        idx === i ? { ...item, portion: e.target.value } : item
+                      )
                     )
-                  )
-                }
-                className="mt-2 h-8 w-20"
-              />
+                  }
+                  className="h-8 w-20"
+                />
+                <span className="text-muted-foreground text-xs">grams</span>
+              </div>
             )}
           </div>
         ))}
@@ -372,7 +386,7 @@ const TodayView = ({ userId, timezone, apiPost, readOnly, refreshKey }) => {
     isReady: false,
   });
   const creatingPlansRef = useRef(false);
-  const CALORIE_GOAL = 2000;
+  const CALORIE_GOAL = 2500;
 
   const { data: todayData, loading } = useGetFromAPI(
     userId
@@ -436,31 +450,27 @@ const TodayView = ({ userId, timezone, apiPost, readOnly, refreshKey }) => {
       </div>
     );
 
-  const progressValue = (state.calories / CALORIE_GOAL) * 100;
+  const progressValue = Math.min((state.calories / CALORIE_GOAL) * 100, 100);
 
   return (
     <div className="space-y-6">
-      <Card className="p-8">
-        <div className="flex flex-col items-center justify-center">
-          <div className="text-primary text-6xl font-bold">
-            {state.calories}
-          </div>
-          <p className="text-muted-foreground mt-2 text-xs font-bold uppercase">
-            Total Calories Today
-          </p>
-        </div>
-
-        <div className="mt-8 space-y-2">
-          <div className="flex justify-between text-sm font-medium">
-            <span>Daily Progress</span>
-            <span className="text-muted-foreground">
-              {Math.min(100, Math.round(progressValue))}%
-            </span>
-          </div>
+      <Card className="flex flex-col items-center justify-center p-8">
+        <div className="text-primary text-6xl font-bold">{state.calories}</div>
+        <p
+          className="text-muted-foreground mt-2 text-xs font-bold
+            tracking-widest uppercase"
+        >
+          Total Calories Today
+        </p>
+        <div className="mt-8 w-full max-w-md space-y-2">
           <Progress value={progressValue} className="h-3" />
-          <p className="text-muted-foreground text-center text-xs">
-            Target: {CALORIE_GOAL} kcal
-          </p>
+          <div
+            className="text-muted-foreground flex justify-between text-[10px]
+              font-bold uppercase"
+          >
+            <span>0 KCAL</span>
+            <span>GOAL: {CALORIE_GOAL} KCAL</span>
+          </div>
         </div>
       </Card>
 
@@ -483,6 +493,7 @@ const TodayView = ({ userId, timezone, apiPost, readOnly, refreshKey }) => {
   );
 };
 
+// --- Main Page ---
 const NutritionPage = ({ viewedUserId = null, readOnly = false }) => {
   const currentUserId = viewedUserId || localStorage.getItem("userId");
   const [activeTab, setActiveTab] = useState("today");
