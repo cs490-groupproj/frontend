@@ -378,36 +378,63 @@ export default function MyCoach() {
     }
   };
 
+  const pageHeader = (
+    <div>
+      <h1 className="text-3xl font-bold text-foreground">My Coach</h1>
+      <p className="text-muted-foreground mt-1">
+        Reviews, reporting, and ending your coaching relationship.
+      </p>
+    </div>
+  );
+
+  const pageShellClass =
+    "w-full max-w-none space-y-8 min-h-[calc(100dvh+2px)]";
+
   if (showInitialLoading) {
     return (
-      <div
-        aria-live="polite"
-        aria-busy="true"
-        className="text-muted-foreground flex w-full min-h-[calc(100dvh-12rem)]
-          items-center justify-center py-8"
-      >
-        <Spinner className="size-8" aria-label="Loading your coach" />
+      <div className={pageShellClass}>
+        {pageHeader}
+        <div
+          aria-live="polite"
+          aria-busy="true"
+          className="text-muted-foreground flex min-h-[min(50vh,420px)] w-full flex-col items-center justify-center rounded-xl border border-border bg-card p-12 shadow-sm"
+        >
+          <Spinner className="size-8" aria-label="Loading your coach" />
+        </div>
       </div>
     );
   }
 
   if (error) {
-    return <div className="p-6 text-red-500">{error}</div>;
+    return (
+      <div className={pageShellClass}>
+        {pageHeader}
+        <div className="text-destructive border-destructive/30 bg-card rounded-xl border p-8">
+          {error}
+        </div>
+      </div>
+    );
   }
 
   if (!coach) {
     return (
-      <div className="text-muted-foreground rounded-xl border p-6 text-center">
-        <h2 className="text-xl font-semibold">No Active Coach</h2>
-        <p className="mt-2">
-          You don’t currently have a coach. Browse and request one.
-        </p>
+      <div className={pageShellClass}>
+        {pageHeader}
+        <div className="border-border bg-card text-muted-foreground flex flex-col items-center justify-center rounded-xl border p-12 text-center shadow-sm">
+          <h2 className="text-xl font-semibold text-foreground">
+            No Active Coach
+          </h2>
+          <p className="mt-3 max-w-md leading-relaxed">
+            You don’t currently have a coach. Use Browse Coaches from the sidebar
+            to send a request.
+          </p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className={pageShellClass}>
       {notification && (
         <div
           className={`rounded-lg border px-4 py-2 text-sm ${
@@ -422,45 +449,116 @@ export default function MyCoach() {
         </div>
       )}
 
-      {/* HEADER */}
-      <div className="bg-card rounded-xl border p-6 shadow-sm">
-        <div className="flex items-start justify-between">
-          <div>
-            <h1 className="text-3xl font-bold">{coach.name}</h1>
+      {pageHeader}
 
-            <div className="mt-2 flex items-center gap-2">
-              <span
-                className="rounded-full bg-emerald-100 px-2 py-1 text-xs
-                  text-emerald-800"
-              >
-                Active
-              </span>
+      <div className="bg-card rounded-xl border p-8 shadow-sm md:p-10 lg:p-16">
+        <div className="mx-auto max-w-7xl space-y-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
+            <h2 className="text-foreground min-w-0 flex-1 text-4xl font-bold tracking-tight md:text-[2.5rem]">
+              {coach.name}
+            </h2>
 
-              <span className="text-muted-foreground text-sm">
-                {coach.specializations.join(" • ")} • ${coach.costPerHour}/hr
-              </span>
+            <div className="shrink-0 sm:text-right">
+              <div className="text-xl font-semibold tabular-nums">
+                ⭐ {coach.rating.toFixed(1)}
+              </div>
+              <div className="text-muted-foreground text-sm">Average rating</div>
             </div>
           </div>
 
-          <div className="text-right">
-            <div className="text-xl font-semibold">
-              ⭐ {coach.rating.toFixed(1)}
-            </div>
-            <div className="text-muted-foreground text-sm">Average rating</div>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="rounded-full bg-emerald-100 px-2 py-1 text-xs font-medium text-emerald-800">
+              Active
+            </span>
+
+            <span className="text-muted-foreground text-sm leading-relaxed">
+              {coach.specializations.length > 0
+                ? `${coach.specializations.join(" • ")} • $${coach.costPerHour}/hr`
+                : `$${coach.costPerHour}/hr`}
+            </span>
+          </div>
+
+          <div className="border-border flex flex-wrap gap-4 border-t pt-6">
+            <Button variant="outline" onClick={() => setShowReview(true)}>
+              Leave Review
+            </Button>
+
+            <AlertDialog open={reportDialogOpen} onOpenChange={setReportDialogOpen}>
+              <AlertDialogTrigger asChild>
+                <Button variant="ghost">Report Coach</Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Report {coach.name}?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Share what happened. This report will be sent to admins for review.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+
+                <textarea
+                  value={reportReason}
+                  onChange={(e) => setReportReason(e.target.value)}
+                  placeholder="Describe the issue..."
+                  className="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring min-h-28 w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:outline-none"
+                />
+
+                <AlertDialogFooter>
+                  <AlertDialogCancel
+                    onClick={() => {
+                      setReportReason("");
+                    }}
+                  >
+                    Cancel
+                  </AlertDialogCancel>
+                  <Button
+                    variant="destructive"
+                    onClick={submitCoachReport}
+                    disabled={reportSubmitting || !reportReason.trim()}
+                  >
+                    {reportSubmitting ? "Submitting..." : "Submit Report"}
+                  </Button>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+
+            <AlertDialog open={fireDialogOpen} onOpenChange={setFireDialogOpen}>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive">Fire Coach</Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Fire {coach.name}?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This will end your active coaching relationship immediately.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <Button
+                    variant="destructive"
+                    onClick={fireCoach}
+                    disabled={fireSubmitting}
+                  >
+                    {fireSubmitting ? "Removing..." : "Yes, Fire Coach"}
+                  </Button>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         </div>
       </div>
 
-      {/* REVIEW MODAL */}
       {showReview && (
-        <div className="bg-card rounded-xl border p-5 shadow-sm">
-          <h2 className="mb-4 text-lg font-semibold">Rate Your Coach</h2>
+        <div className="bg-card rounded-xl border p-8 shadow-sm md:p-10">
+          <h2 className="mb-5 text-lg font-semibold text-foreground">
+            Rate Your Coach
+          </h2>
 
           <StarRating rating={rating} setRating={setRating} />
 
-          <div className="text-muted-foreground mt-2 text-sm">{rating}/10</div>
+          <div className="text-muted-foreground mt-3 text-sm">{rating}/10</div>
 
-          <div className="mt-4 flex gap-3">
+          <div className="mt-6 flex flex-wrap gap-4">
             <Button onClick={submitReview} disabled={rating === 0}>
               Submit Rating
             </Button>
@@ -471,79 +569,6 @@ export default function MyCoach() {
           </div>
         </div>
       )}
-
-      {/* ACTIONS */}
-      <div className="bg-card rounded-xl border p-5 shadow-sm">
-        <h2 className="mb-4 text-lg font-semibold">Actions</h2>
-
-        <div className="flex flex-wrap gap-3">
-          <Button variant="outline" onClick={() => setShowReview(true)}>
-            Leave Review
-          </Button>
-
-          <AlertDialog open={reportDialogOpen} onOpenChange={setReportDialogOpen}>
-            <AlertDialogTrigger asChild>
-              <Button variant="ghost">Report Coach</Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Report {coach.name}?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Share what happened. This report will be sent to admins for review.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-
-              <textarea
-                value={reportReason}
-                onChange={(e) => setReportReason(e.target.value)}
-                placeholder="Describe the issue..."
-                className="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring min-h-28 w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:outline-none"
-              />
-
-              <AlertDialogFooter>
-                <AlertDialogCancel
-                  onClick={() => {
-                    setReportReason("");
-                  }}
-                >
-                  Cancel
-                </AlertDialogCancel>
-                <Button
-                  variant="destructive"
-                  onClick={submitCoachReport}
-                  disabled={reportSubmitting || !reportReason.trim()}
-                >
-                  {reportSubmitting ? "Submitting..." : "Submit Report"}
-                </Button>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-
-          <AlertDialog open={fireDialogOpen} onOpenChange={setFireDialogOpen}>
-            <AlertDialogTrigger asChild>
-              <Button variant="destructive">Fire Coach</Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Fire {coach.name}?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  This will end your active coaching relationship immediately.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <Button
-                  variant="destructive"
-                  onClick={fireCoach}
-                  disabled={fireSubmitting}
-                >
-                  {fireSubmitting ? "Removing..." : "Yes, Fire Coach"}
-                </Button>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </div>
-      </div>
     </div>
   );
 }

@@ -149,32 +149,27 @@ export default function ClientManagement() {
  requests.map((r) => (
  <div
  key={r.id}
- className="bg-card flex items-center justify-between rounded-xl
- border p-5 shadow-sm"
+ className="bg-card flex flex-col gap-4 rounded-xl border p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:gap-6"
  >
- <div className="flex items-start gap-4">
- <div
- className="bg-muted text-foreground flex h-10 w-10 items-center
- justify-center rounded-full font-semibold"
- >
+ <div className="flex min-w-0 flex-1 items-start gap-4">
+ <div className="bg-muted text-foreground flex h-10 w-10 shrink-0 items-center justify-center rounded-full font-semibold">
  {r.initials}
  </div>
- <div>
- <div className="font-semibold">{r.name}</div>
- <div className="text-muted-foreground text-sm">
+ <div className="min-w-0 flex-1 space-y-1 pr-1">
+ <div className="text-foreground font-semibold leading-snug">
+ {r.name}
+ </div>
+ <div className="text-muted-foreground text-sm leading-relaxed">
  {r.message}
  </div>
  </div>
  </div>
 
- <div className="flex gap-2">
+ <div className="flex shrink-0 flex-wrap gap-2 pt-1 sm:pt-0">
  <Button onClick={() => acceptRequest(r.id)}>
  Accept
  </Button>
- <Button
- variant="destructive"
- onClick={() => declineRequest(r.id)}
- >
+ <Button variant="destructive" onClick={() => declineRequest(r.id)}>
  Decline
  </Button>
  </div>
@@ -198,18 +193,16 @@ export default function ClientManagement() {
  activeClients.map((client) => (
  <article
  key={client.client_id}
- className="border-border bg-card flex items-center
- justify-between gap-4 rounded-xl border px-6 py-4 shadow-sm"
+ className="border-border bg-card flex flex-col gap-4 rounded-xl border px-5 py-4 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:px-6"
  >
- <h2 className="text-foreground text-lg font-semibold">
+ <h2 className="text-foreground min-w-0 flex-1 text-lg font-semibold leading-snug">
  {client.first_name} {client.last_name}
  </h2>
 
- <div className="flex gap-2">
+ <div className="flex shrink-0 flex-wrap gap-2">
  <Link
  to={`/clientManagement/${client.client_id}/view`}
- className="hover:bg-muted shrink-0 rounded-lg border px-4 py-2.5
- text-sm font-medium transition-colors"
+ className="hover:bg-muted inline-flex shrink-0 items-center justify-center rounded-lg border px-4 py-2.5 text-sm font-medium leading-none transition-colors"
  >
  View Client
  </Link>
