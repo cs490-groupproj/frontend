@@ -11,6 +11,13 @@ import {
   Legend,
 } from "recharts";
 
+function localDayKey(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
 function dateKeyFromRow(dateSubmitted) {
   if (!dateSubmitted) return null;
   return String(dateSubmitted).slice(0, 10);
@@ -27,11 +34,11 @@ function buildLastNDaysChartData(apiRows, n = 7) {
     const d = new Date();
     d.setHours(12, 0, 0, 0);
     d.setDate(d.getDate() - i);
-    const key = d.toISOString().slice(0, 10);
+    const key = localDayKey(d);
     const row = byDate.get(key);
     out.push({
-      dayShort: d.toLocaleDateString(undefined, { weekday: "short" }), 
-      dayDate: d.toLocaleDateString(undefined, { month: "short", day: "numeric" }), 
+      dayShort: d.toLocaleDateString(undefined, { weekday: "short" }),
+      dayDate: d.toLocaleDateString(undefined, { month: "short", day: "numeric" }),
       mood: row?.mood ?? 0,
       energy: row?.energy ?? 0,
       sleep: row?.sleep ?? 0,
@@ -160,10 +167,13 @@ const Stats = ({ viewedUserId = null }) => {
 
   const userId = viewedUserId || localStorage.getItem("userId");
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  const uri = userId ? `/clients/${userId}/daily_survey/history?days=${range}` : null;
+  const tzParam = encodeURIComponent(timezone);
+  const uri = userId
+    ? `/clients/${userId}/daily_survey/history?days=${range}&timezone=${tzParam}`
+    : null;
   const { data, loading, error } = useGetFromAPI(uri, undefined, false);
   const caloriesUri = userId
-    ? `/nutrition/history?user_id=${userId}&timezone=${encodeURIComponent(timezone)}&days=${calRange}`
+    ? `/nutrition/history?user_id=${userId}&timezone=${tzParam}&days=${calRange}`
     : null;
   const {
     data: caloriesData,

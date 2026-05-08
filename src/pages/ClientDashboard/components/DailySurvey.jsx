@@ -21,7 +21,10 @@ const DailySurvey = ({ onSubmitted }) => {
   const [isSaved, setIsSaved] = useState(false);
   const [submittedSurveyId, setSubmittedSurveyId] = useState(null);
   const userId = localStorage.getItem("userId");
-  const todaySurveyUri = userId ? `/clients/${userId}/daily_survey/history?days=1` : null;
+  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const todaySurveyUri = userId
+    ? `/clients/${userId}/daily_survey/history?days=1&timezone=${encodeURIComponent(timezone)}`
+    : null;
   const { data: todaySurveyData, loading: todaySurveyLoading, error: todaySurveyError } = useGetFromAPI(
     todaySurveyUri,
     userId
@@ -116,6 +119,7 @@ useEffect(() => {
     energy: selectedEnergy,
     sleep: selectedSleep,
     notes: notes,
+    timezone: timezone,
   };
 
   try {
@@ -156,6 +160,9 @@ useEffect(() => {
       })
     );
 
+    console.log(localStorage.getItem(DAILY_SURVEY_STORAGE_KEY));
+    console.log(timezone);
+    console.log(todayKey);
     onSubmitted?.();
     setIsSaved(true);
   } catch (err) {
