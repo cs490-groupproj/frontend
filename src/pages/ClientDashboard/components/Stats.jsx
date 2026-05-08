@@ -156,7 +156,7 @@ function WorkoutMetricChart({
 const Stats = ({ viewedUserId = null }) => {
   const [range, setRange] = useState(7);
   const [calRange, setCalRange] = useState(7);
-  const [workoutRange, setWorkoutRange] = useState(30);
+  const [workoutRange, setWorkoutRange] = useState(7);
 
   const userId = viewedUserId || localStorage.getItem("userId");
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
