@@ -31,6 +31,8 @@ export default function AdminCoachApplications() {
     return (apiResponse?.candidates || []).map(mapApplicationFromBackend);
   }, [apiResponse]);
 
+  const isInitialLoading = fetchLoading || !apiResponse;
+
   const addNotification = (text, type = "info") => {
     const id = crypto.randomUUID?.() ?? Date.now().toString();
     setNotifications((prev) => [...prev, { id, text, type }]);
@@ -64,6 +66,23 @@ export default function AdminCoachApplications() {
     }
   };
 
+  if (isInitialLoading) {
+    return (
+      <div
+        className="flex min-h-[400px] w-full flex-col items-center
+          justify-center space-y-4"
+      >
+        <div
+          className="border-primary h-10 w-10 animate-spin rounded-full border-4
+            border-t-transparent"
+        />
+        <p className="text-muted-foreground font-medium">
+          Fetching applications...
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <header>
@@ -75,13 +94,8 @@ export default function AdminCoachApplications() {
         </p>
       </header>
 
-      {/* Identical grid logic to BrowseCoaches: 3 columns on XL, 2 on SM */}
       <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-        {fetchLoading && applications.length === 0 ? (
-          <p className="text-muted-foreground col-span-full italic">
-            Loading applications...
-          </p>
-        ) : applications.length > 0 ? (
+        {applications.length > 0 ? (
           applications.map((app) => (
             <article
               key={app.surveyId}
@@ -149,7 +163,6 @@ export default function AdminCoachApplications() {
                 </div>
               </div>
 
-              {/* Action Buttons using Neutral Grey and Brand Primary */}
               <div
                 className="mt-5 flex flex-wrap items-center justify-end gap-2"
               >
