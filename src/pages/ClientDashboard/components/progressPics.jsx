@@ -47,7 +47,7 @@ function ProgressPics() {
   );
 
   const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
-  const MAX_FILE_SIZE = 10 * 1024 * 1024; // Max file size would be 10MB
+  const MAX_FILE_SIZE = 30 * 1024 * 1024; // Max file size would be 30MB
 
   const uploadImage = async (type) => {
     const file = type === PHOTO_TYPES.BEFORE ? beforeFile : afterFile;
