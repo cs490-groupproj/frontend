@@ -9,8 +9,9 @@ function CoachesLoadingScreen() {
     <div
       aria-live="polite"
       aria-busy="true"
-      className="text-muted-foreground col-span-full flex min-h-[min(40vh,280px)]
-        flex-col items-center justify-center py-10 text-center"
+      className="text-muted-foreground col-span-full flex
+        min-h-[min(40vh,280px)] flex-col items-center justify-center py-10
+        text-center"
     >
       <Spinner className="size-8" aria-label="Loading coaches" />
     </div>
@@ -38,7 +39,9 @@ export default function BrowseCoaches() {
   ];
 
   const mapCoachFromBackend = (coach) => {
-    const rating = Number(coach.avg_rating ?? 0);
+    const rating = Number(coach.avg_rating ?? 5);
+    const isUnrated = coach.avg_rating === 0;
+
     return {
       id: coach.coach_user_id,
       name: `${coach.first_name} ${coach.last_name}`,
@@ -53,7 +56,7 @@ export default function BrowseCoaches() {
       costPerHour: coach.coach_cost,
 
       rating: rating,
-      isUnrated: rating === 0,
+      isUnrated: isUnrated,
     };
   };
 
@@ -77,8 +80,11 @@ export default function BrowseCoaches() {
     return () => clearTimeout(delay);
   }, [search]);
 
-  const { data: coachesData, loading: coachesLoading, error: coachesError } =
-    useGetFromAPI(coachesURI, null);
+  const {
+    data: coachesData,
+    loading: coachesLoading,
+    error: coachesError,
+  } = useGetFromAPI(coachesURI, null);
 
   const mappedCoaches = useMemo(() => {
     if (!coachesData?.coaches) return [];
@@ -167,8 +173,8 @@ export default function BrowseCoaches() {
     return mappedCoaches.filter((coach) => {
       if (query && !coach?.name.toLowerCase().includes(query)) return false;
       if (!matchesSpecialization(coach, selectedSpecialization)) return false;
-      if (coach?.costPerHour > maxPrice) return false;
-      if ((coach?.rating ?? 0) < minRating) return false;
+      if (maxPrice < 150 && coach?.costPerHour > maxPrice) return false;
+      if (!coach.isUnrated && (coach?.rating ?? 0) < minRating) return false;
       return true;
     });
   }, [mappedCoaches, search, selectedSpecialization, maxPrice, minRating]);
@@ -178,7 +184,7 @@ export default function BrowseCoaches() {
   const showCoachesLoading = !hasCoachesResponse || coachesLoading;
 
   return (
-    <div className="space-y-6 min-h-[calc(100dvh+2px)]">
+    <div className="min-h-[calc(100dvh+2px)] w-full space-y-6">
       <div>
         <h1 className="text-3xl font-bold">Browse Coaches</h1>
         <p className="text-muted-foreground mt-1">
@@ -245,7 +251,7 @@ export default function BrowseCoaches() {
 
           <div className="col-span-1">
             <span className="text-sm font-medium">
-              Max cost per hour: ${maxPrice}
+              Max cost per hour: ${maxPrice === 150 ? "150+" : maxPrice}
             </span>
             <input
               type="range"
@@ -262,7 +268,7 @@ export default function BrowseCoaches() {
                 text-xs"
             >
               <span>$40</span>
-              <span>$150</span>
+              <span>$150+</span>
             </div>
           </div>
 
@@ -316,10 +322,11 @@ export default function BrowseCoaches() {
                   <div>
                     <h2 className="text-xl font-semibold">{coach.name}</h2>
                   </div>
-                  <div className="text-right">
+                  <div className="flex flex-col items-end">
                     <span
-                      className="border-primary text-primary block rounded-full
-                        border px-3 py-1 text-xs font-semibold"
+                      className="border-primary text-primary inline-flex w-fit
+                        items-center justify-center rounded-full border px-3
+                        py-1 text-xs font-semibold"
                     >
                       ${coach.costPerHour}/hr
                     </span>
@@ -328,7 +335,7 @@ export default function BrowseCoaches() {
                         items-center gap-1 text-sm"
                     >
                       {coach.isUnrated
-                        ? "⭐ Unrated"
+                        ? "⭐ New Coach"
                         : `⭐ ${coach.rating.toFixed(1)}`}
                     </span>
                   </div>
