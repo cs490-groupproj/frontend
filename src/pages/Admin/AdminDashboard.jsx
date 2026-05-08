@@ -3,30 +3,45 @@ import { Button } from "../../components/ui/button.jsx";
 import useGetFromAPI from "../../hooks/useGetFromAPI";
 
 export default function AdminDashboard() {
- 
   const [currentPage, setCurrentPage] = useState(1);
-  const usersPerPage = 10;
+  const usersPerPage = 7; // Updated from 10 to 7
   const offset = (currentPage - 1) * usersPerPage;
 
-
+  // Fetching Data
   const { data: statsData, loading: statsLoading } = useGetFromAPI(
     "/admin/users/active"
   );
-
-  
   const { data: userData, loading: usersLoading } = useGetFromAPI(
     `/admin/users/all?limit=${usersPerPage}&offset=${offset}`,
     currentPage
   );
 
+  const isInitialLoading =
+    statsLoading || usersLoading || !userData || !statsData;
 
   const activeStats = statsData || { dau: 0, wau: 0, mau: 0 };
   const userList = userData?.users || [];
   const totalUsers = userData?.total_count || 0;
 
-
   const indexOfFirstUser = offset;
   const indexOfLastUser = indexOfFirstUser + userList.length;
+
+  if (isInitialLoading) {
+    return (
+      <div
+        className="flex min-h-[400px] w-full flex-col items-center
+          justify-center space-y-4"
+      >
+        <div
+          className="border-primary h-10 w-10 animate-spin rounded-full border-4
+            border-t-transparent"
+        />
+        <p className="text-muted-foreground font-medium">
+          Loading dashboard data...
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full space-y-8 p-6">
@@ -37,6 +52,7 @@ export default function AdminDashboard() {
         </p>
       </div>
 
+      {/* Stats Grid */}
       <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
         {[
           { label: "Daily", value: activeStats.dau },
@@ -56,12 +72,11 @@ export default function AdminDashboard() {
             <p
               className="text-foreground mt-4 text-4xl font-bold tracking-tight"
             >
-              {statsLoading ? "..." : stat.value.toLocaleString()}
+              {stat.value.toLocaleString()}
             </p>
           </div>
         ))}
       </div>
-
 
       <div
         className="border-border bg-card w-full overflow-hidden rounded-xl
@@ -86,16 +101,7 @@ export default function AdminDashboard() {
               </tr>
             </thead>
             <tbody className="divide-border divide-y">
-              {usersLoading ? (
-                <tr>
-                  <td
-                    colSpan="3"
-                    className="text-muted-foreground px-8 py-20 text-center"
-                  >
-                    <div className="animate-pulse">Fetching users...</div>
-                  </td>
-                </tr>
-              ) : userList.length > 0 ? (
+              {userList.length > 0 ? (
                 userList.map((user) => (
                   <tr
                     key={user.user_id}
@@ -116,7 +122,7 @@ export default function AdminDashboard() {
                 <tr>
                   <td
                     colSpan="3"
-                    className="text-muted-foreground px-8 py-10 text-center"
+                    className="text-muted-foreground px-8 py-20 text-center"
                   >
                     No users found in the system.
                   </td>
@@ -126,7 +132,6 @@ export default function AdminDashboard() {
           </table>
         </div>
 
-       
         <div
           className="bg-muted/5 border-border flex items-center justify-between
             border-t px-8 py-5"
@@ -152,10 +157,10 @@ export default function AdminDashboard() {
               <Button
                 variant="outline"
                 size="sm"
-                disabled={currentPage === 1 || usersLoading}
+                disabled={currentPage === 1}
                 onClick={() => {
                   setCurrentPage((p) => p - 1);
-                  window.scrollTo({ top: 0, behavior: "smooth" }); // Optional: Scroll up on change
+                  window.scrollTo({ top: 0, behavior: "smooth" });
                 }}
               >
                 Previous
@@ -163,7 +168,7 @@ export default function AdminDashboard() {
               <Button
                 variant="outline"
                 size="sm"
-                disabled={indexOfLastUser >= totalUsers || usersLoading}
+                disabled={indexOfLastUser >= totalUsers}
                 onClick={() => {
                   setCurrentPage((p) => p + 1);
                   window.scrollTo({ top: 0, behavior: "smooth" });

@@ -6,10 +6,9 @@ import usePostToAPI from "../../hooks/usePostToAPI";
 export default function CoachReports() {
   const [currentPage, setCurrentPage] = useState(1);
   const [actioningIds, setActioningIds] = useState(new Set());
-  
   const [localReports, setLocalReports] = useState([]);
 
-  const reportsPerPage = 10;
+  const reportsPerPage = 7; // Set to 7 as per previous request
   const offset = (currentPage - 1) * reportsPerPage;
 
   const { data, loading, refetch } = useGetFromAPI(
@@ -19,12 +18,14 @@ export default function CoachReports() {
 
   const { postFunction: adminActionAPI } = usePostToAPI();
 
- 
   useEffect(() => {
     if (data?.reports) {
       setLocalReports(data.reports);
     }
   }, [data]);
+
+ 
+  const isInitialLoading = loading || !data;
 
   const totalReports = data?.total_count || 0;
 
@@ -41,18 +42,15 @@ export default function CoachReports() {
         user_id: report.coach.coach_id,
       });
 
-      
       setLocalReports((prev) =>
         prev.filter((r) => r.coach.coach_id !== report.coach.coach_id)
       );
       alert("Coach suspended and reports cleared.");
     } catch (err) {
-      // 2. The "JSON" Fix: If it's a parse error but the status is 200/201, it actually worked!
       if (err.message?.includes("JSON") || err.status === 502) {
         setLocalReports((prev) =>
           prev.filter((r) => r.coach.coach_id !== report.coach.coach_id)
         );
-        console.log("Ban successful despite response format issue.");
       } else {
         alert("An error occurred while trying to suspend the coach.");
       }
@@ -62,7 +60,7 @@ export default function CoachReports() {
         next.delete(report.coach_report_id);
         return next;
       });
-      refetch(); 
+      refetch();
     }
   };
 
@@ -77,7 +75,6 @@ export default function CoachReports() {
         prev.filter((r) => r.coach_report_id !== reportId)
       );
     } catch (err) {
-     
       if (err.message?.includes("JSON")) {
         setLocalReports((prev) =>
           prev.filter((r) => r.coach_report_id !== reportId)
@@ -89,6 +86,22 @@ export default function CoachReports() {
       refetch();
     }
   };
+
+  
+  if (isInitialLoading) {
+    return (
+      <div
+        className="flex min-h-[400px] w-full flex-col items-center
+          justify-center space-y-4"
+      >
+        <div
+          className="border-primary h-10 w-10 animate-spin rounded-full border-4
+            border-t-transparent"
+        />
+        <p className="text-muted-foreground font-medium">Loading reports...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full space-y-6 p-6">
@@ -118,26 +131,7 @@ export default function CoachReports() {
               </tr>
             </thead>
             <tbody className="divide-border divide-y">
-              {loading && localReports.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan="3"
-                    className="text-muted-foreground animate-pulse px-8 py-20
-                      text-center"
-                  >
-                    Loading...
-                  </td>
-                </tr>
-              ) : localReports.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan="3"
-                    className="text-muted-foreground px-8 py-20 text-center"
-                  >
-                    No pending reports.
-                  </td>
-                </tr>
-              ) : (
+              {localReports.length > 0 ? (
                 localReports.map((report) => (
                   <tr
                     key={report.coach_report_id}
@@ -185,6 +179,15 @@ export default function CoachReports() {
                     </td>
                   </tr>
                 ))
+              ) : (
+                <tr>
+                  <td
+                    colSpan="3"
+                    className="text-muted-foreground px-8 py-20 text-center"
+                  >
+                    No pending reports.
+                  </td>
+                </tr>
               )}
             </tbody>
           </table>
@@ -201,7 +204,10 @@ export default function CoachReports() {
             variant="outline"
             size="sm"
             disabled={currentPage === 1}
-            onClick={() => setCurrentPage((p) => p - 1)}
+            onClick={() => {
+              setCurrentPage((p) => p - 1);
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
           >
             Previous
           </Button>
@@ -209,7 +215,10 @@ export default function CoachReports() {
             variant="outline"
             size="sm"
             disabled={offset + localReports.length >= totalReports}
-            onClick={() => setCurrentPage((p) => p + 1)}
+            onClick={() => {
+              setCurrentPage((p) => p + 1);
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
           >
             Next
           </Button>
