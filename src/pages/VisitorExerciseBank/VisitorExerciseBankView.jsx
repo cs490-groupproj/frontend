@@ -2,6 +2,8 @@ import React, { useMemo, useState } from "react";
 
 import useGetPublicAPI from "@/hooks/useGetPublicAPI";
 import VisitorExercisesBank from "./components/VisitorExercisesBank";
+import LandingPage from "../LandingPage/LandingPage";
+import LandingPageFooter from "../LandingPage/components/LandingPageFooter";
 
 const VisitorExerciseBankView = () => {
   const [bankBodyPartFilter, setBankBodyPartFilter] = useState("All");
@@ -75,6 +77,7 @@ const VisitorExerciseBankView = () => {
   ]);
 
   return (
+    <>
     <div
       className="bg-background mx-auto flex w-full max-w-7xl flex-col space-y-6
         pt-40"
@@ -94,6 +97,10 @@ const VisitorExerciseBankView = () => {
         categoryNameById={categoryNameById}
       />
     </div>
+    <div className="pt-5">
+     <LandingPageFooter />
+    </div>
+    </>
   );
 };
 
