@@ -4,15 +4,9 @@ import { Card, CardContent } from "@/components/ui/card";
 const TransformationCard = ({ transformation }) => {
   return (
     <Card className="hover:border-primary relative w-full max-w-lg border-1">
-      <div className="grid h-75 grid-cols-2 items-center">
-        <img
-          className="h-full w-full object-cover"
-          src={transformation.before}
-        />
-        <img
-          className="h-full w-full object-cover"
-          src={transformation.after}
-        />
+      <div className="grid grid-cols-2">
+        <img className="h-80 w-full object-cover" src={transformation.before} />
+        <img className="h-80 w-full object-cover" src={transformation.after} />
       </div>
       <div className="absolute flex w-full justify-between px-6 py-4">
         <p
