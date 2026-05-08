@@ -15,13 +15,12 @@ const LandingPage = () => {
         >
           <div className="text-foreground flex flex-col gap-4">
             <h1 className="text-5xl leading-16 font-bold">
-              Optimal for your Health, Optimal for your Wallet
+              Optimal for your heatlh, Optimal for your wallet.
             </h1>
             <p className="text-muted-foreground text-xl">
-              Lorem ipsum dolor sit amet consectetur adipiscing elit. Dolor sit
-              amet consectetur adipiscing elit quisque faucibus.
+              We bring your fitness journey to the world's best coaches and nutritionists.
             </p>
-            <div className="flex flex-col items-center">
+            <div className="flex flex-col items-start">
               <Button asChild size="xl">
                 <NavLink to="/signup" className="text-xl">
                   Sign Up
