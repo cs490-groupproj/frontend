@@ -1,10 +1,11 @@
 import React, { useState } from "react";
 import { Button } from "../../components/ui/button.jsx";
 import useGetFromAPI from "../../hooks/useGetFromAPI";
+import { Loader2 } from "lucide-react";
 
 export default function AdminDashboard() {
   const [currentPage, setCurrentPage] = useState(1);
-  const usersPerPage = 7; // Updated from 10 to 7
+  const usersPerPage = 6; // Updated from 10 to 6
   const offset = (currentPage - 1) * usersPerPage;
 
   // Fetching Data
@@ -28,21 +29,17 @@ export default function AdminDashboard() {
 
   if (isInitialLoading) {
     return (
-      <div
-        className="flex min-h-[400px] w-full flex-col items-center
-          justify-center space-y-4"
-      >
-        <div
-          className="border-primary h-10 w-10 animate-spin rounded-full border-4
-            border-t-transparent"
-        />
-        <p className="text-muted-foreground font-medium">
+      <div className="flex w-full flex-col items-center justify-center py-12">
+        <Loader2 className="text-primary h-12 w-12 animate-spin" />
+        <p
+          className="text-muted-foreground mt-4 text-xs font-bold
+            tracking-widest uppercase"
+        >
           Loading dashboard data...
         </p>
       </div>
     );
   }
-
   return (
     <div className="w-full space-y-8 p-6">
       <div>
