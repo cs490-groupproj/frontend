@@ -391,6 +391,10 @@ const WorkoutPlansTab = ({
                   const source = String(entry?.source || "").toLowerCase();
                   return source === "self" || source === "user";
                 };
+                const hasAssignments = (plan.assignments || []).length > 0;
+                const hasCoachAssignedTag = Boolean(
+                  plan.created_by != null && !plan.is_created_by_user
+                );
                 return (
                   <>
               <div className="flex flex-wrap items-center gap-3">
@@ -422,9 +426,14 @@ const WorkoutPlansTab = ({
                         {bodyPart}
                       </span>
                     ))}
-                    {plan.is_locked_assigned_plan && (
+                    {hasAssignments && (
                       <span className="bg-destructive/15 text-destructive rounded-full px-2.5 py-1 text-xs">
                         Assigned
+                      </span>
+                    )}
+                    {hasCoachAssignedTag && (
+                      <span className="bg-violet-500/15 text-violet-300 rounded-full px-2.5 py-1 text-xs">
+                        Coach Assigned
                       </span>
                     )}
                     {isGlobalTemplate && (
