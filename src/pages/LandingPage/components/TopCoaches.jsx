@@ -4,7 +4,7 @@ import useGetPublicAPI from "@/hooks/useGetPublicAPI";
 
 const TopCoaches = () => {
   const [coachData, setCoachData] = useState([]);
-  const [coachesURI, setCoachesURI] = useState("/visitors/top_coaches?limit=6");
+  const [coachesURI, setCoachesURI] = useState("/visitors/top_coaches?limit=3");
   const SPECIALIZATIONS = {
     ALL: "ALL",
     EXERCISE: "EXERCISE",
@@ -13,7 +13,8 @@ const TopCoaches = () => {
   };
 
   const mapCoachFromBackend = (coach) => {
-    const rating = Number(coach.avg_rating ?? 0);
+    const rating = Number(coach.avg_rating ?? 5);
+    const isUnrated = coach.avg_rating === 0;
     return {
       name: `${coach.first_name} ${coach.last_name}`,
 
@@ -25,7 +26,7 @@ const TopCoaches = () => {
       qualifications: coach.qualifications,
 
       rating: rating,
-      isUnrated: rating === 0,
+      isUnrated: isUnrated,
     };
   };
   const {
