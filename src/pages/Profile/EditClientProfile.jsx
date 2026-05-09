@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Dialog } from "radix-ui";
+import { Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import useGetFromAPI from "@/hooks/useGetFromAPI";
 import usePatchToAPI from "@/hooks/usePatchToAPI";
 import DeleteAccount from "./components/DeleteAccount";
@@ -167,12 +167,6 @@ export default function EditClientProfile() {
     return n || "Your profile";
   }, [firstName, lastName]);
 
-  const initials = useMemo(() => {
-    const a = (firstName?.[0] || "").toUpperCase();
-    const b = (lastName?.[0] || "").toUpperCase();
-    return a + b || "?";
-  }, [firstName, lastName]);
-
   const selectedGoalLabels = useMemo(
     () =>
       selectedGoalIds
@@ -301,41 +295,51 @@ export default function EditClientProfile() {
     <div className="w-full max-w-3xl space-y-6">
       <div>
         <h1 className="text-foreground text-3xl font-bold">Profile</h1>
-        <p className="text-muted-foreground mt-1 text-sm">
-          Your account and fitness goals.
-        </p>
       </div>
 
-      <section className="border-border bg-card rounded-xl border p-6">
-        <div className="flex items-start justify-between">
-          <div
-            className="flex flex-col items-center gap-4 sm:flex-row
-              sm:items-center"
-          >
-            <Avatar className="size-24 text-2xl">
-              <AvatarImage
-                src="https://www.gravatar.com/avatar?d=mp&f=y&s=128"
-                alt=""
-              />
-              <AvatarFallback className="text-2xl">{initials}</AvatarFallback>
-            </Avatar>
-            <div
-              className="flex flex-col items-center text-center sm:items-start
-                sm:text-left"
+      <section
+        className="border-border bg-card relative overflow-hidden rounded-2xl
+          border p-6 shadow-sm sm:p-8"
+      >
+        <div
+          className="from-primary/10 pointer-events-none absolute inset-x-0
+            top-0 h-32 bg-gradient-to-b to-transparent"
+          aria-hidden="true"
+        />
+        <div
+          className="relative flex flex-col gap-6 sm:flex-row sm:items-start
+            sm:justify-between"
+        >
+          <div className="flex min-w-0 flex-col gap-2">
+            <span
+              className="text-muted-foreground text-xs font-semibold
+                tracking-[0.18em] uppercase"
             >
-              <h2 className="text-foreground text-2xl font-semibold">
-                {displayName}
-              </h2>
-              <p className="text-muted-foreground mt-1 text-sm">
+              Client account
+            </span>
+            <h2
+              className="text-foreground text-3xl leading-tight font-semibold
+                tracking-tight sm:text-4xl"
+            >
+              {displayName}
+            </h2>
+            <div
+              className="text-muted-foreground inline-flex items-center gap-2
+                text-sm"
+            >
+              <Mail className="size-4 shrink-0" aria-hidden="true" />
+              <span className="break-all">
                 {email || "No email on file"}
-              </p>
+              </span>
             </div>
           </div>
-          <div className="flex flex-col justify-between gap-8">
+          <div
+            className="flex flex-col gap-2 sm:items-stretch
+              sm:[&>button]:w-44"
+          >
             <Button
               type="button"
               variant="outline"
-              className="shrink-0"
               onClick={() => setAccountDialogOpen(true)}
             >
               Edit profile
@@ -453,9 +457,6 @@ export default function EditClientProfile() {
                 ></Button>
               </Dialog.Close>
             </div>
-            <Dialog.Description className="text-muted-foreground text-sm">
-              Update your name and email.
-            </Dialog.Description>
 
             <form className="space-y-4" onSubmit={handleSaveAccount}>
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -534,9 +535,6 @@ export default function EditClientProfile() {
                 ></Button>
               </Dialog.Close>
             </div>
-            <Dialog.Description className="text-muted-foreground text-sm">
-              Update height, weight goal, and fitness targets.
-            </Dialog.Description>
 
             <form className="space-y-4" onSubmit={handleSaveGoals}>
               <div className="flex flex-col gap-2">
