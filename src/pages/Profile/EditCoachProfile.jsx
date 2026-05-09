@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import useGetFromAPI from "@/hooks/useGetFromAPI";
 import usePatchToAPI from "@/hooks/usePatchToAPI";
 import DeleteAccount from "./components/DeleteAccount";
+import { Loader2 } from "lucide-react";
 
 const SPECIALIZATIONS = [
   { value: "EXERCISE", label: "Exercise" },
@@ -187,11 +188,31 @@ export default function EditCoachProfile() {
     "focus-visible:border-ring h-9 w-full rounded-lg border px-3 " +
     "text-sm outline-none focus-visible:ring-3";
 
-  if (meLoading || profileLoading) {
+  // if (meLoading || profileLoading) {
+  //   return (
+  //     <div className="w-full max-w-3xl">
+  //       <h1 className="text-foreground text-2xl font-semibold">Profile</h1>
+  //       <p className="text-muted-foreground mt-4">Loading profile...</p>
+  //     </div>
+  //   );
+  // }
+
+  const isDataReady = !profileLoading && !meLoading && profileData;
+
+  if (!isDataReady) {
     return (
-      <div className="w-full max-w-3xl">
-        <h1 className="text-foreground text-2xl font-semibold">Profile</h1>
-        <p className="text-muted-foreground mt-4">Loading profile...</p>
+      <div
+        className="bg-background flex h-screen w-full flex-col items-center
+          justify-center text-white"
+      >
+        {/* Matching the Loader2 styling from your nutrition page */}
+        <Loader2 className="text-primary h-12 w-12 animate-spin" />
+        <p
+          className="text-muted-foreground mt-4 text-xs font-bold
+            tracking-widest uppercase"
+        >
+          Syncing Profile
+        </p>
       </div>
     );
   }
