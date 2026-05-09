@@ -73,6 +73,11 @@ const WorkoutPlansTab = ({
   addScheduleDraftEntry,
   removeScheduleDraftEntry,
   assignScheduleToPlan,
+  /** When false, hides schedule assignment UI entirely (coach + client flows). */
+  allowAssignments = true,
+  /** When true, global templates (`created_by == null`) remain editable/deleteable like normal plans (admin tooling). */
+  globalTemplateManagementMode = false,
+  emptyListMessage = "No plans yet for this user.",
 }) => {
   if (isLoading) {
     return (
@@ -361,8 +366,10 @@ const WorkoutPlansTab = ({
             <CardContent className="space-y-4 p-4">
               {(() => {
                 const isGlobalTemplate = plan.created_by == null;
-                const isRestrictedTemplate = plan.is_locked_assigned_plan || isGlobalTemplate;
-                const canAssignPlan = !plan.is_locked_assigned_plan;
+                const isRestrictedTemplate = globalTemplateManagementMode
+                  ? Boolean(plan.is_locked_assigned_plan)
+                  : Boolean(plan.is_locked_assigned_plan || isGlobalTemplate);
+                const canAssignPlan = allowAssignments && !plan.is_locked_assigned_plan;
                 return (
                   <>
               <div className="flex flex-wrap items-center gap-3">
@@ -464,7 +471,7 @@ const WorkoutPlansTab = ({
                 </Button>
               </div>
 
-              {(plan.assignments || []).length > 0 && (
+              {allowAssignments && (plan.assignments || []).length > 0 && (
                 <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
                   {(plan.assignments || []).map((entry, index) => (
                     <div
@@ -490,7 +497,7 @@ const WorkoutPlansTab = ({
                 </div>
               )}
 
-              {assigningPlanId === plan.workout_plan_id && (
+              {allowAssignments && assigningPlanId === plan.workout_plan_id && (
                 <Card>
                   <CardContent className="grid grid-cols-1 gap-3 p-3 md:grid-cols-2">
                     {isCoachAssignScreen ? (
@@ -668,7 +675,7 @@ const WorkoutPlansTab = ({
         {plans.length === 0 && (
           <Card>
             <CardContent className="text-muted-foreground p-6 text-center">
-              No plans yet for this user.
+              {emptyListMessage}
             </CardContent>
           </Card>
         )}

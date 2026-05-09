@@ -16,6 +16,7 @@ import {
   View,
   ClipboardCheck,
   ShieldAlert,
+  ListChecks,
 } from "lucide-react";
 import { signOut } from "firebase/auth";
 import { auth } from "@/firebase.js";
@@ -96,6 +97,7 @@ const Sidebar = ({
           label: "Coach Applications",
         },
         { to: "/admin/reports", icon: ShieldAlert, label: "Coach Reports" },
+        { to: "/admin/workout-plans", icon: ListChecks, label: "Workout Plans" },
         { to: "/admin/exercise-bank", icon: Dumbbell, label: "Exercise Bank" },
       ];
     }
