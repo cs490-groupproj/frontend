@@ -175,30 +175,28 @@ const DailySurvey = ({ onSubmitted }) => {
     }
   };
 
-const handleChangeResponse = () => {
-  // Keep submittedSurveyId so next save uses PATCH
-  const todayKey = getLocalDateKey();
-  localStorage.setItem(
-    DAILY_SURVEY_STORAGE_KEY,
-    JSON.stringify({
-      userId,
-      dateKey: todayKey,
-      isSaved: false,
-      submittedSurveyId: submittedSurveyId,
-      mood: null,
-      energy: null,
-      sleep: null,
-      notes: "",
-    })
-  );
-  setSelectedMood(null);
-  setSelectedEnergy(null);
-  setSelectedSleep(null);
-  setNotes("");
-  setIsSaved(false);
-};
-
-
+  const handleChangeResponse = () => {
+    // Keep submittedSurveyId so next save uses PATCH
+    const todayKey = getLocalDateKey();
+    localStorage.setItem(
+      DAILY_SURVEY_STORAGE_KEY,
+      JSON.stringify({
+        userId,
+        dateKey: todayKey,
+        isSaved: false,
+        submittedSurveyId: submittedSurveyId,
+        mood: null,
+        energy: null,
+        sleep: null,
+        notes: "",
+      })
+    );
+    setSelectedMood(null);
+    setSelectedEnergy(null);
+    setSelectedSleep(null);
+    setNotes("");
+    setIsSaved(false);
+  };
 
   if (isSaved) {
     return (
@@ -244,7 +242,7 @@ const handleChangeResponse = () => {
   if (!isBackendProcessed) {
     return (
       <div
-        className="flex h-[40vh] w-full flex-col items-center justify-center
+        className="flex h-[60vh] w-full flex-col items-center justify-center
           p-6"
       >
         <Loader2 className="text-primary h-12 w-12 animate-spin" />
