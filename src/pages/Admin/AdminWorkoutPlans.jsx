@@ -141,12 +141,9 @@ export default function AdminWorkoutPlans() {
   const { data: exerciseCategories, loading: exerciseCategoriesLoading } =
     useGetFromAPI("/exercise-categories", null);
 
-  /**
-   * Assumes admins can GET `/workout-plans`; response is narrowed to globals after each plan detail loads.
-   * If backend uses a dedicated admin list endpoint, swap the URI here.
-   */
+  /** Admin-only catalog: `GET /workout-plans/global` (shared templates, `created_by` null). */
   const { data: plansData, loading: plansLoading } = useGetFromAPI(
-    "/workout-plans",
+    "/workout-plans/global",
     plansRefreshKey
   );
 
@@ -226,30 +223,23 @@ export default function AdminWorkoutPlans() {
 
     plansData.forEach((plan) => {
       const detail = planDetailsById[plan.workout_plan_id];
-      if (!detail) return;
-
-      const hasCreatedKey = Object.prototype.hasOwnProperty.call(
-        detail,
-        "created_by"
-      );
-      if (!hasCreatedKey) return;
-
-      /** Global templates match client UI: only `created_by == null`. */
-      if (detail.created_by != null) return;
-
-      const detailExercises = Array.isArray(detail?.exercises) ? detail.exercises : [];
-      const baseAssignments = Array.isArray(detail?.assignments) ? detail.assignments : [];
+      const detailExercises =
+        detail && Array.isArray(detail.exercises) ? detail.exercises : [];
+      const baseAssignments =
+        detail && Array.isArray(detail.assignments) ? detail.assignments : [];
 
       rows.push({
         workout_plan_id: plan.workout_plan_id,
-        title: detail?.title || plan.title || "",
-        description: detail?.description || "",
+        title: detail?.title ?? plan.title ?? "",
+        description: detail?.description ?? "",
         duration_min:
-          detail?.duration_min === 0 || detail?.duration_min
+          detail?.duration_min === 0 || detail?.duration_min != null
             ? detail.duration_min
-            : plan.duration_min || 0,
-        workout_type_id: detail?.workout_type_id ?? null,
-        created_by: detail.created_by,
+            : plan.duration_min ?? 0,
+        workout_type_id: detail
+          ? detail.workout_type_id ?? null
+          : plan.workout_type_id ?? null,
+        created_by: plan.created_by ?? detail?.created_by ?? null,
         is_created_by_user: false,
         is_assigned_to_user: false,
         is_locked_assigned_plan: false,
@@ -475,10 +465,7 @@ export default function AdminWorkoutPlans() {
 
     try {
       if (!editingPlanId) {
-        const created = await postFunction("/workout-plans", {
-          ...basePayload,
-          created_by: null,
-        });
+        const created = await postFunction("/workout-plans/global", basePayload);
         const newPlanId = created?.workout_plan_id;
         if (newPlanId && cleanedRows.length > 0) {
           await postFunction(`/workout-plans/${newPlanId}/exercises`, {
