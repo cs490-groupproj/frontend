@@ -41,11 +41,7 @@ export default function CoachDashboard() {
   // --- LOADING VIEW (Matching Nutrition Page Style) ---
   if (!isDataReady) {
     return (
-      <div
-        className="bg-background flex h-screen w-full flex-col items-center
-          justify-center text-white"
-      >
-        {/* Matching the Loader2 styling from your nutrition page */}
+      <div className="flex w-full flex-col items-center justify-center py-12">
         <Loader2 className="text-primary h-12 w-12 animate-spin" />
         <p
           className="text-muted-foreground mt-4 text-xs font-bold
@@ -59,7 +55,7 @@ export default function CoachDashboard() {
 
   // --- DASHBOARD CONTENT (Instant Snap) ---
   return (
-    <div className="bg-background min-h-screen w-full space-y-8 p-6 text-white">
+    <div className="bg-background w-full space-y-8 p-6 text-white">
       {/* HEADER SECTION */}
       <div>
         <h1 className="text-4xl font-bold tracking-tight">

@@ -37,7 +37,7 @@ const Navbar = ({ navbar_contents }) => {
           </NavLink>
         )}
         {"navPaths" in navbar_contents && (
-          <div className="flex items-center justify-between gap-12 px-4">
+          <div className="flex items-center justify-between gap-8 px-4">
             {/* This handles the paths on the right side of the navbar, mapping out 
           the navPaths from navbar_contents. Special cases can be added in the first 
           if statement, like i did with btnLg */}

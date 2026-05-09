@@ -42,6 +42,8 @@ const App = () => {
           path="/visitorExerciseBank"
           element={<VisitorExerciseBankView />}
         />
+        <Route path="/login" element={<LogIn />} />
+        <Route path="/signup" element={<SignUp />} />
       </Route>
 
       <Route element={<DashboardLayout />}>
@@ -88,8 +90,6 @@ const App = () => {
         </Route>
       </Route>
 
-      <Route path="/login" element={<LogIn />} />
-      <Route path="/signup" element={<SignUp />} />
       <Route path="/clientSurvey" element={<ClientSurvey />} />
       <Route path="/coachSurvey" element={<CoachSurvey />} />
     </Routes>

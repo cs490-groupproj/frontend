@@ -11,3 +11,17 @@ function toTitleCase(string) {
   });
 }
 export default toTitleCase;
+
+//expects a string in the format "XX:XX:XX"
+export function formatMilitaryTime(timeString) {
+  if (!timeString) return "";
+
+  const [hoursStr, minutesStr] = timeString.split(":");
+
+  let hours = parseInt(hoursStr, 10);
+  const am_pm = hours >= 12 ? "PM" : "AM";
+
+  hours = hours % 12;
+  hours = hours ? hours : 12;
+  return `${hours}:${minutesStr} ${am_pm}`;
+}
