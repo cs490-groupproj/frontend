@@ -10,6 +10,7 @@ import {
   ResponsiveContainer,
   Legend,
 } from "recharts";
+import { Loader2 } from "lucide-react";
 
 function localDayKey(d) {
   const y = d.getFullYear();
@@ -38,7 +39,10 @@ function buildLastNDaysChartData(apiRows, n = 7) {
     const row = byDate.get(key);
     out.push({
       dayShort: d.toLocaleDateString(undefined, { weekday: "short" }),
-      dayDate: d.toLocaleDateString(undefined, { month: "short", day: "numeric" }),
+      dayDate: d.toLocaleDateString(undefined, {
+        month: "short",
+        day: "numeric",
+      }),
       mood: row?.mood ?? 0,
       energy: row?.energy ?? 0,
       sleep: row?.sleep ?? 0,
@@ -70,7 +74,10 @@ function buildWorkoutMetricChartData(apiRows, n, valueKey) {
     const key = d.toISOString().slice(0, 10);
     out.push({
       dayShort: d.toLocaleDateString(undefined, { weekday: "short" }),
-      dayDate: d.toLocaleDateString(undefined, { month: "short", day: "numeric" }),
+      dayDate: d.toLocaleDateString(undefined, {
+        month: "short",
+        day: "numeric",
+      }),
       [valueKey]: summedByDate.get(key) ?? 0,
     });
   }
@@ -95,7 +102,10 @@ function buildCaloriesChartData(apiRows, n) {
     const key = d.toISOString().slice(0, 10);
     out.push({
       dayShort: d.toLocaleDateString(undefined, { weekday: "short" }),
-      dayDate: d.toLocaleDateString(undefined, { month: "short", day: "numeric" }),
+      dayDate: d.toLocaleDateString(undefined, {
+        month: "short",
+        day: "numeric",
+      }),
       daily_total_calories: Math.round(summedByDate.get(key) ?? 0),
     });
   }
@@ -119,11 +129,17 @@ function WorkoutMetricChart({
       : (value) => [value, title];
 
   return (
-    <section className="border-border bg-card text-card-foreground rounded-xl border p-4">
+    <section
+      className="border-border bg-card text-card-foreground rounded-xl border
+        p-4"
+    >
       <h3 className="mb-4 text-lg font-semibold">{title}</h3>
-      <div className="h-72 w-full min-h-[288px]">
+      <div className="h-72 min-h-[288px] w-full">
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={data} margin={{ top: 8, right: 12, left: 10, bottom: 0 }}>
+          <LineChart
+            data={data}
+            margin={{ top: 8, right: 12, left: 10, bottom: 0 }}
+          >
             <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" />
             <XAxis
               dataKey={range === 90 || range === 30 ? "dayDate" : "dayShort"}
@@ -189,14 +205,21 @@ const Stats = ({ viewedUserId = null }) => {
   const workoutVolumeUri = userId
     ? `/workouts/history/total-volume?user_id=${userId}&days=${workoutRange}`
     : null;
-  const { data: setsData, loading: setsLoading, error: setsError } = useGetFromAPI(
-    setsUri,
-    workoutRange
-  );
-  const { data: workoutTimeData, loading: workoutTimeLoading, error: workoutTimeError } =
-    useGetFromAPI(workoutTimeUri, workoutRange);
-  const { data: workoutVolumeData, loading: workoutVolumeLoading, error: workoutVolumeError } =
-    useGetFromAPI(workoutVolumeUri, workoutRange);
+  const {
+    data: setsData,
+    loading: setsLoading,
+    error: setsError,
+  } = useGetFromAPI(setsUri, workoutRange);
+  const {
+    data: workoutTimeData,
+    loading: workoutTimeLoading,
+    error: workoutTimeError,
+  } = useGetFromAPI(workoutTimeUri, workoutRange);
+  const {
+    data: workoutVolumeData,
+    loading: workoutVolumeLoading,
+    error: workoutVolumeError,
+  } = useGetFromAPI(workoutVolumeUri, workoutRange);
 
   const chartData = useMemo(() => {
     const rows = Array.isArray(data) ? data : [];
@@ -208,7 +231,11 @@ const Stats = ({ viewedUserId = null }) => {
   }, [setsData, workoutRange]);
   const workoutTimeChartData = useMemo(() => {
     const rows = Array.isArray(workoutTimeData) ? workoutTimeData : [];
-    return buildWorkoutMetricChartData(rows, workoutRange, "total_workout_time");
+    return buildWorkoutMetricChartData(
+      rows,
+      workoutRange,
+      "total_workout_time"
+    );
   }, [workoutTimeData, workoutRange]);
   const workoutVolumeChartData = useMemo(() => {
     const rows = Array.isArray(workoutVolumeData) ? workoutVolumeData : [];
@@ -218,206 +245,287 @@ const Stats = ({ viewedUserId = null }) => {
     const rows = Array.isArray(caloriesData) ? caloriesData : [];
     return buildCaloriesChartData(rows, calRange);
   }, [caloriesData, calRange]);
-  const workoutLoading = setsLoading || workoutTimeLoading || workoutVolumeLoading;
   const workoutError = setsError || workoutTimeError || workoutVolumeError;
 
+  const isAnyLoading =
+    loading ||
+    caloriesLoading ||
+    setsLoading ||
+    workoutTimeLoading ||
+    workoutVolumeLoading;
 
+  if (isAnyLoading) {
+    return (
+      <div
+        className="flex h-[60vh] w-full flex-col items-center justify-center
+          p-6"
+      >
+        <Loader2 className="text-primary h-12 w-12 animate-spin" />
+        <p
+          className="text-muted-foreground mt-4 text-xs font-bold
+            tracking-widest uppercase"
+        >
+          Crunching Your Numbers
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full space-y-4 p-6">
-      <section className="border-border bg-card text-card-foreground rounded-xl border p-4">
+      <section
+        className="border-border bg-card text-card-foreground rounded-xl border
+          p-4"
+      >
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-xl font-semibold">Mood, energy & sleep (last {range} days)</h2>
+          <h2 className="text-xl font-semibold">
+            Mood, energy & sleep (last {range} days)
+          </h2>
           <div className="flex items-center gap-2">
             <button
               onClick={() => setRange(7)}
-              className={`px-3 py-1 rounded-md text-sm font-medium transition ${
-                range === 7 
-                ? "bg-muted text-foreground" 
-                : "text-muted-foreground"
-              }`}
+              className={`rounded-md px-3 py-1 text-sm font-medium transition ${
+                range === 7
+                  ? "bg-muted text-foreground"
+                  : "text-muted-foreground"
+                }`}
             >
               7D
             </button>
             <button
               onClick={() => setRange(30)}
-              className={`px-3 py-1 rounded-md text-sm font-medium transition ${
-                range === 30 
-                ? "bg-muted text-foreground" 
-                : "text-muted-foreground"
-              }`}
+              className={`rounded-md px-3 py-1 text-sm font-medium transition ${
+                range === 30
+                  ? "bg-muted text-foreground"
+                  : "text-muted-foreground"
+                }`}
             >
               30D
             </button>
           </div>
         </div>
-        
+
         {error ? (
           <p className="text-destructive text-sm" role="alert">
             {error}
           </p>
-        ) : null}
-        
-        <div className="h-80 w-full min-h-[320px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={chartData} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
-              <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" />
-              <XAxis dataKey={range === 30 ? "dayDate" : "dayShort"} interval={range === 30 ? 4 : 0} tick={{ fill: "var(--muted-foreground)" }} />
-              <YAxis domain={[0, 10]} tick={{ fill: "var(--muted-foreground)" }} />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "var(--popover)",
-                  border: "1px solid var(--border)",
-                  color: "var(--popover-foreground)",
-                }}
-              />
-              <Legend />
-              <Line type="monotone" dataKey="mood" stroke="var(--chart-1)" strokeWidth={3} connectNulls />
-              <Line type="monotone" dataKey="energy" stroke="var(--chart-2)" strokeWidth={3} connectNulls />
-              <Line type="monotone" dataKey="sleep" stroke="var(--chart-3)" strokeWidth={3} connectNulls />
-            </LineChart>
-          </ResponsiveContainer>
-
-        </div>
+        ) : (
+          <div className="h-80 min-h-[320px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart
+                data={chartData}
+                margin={{ top: 8, right: 12, left: 0, bottom: 0 }}
+              >
+                <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" />
+                <XAxis
+                  dataKey={range === 30 ? "dayDate" : "dayShort"}
+                  interval={range === 30 ? 4 : 0}
+                  tick={{ fill: "var(--muted-foreground)" }}
+                />
+                <YAxis
+                  domain={[0, 10]}
+                  tick={{ fill: "var(--muted-foreground)" }}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "var(--popover)",
+                    border: "1px solid var(--border)",
+                    color: "var(--popover-foreground)",
+                  }}
+                />
+                <Legend />
+                <Line
+                  type="monotone"
+                  dataKey="mood"
+                  stroke="var(--chart-1)"
+                  strokeWidth={3}
+                  connectNulls
+                />
+                <Line
+                  type="monotone"
+                  dataKey="energy"
+                  stroke="var(--chart-2)"
+                  strokeWidth={3}
+                  connectNulls
+                />
+                <Line
+                  type="monotone"
+                  dataKey="sleep"
+                  stroke="var(--chart-3)"
+                  strokeWidth={3}
+                  connectNulls
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        )}
       </section>
-      <section className="border-border bg-card text-card-foreground rounded-xl border p-4">
-          <div className="mb-4 flex items-center justify-between">
-        <h2 className="mb-4 text-xl font-semibold">Calories intake (last {calRange} days)</h2>
+
+      <section
+        className="border-border bg-card text-card-foreground rounded-xl border
+          p-4"
+      >
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="mb-4 text-xl font-semibold">
+            Calories intake (last {calRange} days)
+          </h2>
 
           <div className="flex items-center gap-2">
             <button
               onClick={() => setCalRange(7)}
-              className={`px-3 py-1 rounded-md text-sm font-medium transition ${
-                calRange === 7 
-                ? "bg-muted text-foreground" 
-                : "text-muted-foreground"
-              }`}
+              className={`rounded-md px-3 py-1 text-sm font-medium transition ${
+                calRange === 7
+                  ? "bg-muted text-foreground"
+                  : "text-muted-foreground"
+                }`}
             >
               7D
             </button>
             <button
               onClick={() => setCalRange(30)}
-              className={`px-3 py-1 rounded-md text-sm font-medium transition ${
-                calRange === 30 
-                ? "bg-muted text-foreground" 
-                : "text-muted-foreground"
-              }`}
+              className={`rounded-md px-3 py-1 text-sm font-medium transition ${
+                calRange === 30
+                  ? "bg-muted text-foreground"
+                  : "text-muted-foreground"
+                }`}
             >
               30D
             </button>
           </div>
-          </div>
-            {caloriesError ? (
+        </div>
+        {caloriesError ? (
           <p className="text-destructive text-sm" role="alert">
             {caloriesError}
           </p>
-        ) : null}
-        <div className="h-80 w-full min-h-[320px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart
-              data={caloriesChartData}
-              margin={{ top: 8, right: 12, left: 10, bottom: 0 }}
-            >
-              <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" />
-              <XAxis
-                dataKey={calRange === 30 ? "dayDate" : "dayShort"}
-                interval={calRange === 30 ? 4 : 0}
-                tick={{ fill: "var(--muted-foreground)" }}
-              />
-              <YAxis
-                width={70}
-                tick={{ fill: "var(--muted-foreground)" }}
-                allowDecimals={false}
-                tickFormatter={(value) => `${Math.round(value)}`}
-              />
-              <Tooltip
-                formatter={(value) => [`${Math.round(value)} kcal`, "Calories intake"]}
-                contentStyle={{
-                  backgroundColor: "var(--popover)",
-                  border: "1px solid var(--border)",
-                  color: "var(--popover-foreground)",
-                }}
-              />
-              <Legend />
-              <Line
-                type="monotone"
-                dataKey="daily_total_calories"
-                stroke="var(--chart-4)"
-                strokeWidth={3}
-                name="Calories intake"
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
+        ) : (
+          <div className="h-80 min-h-[320px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart
+                data={caloriesChartData}
+                margin={{ top: 8, right: 12, left: 10, bottom: 0 }}
+              >
+                <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" />
+                <XAxis
+                  dataKey={calRange === 30 ? "dayDate" : "dayShort"}
+                  interval={calRange === 30 ? 4 : 0}
+                  tick={{ fill: "var(--muted-foreground)" }}
+                />
+                <YAxis
+                  width={70}
+                  tick={{ fill: "var(--muted-foreground)" }}
+                  allowDecimals={false}
+                  tickFormatter={(value) => `${Math.round(value)}`}
+                />
+                <Tooltip
+                  formatter={(value) => [
+                    `${Math.round(value)} kcal`,
+                    "Calories intake",
+                  ]}
+                  contentStyle={{
+                    backgroundColor: "var(--popover)",
+                    border: "1px solid var(--border)",
+                    color: "var(--popover-foreground)",
+                  }}
+                />
+                <Legend />
+                <Line
+                  type="monotone"
+                  dataKey="daily_total_calories"
+                  stroke="var(--chart-4)"
+                  strokeWidth={3}
+                  name="Calories intake"
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        )}
       </section>
-      <section className="border-border bg-card text-card-foreground rounded-xl border p-4">
+      <section
+        className="border-border bg-card text-card-foreground rounded-xl border
+          p-4"
+      >
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-xl font-semibold">
             Workout trends (last {workoutRange} days)
           </h2>
-          
+
           <div className="flex items-center gap-2">
             <button
               onClick={() => setWorkoutRange(7)}
-              className={`px-3 py-1 rounded-md text-sm font-medium transition ${
-                workoutRange === 7 ? "bg-muted text-foreground" : "text-muted-foreground"
-              }`}
+              className={`rounded-md px-3 py-1 text-sm font-medium transition ${
+                workoutRange === 7
+                  ? "bg-muted text-foreground"
+                  : "text-muted-foreground"
+                }`}
             >
               7D
             </button>
             <button
               onClick={() => setWorkoutRange(30)}
-              className={`px-3 py-1 rounded-md text-sm font-medium transition ${
-                workoutRange === 30 ? "bg-muted text-foreground" : "text-muted-foreground"
-              }`}
+              className={`rounded-md px-3 py-1 text-sm font-medium transition ${
+                workoutRange === 30
+                  ? "bg-muted text-foreground"
+                  : "text-muted-foreground"
+                }`}
             >
               30D
             </button>
             <button
               onClick={() => setWorkoutRange(90)}
-              className={`px-3 py-1 rounded-md text-sm font-medium transition ${
-                workoutRange === 90 ? "bg-muted text-foreground" : "text-muted-foreground"
-              }`}
+              className={`rounded-md px-3 py-1 text-sm font-medium transition ${
+                workoutRange === 90
+                  ? "bg-muted text-foreground"
+                  : "text-muted-foreground"
+                }`}
             >
               90D
             </button>
           </div>
         </div>
-        {workoutLoading ? (
-          <p className="text-muted-foreground text-sm">Loading workout trends...</p>
-        ) : null}
+
         {workoutError ? (
           <p className="text-destructive text-sm" role="alert">
             {workoutError}
           </p>
-        ) : null}
+        ) : (
+          <p className="text-muted-foreground text-sm">
+            Here are your detailed metrics across the selected timeframe.
+          </p>
+        )}
       </section>
 
-      <WorkoutMetricChart
-        title="Sets logged"
-        data={setsChartData}
-        valueKey="sets_logged"
-        range={workoutRange}
-        colorVar="var(--chart-1)"
-      />
-      <WorkoutMetricChart
-        title="Total workout time"
-        data={workoutTimeChartData}
-        valueKey="total_workout_time"
-        range={workoutRange}
-        colorVar="var(--chart-2)"
-        yAxisFormatter={(value) => `${value} min`}
-        tooltipFormatter={(value) => [`${value} min`, "Total workout time"]}
-      />
-      <WorkoutMetricChart
-        title="Total volume"
-        data={workoutVolumeChartData}
-        valueKey="total_volume"
-        range={workoutRange}
-        colorVar="var(--chart-3)"
-        yAxisFormatter={(value) => `${value} lbs`}
-        tooltipFormatter={(value) => [`${Number(value).toLocaleString()} lbs`, "Total volume"]}
-      />
+      {!workoutError && (
+        <div className="space-y-4">
+          <WorkoutMetricChart
+            title="Sets logged"
+            data={setsChartData}
+            valueKey="sets_logged"
+            range={workoutRange}
+            colorVar="var(--chart-1)"
+          />
+          <WorkoutMetricChart
+            title="Total workout time"
+            data={workoutTimeChartData}
+            valueKey="total_workout_time"
+            range={workoutRange}
+            colorVar="var(--chart-2)"
+            yAxisFormatter={(value) => `${value} min`}
+            tooltipFormatter={(value) => [`${value} min`, "Total workout time"]}
+          />
+          <WorkoutMetricChart
+            title="Total volume"
+            data={workoutVolumeChartData}
+            valueKey="total_volume"
+            range={workoutRange}
+            colorVar="var(--chart-3)"
+            yAxisFormatter={(value) => `${value} lbs`}
+            tooltipFormatter={(value) => [
+              `${Number(value).toLocaleString()} lbs`,
+              "Total volume",
+            ]}
+          />
+        </div>
+      )}
     </div>
   );
 };
