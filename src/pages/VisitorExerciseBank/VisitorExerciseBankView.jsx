@@ -1,25 +1,36 @@
 import React, { useMemo, useState } from "react";
-
 import useGetPublicAPI from "@/hooks/useGetPublicAPI";
 import VisitorExercisesBank from "./components/VisitorExercisesBank";
-import LandingPage from "../LandingPage/LandingPage";
 import LandingPageFooter from "../LandingPage/components/LandingPageFooter";
 
 const VisitorExerciseBankView = () => {
   const [bankBodyPartFilter, setBankBodyPartFilter] = useState("All");
   const [bankCategoryFilter, setBankCategoryFilter] = useState("All");
 
-  const { data: exercisesCatalog } = useGetPublicAPI(
-    "/visitors/exercises",
-    null
-  );
-  const { data: bodyParts } = useGetPublicAPI("/visitors/body-parts", null);
+  const {
+    data: exercisesCatalog,
+    loading: loadingExercises,
+    error: errorExercises,
+  } = useGetPublicAPI("/visitors/exercises", null);
+  const {
+    data: bodyParts,
+    loading: loadingBodyParts,
+    error: errorBodyParts,
+  } = useGetPublicAPI("/visitors/body-parts", null);
   const {
     data: exerciseCategories,
     loading: loadingExerciseCategories,
     error: errorExerciseCategories,
   } = useGetPublicAPI("/visitors/exercise-categories", null);
 
+  const isLoading =
+    loadingExercises ||
+    loadingBodyParts ||
+    loadingExerciseCategories ||
+    exercisesCatalog === null ||
+    bodyParts === null ||
+    exerciseCategories === null;
+  const hasError = errorExercises || errorBodyParts || errorExerciseCategories;
   const bodyPartNameById = useMemo(() => {
     if (!Array.isArray(bodyParts)) return {};
     return bodyParts.reduce((acc, part) => {
@@ -78,28 +89,27 @@ const VisitorExerciseBankView = () => {
 
   return (
     <>
-    <div
-      className="bg-background mx-auto flex w-full max-w-7xl flex-col space-y-6
-        pt-40"
-    >
-      <VisitorExercisesBank
-        loadingExerciseCategories={loadingExerciseCategories}
-        errorExerciseCategories={errorExerciseCategories}
-        exerciseCategories={exerciseCategories}
-        bodyPartOptions={bodyPartOptions}
-        bankBodyPartFilter={bankBodyPartFilter}
-        setBankBodyPartFilter={setBankBodyPartFilter}
-        categoryOptions={categoryOptions}
-        bankCategoryFilter={bankCategoryFilter}
-        setBankCategoryFilter={setBankCategoryFilter}
-        filteredExerciseBank={filteredExerciseBank}
-        bodyPartNameById={bodyPartNameById}
-        categoryNameById={categoryNameById}
-      />
-    </div>
-    <div className="pt-5">
-     <LandingPageFooter />
-    </div>
+      <div
+        className="bg-background mx-auto flex min-h-[66.5vh] w-full max-w-7xl
+          flex-col space-y-6 pt-40"
+      >
+        <VisitorExercisesBank
+          isLoading={isLoading}
+          error={hasError}
+          bodyPartOptions={bodyPartOptions}
+          bankBodyPartFilter={bankBodyPartFilter}
+          setBankBodyPartFilter={setBankBodyPartFilter}
+          categoryOptions={categoryOptions}
+          bankCategoryFilter={bankCategoryFilter}
+          setBankCategoryFilter={setBankCategoryFilter}
+          filteredExerciseBank={filteredExerciseBank}
+          bodyPartNameById={bodyPartNameById}
+          categoryNameById={categoryNameById}
+        />
+      </div>
+      <div className="pt-5">
+        <LandingPageFooter />
+      </div>
     </>
   );
 };

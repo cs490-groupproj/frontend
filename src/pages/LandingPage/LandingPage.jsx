@@ -10,8 +10,8 @@ const LandingPage = () => {
     <main className="bg-background flex flex-col pt-20">
       <section className="bg-background">
         <div
-          className="mx-auto my-0 grid h-180 w-full grid-cols-2 items-center
-            px-12"
+          className="mx-auto my-0 grid min-h-[80vh] w-full grid-cols-2
+            items-center px-12"
         >
           <div className="text-foreground flex flex-col gap-4">
             <h1 className="text-5xl leading-16 font-bold">

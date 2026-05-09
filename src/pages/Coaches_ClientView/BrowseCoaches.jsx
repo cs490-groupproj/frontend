@@ -1,19 +1,19 @@
 import React, { useMemo, useState, useEffect } from "react";
 import { Button } from "../../components/ui/button.jsx";
-import { Spinner } from "@/components/ui/spinner.jsx";
+import { Loader2 } from "lucide-react";
 import useGetFromAPI from "@/hooks/useGetFromAPI.js";
 import usePostToAPI from "@/hooks/usePostToAPI.js";
 
 function CoachesLoadingScreen() {
   return (
-    <div
-      aria-live="polite"
-      aria-busy="true"
-      className="text-muted-foreground col-span-full flex
-        min-h-[min(40vh,280px)] flex-col items-center justify-center py-10
-        text-center"
-    >
-      <Spinner className="size-8" aria-label="Loading coaches" />
+    <div className="flex w-full flex-col items-center justify-center py-12">
+      <Loader2 className="text-primary h-12 w-12 animate-spin" />
+      <p
+        className="text-muted-foreground mt-4 text-xs font-bold tracking-widest
+          uppercase"
+      >
+        Loading Coaches
+      </p>
     </div>
   );
 }
@@ -297,18 +297,18 @@ export default function BrowseCoaches() {
         </div>
       </section>
 
-      <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-        {coachesError && coachesData == null ? (
-          <div
-            className="border-destructive/30 bg-destructive/10 text-destructive
-              col-span-full rounded-xl border p-6 text-center text-sm"
-          >
-            Could not load coaches. Please try again.
-          </div>
-        ) : showCoachesLoading ? (
-          <CoachesLoadingScreen />
-        ) : filteredCoaches.length > 0 ? (
-          filteredCoaches.map((coach) => {
+      {coachesError && coachesData == null ? (
+        <div
+          className="border-destructive/30 bg-destructive/10 text-destructive
+            col-span-full rounded-xl border p-6 text-center text-sm"
+        >
+          Could not load coaches. Please try again.
+        </div>
+      ) : showCoachesLoading ? (
+        <CoachesLoadingScreen />
+      ) : filteredCoaches.length > 0 ? (
+        <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+          {filteredCoaches.map((coach) => {
             const isActive = activeCoachId === coach.id;
             const isPending = pendingCoachId === coach.id;
 
@@ -417,16 +417,16 @@ export default function BrowseCoaches() {
                 </div>
               </article>
             );
-          })
-        ) : !coachesLoading && coachesData != null ? (
-          <div
-            className="border-border bg-card text-muted-foreground col-span-full
-              rounded-xl border p-6 text-center"
-          >
-            No coaches match your filters. Try adjusting your search criteria.
-          </div>
-        ) : null}
-      </div>
+          })}
+        </div>
+      ) : !coachesLoading && coachesData != null ? (
+        <div
+          className="border-border bg-card text-muted-foreground col-span-full
+            rounded-xl border p-6 text-center"
+        >
+          No coaches match your filters. Try adjusting your search criteria.
+        </div>
+      ) : null}
     </div>
   );
 }
