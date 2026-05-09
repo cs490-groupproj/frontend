@@ -1,10 +1,10 @@
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
+import { Loader2 } from "lucide-react";
 
 const VisitorExercisesBank = ({
-  loadingExerciseCategories,
-  errorExerciseCategories,
-  exerciseCategories,
+  isLoading,
+  error,
   bodyPartOptions,
   bankBodyPartFilter,
   setBankBodyPartFilter,
@@ -15,6 +15,35 @@ const VisitorExercisesBank = ({
   bodyPartNameById,
   categoryNameById,
 }) => {
+  if (error) {
+    return (
+      <div
+        className="flex h-64 w-full flex-col items-center justify-center
+          space-y-2 p-6 text-center"
+      >
+        <p className="text-destructive text-lg font-semibold">
+          Unable to load exercise bank
+        </p>
+        <p className="text-muted-foreground text-sm">
+          Please refresh the page or try again later.
+        </p>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex h-96 w-full flex-col items-center justify-center p-6">
+        <Loader2 className="text-primary h-12 w-12 animate-spin" />
+        <p
+          className="text-muted-foreground mt-4 text-xs font-bold
+            tracking-widest uppercase"
+        >
+          Getting Exercise Library
+        </p>
+      </div>
+    );
+  }
   return (
     <div className="space-y-5">
       <div>
@@ -56,65 +85,56 @@ const VisitorExercisesBank = ({
           </div>
         </CardContent>
       </Card>
-      {errorExerciseCategories ? (
-        <p className="flex flex-1 items-center justify-center">
-          error: {errorExerciseCategories}
-        </p>
-      ) : loadingExerciseCategories || !exerciseCategories ? (
-        <p className="flex flex-1 items-center justify-center">
-          Loading Exercises
-        </p>
-      ) : (
-        <div>
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-            {filteredExerciseBank.map((exercise) => (
-              <Card key={exercise.exercise_id}>
-                <CardContent className="space-y-2 p-4">
-                  <h3 className="text-lg font-semibold">{exercise.name}</h3>
-                  <div className="flex flex-wrap gap-2">
-                    <span
-                      className="bg-muted text-muted-foreground rounded-full
-                        px-3 py-1 text-xs"
-                    >
-                      Body Part:{" "}
-                      {exercise.body_part ||
-                        bodyPartNameById[exercise.body_part_id] ||
-                        "N/A"}
-                    </span>
-                    <span
-                      className="bg-muted text-muted-foreground rounded-full
-                        px-3 py-1 text-xs"
-                    >
-                      Category:{" "}
-                      {exercise.category ||
-                        categoryNameById[exercise.category_id] ||
-                        "N/A"}
-                    </span>
-                  </div>
-                  {exercise.youtube_url ? (
-                    <a
-                      href={exercise.youtube_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-primary inline-flex text-sm font-medium
-                        underline-offset-4 hover:underline"
-                    >
-                      Watch Tutorial
-                    </a>
-                  ) : null}
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-          {filteredExerciseBank.length === 0 && (
-            <Card>
-              <CardContent className="text-muted-foreground p-6 text-center">
-                No exercises match the selected filters.
+
+      <div>
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+          {filteredExerciseBank.map((exercise) => (
+            <Card key={exercise.exercise_id}>
+              <CardContent className="space-y-2 p-4">
+                <h3 className="text-lg font-semibold">{exercise.name}</h3>
+                <div className="flex flex-wrap gap-2">
+                  <span
+                    className="bg-muted text-muted-foreground rounded-full px-3
+                      py-1 text-xs"
+                  >
+                    Body Part:{" "}
+                    {exercise.body_part ||
+                      bodyPartNameById[exercise.body_part_id] ||
+                      "N/A"}
+                  </span>
+                  <span
+                    className="bg-muted text-muted-foreground rounded-full px-3
+                      py-1 text-xs"
+                  >
+                    Category:{" "}
+                    {exercise.category ||
+                      categoryNameById[exercise.category_id] ||
+                      "N/A"}
+                  </span>
+                </div>
+                {exercise.youtube_url ? (
+                  <a
+                    href={exercise.youtube_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary inline-flex text-sm font-medium
+                      underline-offset-4 hover:underline"
+                  >
+                    Watch Tutorial
+                  </a>
+                ) : null}
               </CardContent>
             </Card>
-          )}
+          ))}
         </div>
-      )}
+        {filteredExerciseBank.length === 0 && (
+          <Card>
+            <CardContent className="text-muted-foreground p-6 text-center">
+              No exercises match the selected filters.
+            </CardContent>
+          </Card>
+        )}
+      </div>
     </div>
   );
 };
