@@ -104,11 +104,11 @@ const SignUp = () => {
       if (!emailGoogle) {
         throw new Error("Your Google account has no email address.");
       }
-      const parts = (user.displayName?.trim() || "").split(/\s+/).filter(Boolean);
-      const first_name =
-        parts[0] || emailGoogle.split("@")[0] || "User";
-      const last_name =
-        parts.length > 1 ? parts.slice(1).join(" ") : "User";
+      const parts = (user.displayName?.trim() || "")
+        .split(/\s+/)
+        .filter(Boolean);
+      const first_name = parts[0] || emailGoogle.split("@")[0] || "User";
+      const last_name = parts.length > 1 ? parts.slice(1).join(" ") : "User";
 
       // Same as email signup: backend rejects /users/me until POST /users/register.
       try {
@@ -141,7 +141,7 @@ const SignUp = () => {
   return (
     <div
       className="bg-background flex min-h-screen items-center justify-center
-        px-4"
+        px-4 pt-20"
     >
       <div
         className="border-border bg-card w-full max-w-sm rounded-xl border p-8

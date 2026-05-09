@@ -15,6 +15,10 @@ const PublicLayout = () => {
       {
         pathTitle: "Log In",
         path: "/login",
+      },
+      {
+        pathTitle: "Sign Up",
+        path: "/signup",
         type: "btn",
         size: "lg",
         variant: "default",

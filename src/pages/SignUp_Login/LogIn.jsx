@@ -109,7 +109,7 @@ const LogIn = () => {
   return (
     <div
       className="bg-background flex min-h-screen items-center justify-center
-        px-4"
+        px-4 pt-20"
     >
       <div
         className="border-border bg-card w-full max-w-sm rounded-xl border p-8
