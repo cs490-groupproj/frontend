@@ -1,5 +1,7 @@
 import React, { useState, useCallback, useEffect } from "react";
 import useGetFromAPI from "@/hooks/useGetFromAPI";
+import { formatMilitaryTime } from "@/lib/utils.js";
+import { Loader2 } from "lucide-react";
 
 const WeeklySchedule = ({ viewedUserId = null }) => {
   const daysOfTheWeek = [
@@ -108,9 +110,18 @@ const WeeklySchedule = ({ viewedUserId = null }) => {
           }`}
       >
         {weeklyScheduleError && <p>error: {weeklyScheduleError}</p>}
-
         {!weeklyScheduleError && weeklyScheduleLoading && (
-          <p>Loading Schedule</p>
+          <div
+            className="flex w-full flex-col items-center justify-center py-12"
+          >
+            <Loader2 className="text-primary h-12 w-12 animate-spin" />
+            <p
+              className="text-muted-foreground mt-4 text-xs font-bold
+                tracking-widest uppercase"
+            >
+              Syncing Weekly Schedule
+            </p>
+          </div>
         )}
         {!weeklyScheduleError &&
           !weeklyScheduleLoading &&
@@ -132,7 +143,7 @@ const WeeklySchedule = ({ viewedUserId = null }) => {
                 {console.log(selectedDateWorkouts)}
                 <div className="flex items-center gap-6">
                   <div className="text-muted-foreground text-sm font-medium">
-                    {selectedWorkout.schedule_time?.substring(0, 5)}
+                    {formatMilitaryTime(selectedWorkout.schedule_time)}
                   </div>
                   <div className="text-foreground text-lg font-semibold">
                     {selectedWorkout.title.toUpperCase()}

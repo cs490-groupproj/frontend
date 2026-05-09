@@ -1,8 +1,9 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import useGetFromAPI from "@/hooks/useGetFromAPI";
 import useDeleteFromAPI from "@/hooks/useDeleteFromAPI";
 import { API_BASE_URL } from "../../../../config";
 import { getAuthHeader } from "@/lib/authHeader";
+import { Loader2 } from "lucide-react";
 
 const PHOTO_TYPES = {
   BEFORE: "BEFORE",
@@ -19,7 +20,9 @@ function ProgressPics() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [beforeFile, setBeforeFile] = useState(null);
   const [afterFile, setAfterFile] = useState(null);
+
   const [message, setMessage] = useState("");
+  const [pendingMessage, setPendingMessage] = useState("");
   const [localError, setLocalError] = useState("");
   const [busyType, setBusyType] = useState("");
   const [editingType, setEditingType] = useState("");
@@ -33,18 +36,37 @@ function ProgressPics() {
     ? `/progress/?user_id=${encodeURIComponent(userId)}&type=${PHOTO_TYPES.AFTER}`
     : null;
 
-  const { data: beforeData, error: beforeError } = useGetFromAPI(beforeUri, refreshKey);
-  const { data: afterData, error: afterError } = useGetFromAPI(afterUri, refreshKey);
+  const {
+    data: beforeData,
+    loading: beforeLoading,
+    error: beforeError,
+  } = useGetFromAPI(beforeUri, refreshKey);
+  const {
+    data: afterData,
+    loading: afterLoading,
+    error: afterError,
+  } = useGetFromAPI(afterUri, refreshKey);
 
   const beforeImage = useMemo(
-    () => (Array.isArray(beforeData?.images) ? beforeData.images[0] || null : null),
+    () =>
+      Array.isArray(beforeData?.images) ? beforeData.images[0] || null : null,
     [beforeData]
   );
 
   const afterImage = useMemo(
-    () => (Array.isArray(afterData?.images) ? afterData.images[0] || null : null),
+    () =>
+      Array.isArray(afterData?.images) ? afterData.images[0] || null : null,
     [afterData]
   );
+
+  useEffect(() => {
+    if (pendingMessage && !beforeLoading && !afterLoading) {
+      setMessage(pendingMessage);
+      setPendingMessage("");
+      const timer = setTimeout(() => setMessage(""), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [beforeLoading, afterLoading, pendingMessage]);
 
   const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
   const MAX_FILE_SIZE = 30 * 1024 * 1024; // Max file size would be 30MB
@@ -58,7 +80,9 @@ function ProgressPics() {
     }
 
     if (!ALLOWED_TYPES.includes(file.type)) {
-      setLocalError("Invalid file type. Please upload a JPEG, PNG, or WebP image.");
+      setLocalError(
+        "Invalid file type. Please upload a JPEG, PNG, or WebP image."
+      );
       setMessage("");
       return;
     }
@@ -91,7 +115,9 @@ function ProgressPics() {
       if (type === PHOTO_TYPES.BEFORE) setBeforeFile(null);
       if (type === PHOTO_TYPES.AFTER) setAfterFile(null);
       setEditingType("");
-      setMessage(`${type === PHOTO_TYPES.BEFORE ? "Before" : "After"} photo uploaded.`);
+      setPendingMessage(
+        `${type === PHOTO_TYPES.BEFORE ? "Before" : "After"} photo uploaded.`
+      );
       setRefreshKey((value) => value + 1);
     } catch (error) {
       setLocalError(error?.message || "Upload failed.");
@@ -101,7 +127,8 @@ function ProgressPics() {
   };
 
   const clearLatest = async (type) => {
-    const imageToDelete = type === PHOTO_TYPES.BEFORE ? beforeImage : afterImage;
+    const imageToDelete =
+      type === PHOTO_TYPES.BEFORE ? beforeImage : afterImage;
     if (!imageToDelete?.id) return;
 
     setBusyType(`delete-${type}`);
@@ -112,7 +139,9 @@ function ProgressPics() {
       if (type === PHOTO_TYPES.BEFORE) setBeforeFile(null);
       if (type === PHOTO_TYPES.AFTER) setAfterFile(null);
       setEditingType("");
-      setMessage(`${type === PHOTO_TYPES.BEFORE ? "Before" : "After"} photo removed.`);
+      setMessage(
+        `${type === PHOTO_TYPES.BEFORE ? "Before" : "After"} photo removed.`
+      );
       setRefreshKey((value) => value + 1);
     } catch (error) {
       setLocalError(error?.message || "Delete failed.");
@@ -121,64 +150,103 @@ function ProgressPics() {
     }
   };
 
+  const isInitialLoading =
+    (beforeLoading && !beforeData) || (afterLoading && !afterData);
   const errorText = localError || beforeError || afterError;
   const hasBefore = Boolean(beforeImage);
   const hasAfter = Boolean(afterImage);
   const isEditingBefore = editingType === PHOTO_TYPES.BEFORE;
   const isEditingAfter = editingType === PHOTO_TYPES.AFTER;
 
+  if (isInitialLoading) {
+    return (
+      <div
+        className="flex h-[60vh] w-full flex-col items-center justify-center
+          p-6"
+      >
+        <Loader2 className="text-primary h-12 w-12 animate-spin" />
+        <p
+          className="text-muted-foreground mt-4 text-xs font-bold
+            tracking-widest uppercase"
+        >
+          Fetching Progress Photos
+        </p>
+      </div>
+    );
+  }
   return (
     <div className="space-y-6 p-4 md:p-6">
-            {(message || errorText) && (
+      {(message || errorText) && (
         <section className={panelStyles}>
           {message ? (
-            <p className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-400">
+            <p
+              className="rounded-lg border border-emerald-500/30
+                bg-emerald-500/10 px-3 py-2 text-sm text-emerald-400"
+            >
               {message}
             </p>
           ) : null}
           {errorText ? (
-            <p className="text-destructive mt-2 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm">
+            <p
+              className="text-destructive border-destructive/30
+                bg-destructive/10 mt-2 rounded-lg border px-3 py-2 text-sm"
+            >
               {errorText}
             </p>
           ) : null}
         </section>
       )}
-      <section className={`${panelStyles} bg-gradient-to-br from-card via-card to-muted/20`}>
-
-
-
+      <section className={panelStyles}>
         <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
           <div className="border-border bg-background/50 rounded-xl border p-4">
             <div className="mb-3 flex items-center justify-between">
-              <p className="text-foreground text-2xl font-semibold tracking-tight">Before</p>
+              <p
+                className="text-foreground text-2xl font-semibold
+                  tracking-tight"
+              >
+                Before
+              </p>
               <span
                 className={`rounded-full px-2.5 py-1 text-xs font-medium ${
                   hasBefore
                     ? "bg-emerald-500/15 text-emerald-400"
                     : "bg-muted text-muted-foreground"
-                }`}
+                  }`}
               >
                 {hasBefore ? "Saved" : "Missing"}
               </span>
             </div>
-
 
             {(isEditingBefore || !hasBefore) && (
               <>
                 <input
                   type="file"
                   accept="image/jpeg,image/png,image/webp"
-                  onChange={(event) => setBeforeFile(event.target.files?.[0] || null)}
-                  className="border-border bg-background/80 block w-full cursor-pointer rounded-lg border px-3 py-2 text-sm file:mr-3 file:cursor-pointer file:rounded-md file:border file:border-border file:bg-secondary file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-secondary-foreground hover:file:bg-secondary/80"
+                  onChange={(event) =>
+                    setBeforeFile(event.target.files?.[0] || null)
+                  }
+                  className="border-border bg-background/80 file:border-border
+                    file:bg-secondary file:text-secondary-foreground
+                    hover:file:bg-secondary/80 block w-full cursor-pointer
+                    rounded-lg border px-3 py-2 text-sm file:mr-3
+                    file:cursor-pointer file:rounded-md file:border file:px-3
+                    file:py-1.5 file:text-sm file:font-medium"
                 />
                 <div className="mt-3 flex gap-2">
                   <button
                     type="button"
                     onClick={() => uploadImage(PHOTO_TYPES.BEFORE)}
-                    disabled={busyType === `upload-${PHOTO_TYPES.BEFORE}` || !beforeFile}
-                    className="bg-primary text-primary-foreground rounded-lg px-4 py-2 text-sm font-medium shadow-sm transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+                    disabled={
+                      busyType === `upload-${PHOTO_TYPES.BEFORE}` || !beforeFile
+                    }
+                    className="bg-primary text-primary-foreground
+                      hover:bg-primary/90 rounded-lg px-4 py-2 text-sm
+                      font-medium shadow-sm transition
+                      disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    {busyType === `upload-${PHOTO_TYPES.BEFORE}` ? "Uploading..." : "Upload"}
+                    {busyType === `upload-${PHOTO_TYPES.BEFORE}`
+                      ? "Uploading..."
+                      : "Upload"}
                   </button>
                   {hasBefore && (
                     <button
@@ -187,7 +255,9 @@ function ProgressPics() {
                         setEditingType("");
                         setBeforeFile(null);
                       }}
-                      className="border-border text-foreground rounded-lg border px-4 py-2 text-sm font-medium transition hover:bg-muted"
+                      className="border-border text-foreground hover:bg-muted
+                        rounded-lg border px-4 py-2 text-sm font-medium
+                        transition"
                     >
                       Cancel
                     </button>
@@ -205,36 +275,60 @@ function ProgressPics() {
                     setMessage("");
                     setEditingType(PHOTO_TYPES.BEFORE);
                   }}
-                  className="bg-primary text-primary-foreground rounded-lg px-4 py-2 text-sm font-medium shadow-sm transition hover:bg-primary/90"
+                  className="bg-primary text-primary-foreground
+                    hover:bg-primary/90 rounded-lg px-4 py-2 text-sm font-medium
+                    shadow-sm transition"
                 >
                   Change
                 </button>
                 <button
                   type="button"
                   onClick={() => clearLatest(PHOTO_TYPES.BEFORE)}
-                  disabled={busyType === `delete-${PHOTO_TYPES.BEFORE}` || !beforeImage}
-                  className="text-destructive border-destructive/40 rounded-lg border px-4 py-2 text-sm font-medium transition hover:bg-destructive/10 disabled:cursor-not-allowed disabled:opacity-50"
+                  disabled={
+                    busyType === `delete-${PHOTO_TYPES.BEFORE}` || !beforeImage
+                  }
+                  className="text-destructive border-destructive/40
+                    hover:bg-destructive/10 rounded-lg border px-4 py-2 text-sm
+                    font-medium transition disabled:cursor-not-allowed
+                    disabled:opacity-50"
                 >
-                  {busyType === `delete-${PHOTO_TYPES.BEFORE}` ? "Removing..." : "Remove"}
+                  {busyType === `delete-${PHOTO_TYPES.BEFORE}`
+                    ? "Removing..."
+                    : "Remove"}
                 </button>
               </div>
             )}
 
-            <div className="mt-4">
-              {beforeImage ? (
-                <div className={imageFrameStyles}>
-                  <img
-                    src={beforeImage.url}
-                    alt="Latest before"
-                    className="h-full w-full object-contain"
+            <div className={imageFrameStyles}>
+              {beforeLoading && !pendingMessage && (
+                <div
+                  className="bg-background/5 absolute inset-0 z-10 flex
+                    items-center justify-center transition-opacity"
+                >
+                  <Loader2
+                    className="text-primary h-8 w-8 animate-spin drop-shadow-md"
                   />
                 </div>
+              )}
+
+              {beforeImage ? (
+                <img
+                  src={beforeImage.url}
+                  alt="Latest before"
+                  className="h-full w-full object-contain transition-all
+                    duration-500 group-hover:scale-[1.01]"
+                />
               ) : (
-                <div className={`${imageFrameStyles} text-muted-foreground flex-col gap-1 text-sm`}>
-                  <span className="text-base">No before photo yet</span>
-                  <span className="text-muted-foreground/80 text-xs">
-                    Upload one to start tracking progress.
-                  </span>
+                <div
+                  className="text-muted-foreground flex flex-col items-center
+                    gap-3"
+                >
+                  <div className="text-center">
+                    <span className="block text-sm font-bold">No Photo</span>
+                    <span className="text-muted-foreground/60 text-xs">
+                      Starting your journey
+                    </span>
+                  </div>
                 </div>
               )}
             </div>
@@ -242,13 +336,18 @@ function ProgressPics() {
 
           <div className="border-border bg-background/50 rounded-xl border p-4">
             <div className="mb-3 flex items-center justify-between">
-              <p className="text-foreground text-2xl font-semibold tracking-tight">After</p>
+              <p
+                className="text-foreground text-2xl font-semibold
+                  tracking-tight"
+              >
+                After
+              </p>
               <span
                 className={`rounded-full px-2.5 py-1 text-xs font-medium ${
                   hasAfter
                     ? "bg-emerald-500/15 text-emerald-400"
                     : "bg-muted text-muted-foreground"
-                }`}
+                  }`}
               >
                 {hasAfter ? "Saved" : "Missing"}
               </span>
@@ -258,17 +357,31 @@ function ProgressPics() {
                 <input
                   type="file"
                   accept="image/jpeg,image/png,image/webp"
-                  onChange={(event) => setAfterFile(event.target.files?.[0] || null)}
-                  className="border-border bg-background/80 block w-full cursor-pointer rounded-lg border px-3 py-2 text-sm file:mr-3 file:cursor-pointer file:rounded-md file:border file:border-border file:bg-secondary file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-secondary-foreground hover:file:bg-secondary/80"
+                  onChange={(event) =>
+                    setAfterFile(event.target.files?.[0] || null)
+                  }
+                  className="border-border bg-background/80 file:border-border
+                    file:bg-secondary file:text-secondary-foreground
+                    hover:file:bg-secondary/80 block w-full cursor-pointer
+                    rounded-lg border px-3 py-2 text-sm file:mr-3
+                    file:cursor-pointer file:rounded-md file:border file:px-3
+                    file:py-1.5 file:text-sm file:font-medium"
                 />
                 <div className="mt-3 flex gap-2">
                   <button
                     type="button"
                     onClick={() => uploadImage(PHOTO_TYPES.AFTER)}
-                    disabled={busyType === `upload-${PHOTO_TYPES.AFTER}` || !afterFile}
-                    className="bg-primary text-primary-foreground rounded-lg px-4 py-2 text-sm font-medium shadow-sm transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+                    disabled={
+                      busyType === `upload-${PHOTO_TYPES.AFTER}` || !afterFile
+                    }
+                    className="bg-primary text-primary-foreground
+                      hover:bg-primary/90 rounded-lg px-4 py-2 text-sm
+                      font-medium shadow-sm transition
+                      disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    {busyType === `upload-${PHOTO_TYPES.AFTER}` ? "Uploading..." : "Upload"}
+                    {busyType === `upload-${PHOTO_TYPES.AFTER}`
+                      ? "Uploading..."
+                      : "Upload"}
                   </button>
                   {hasAfter && (
                     <button
@@ -277,7 +390,9 @@ function ProgressPics() {
                         setEditingType("");
                         setAfterFile(null);
                       }}
-                      className="border-border text-foreground rounded-lg border px-4 py-2 text-sm font-medium transition hover:bg-muted"
+                      className="border-border text-foreground hover:bg-muted
+                        rounded-lg border px-4 py-2 text-sm font-medium
+                        transition"
                     >
                       Cancel
                     </button>
@@ -295,44 +410,65 @@ function ProgressPics() {
                     setMessage("");
                     setEditingType(PHOTO_TYPES.AFTER);
                   }}
-                  className="bg-primary text-primary-foreground rounded-lg px-4 py-2 text-sm font-medium shadow-sm transition hover:bg-primary/90"
+                  className="bg-primary text-primary-foreground
+                    hover:bg-primary/90 rounded-lg px-4 py-2 text-sm font-medium
+                    shadow-sm transition"
                 >
                   Change
                 </button>
                 <button
                   type="button"
                   onClick={() => clearLatest(PHOTO_TYPES.AFTER)}
-                  disabled={busyType === `delete-${PHOTO_TYPES.AFTER}` || !afterImage}
-                  className="text-destructive border-destructive/40 rounded-lg border px-4 py-2 text-sm font-medium transition hover:bg-destructive/10 disabled:cursor-not-allowed disabled:opacity-50"
+                  disabled={
+                    busyType === `delete-${PHOTO_TYPES.AFTER}` || !afterImage
+                  }
+                  className="text-destructive border-destructive/40
+                    hover:bg-destructive/10 rounded-lg border px-4 py-2 text-sm
+                    font-medium transition disabled:cursor-not-allowed
+                    disabled:opacity-50"
                 >
-                  {busyType === `delete-${PHOTO_TYPES.AFTER}` ? "Removing..." : "Remove"}
+                  {busyType === `delete-${PHOTO_TYPES.AFTER}`
+                    ? "Removing..."
+                    : "Remove"}
                 </button>
               </div>
             )}
 
-            <div className="mt-4">
-              {afterImage ? (
-                <div className={imageFrameStyles}>
-                  <img
-                    src={afterImage.url}
-                    alt="Latest after"
-                    className="h-full w-full object-contain"
+            <div className={imageFrameStyles}>
+              {afterLoading && !pendingMessage && (
+                <div
+                  className="bg-background/5 absolute inset-0 z-10 flex
+                    items-center justify-center transition-opacity"
+                >
+                  <Loader2
+                    className="text-primary h-8 w-8 animate-spin drop-shadow-md"
                   />
                 </div>
+              )}
+              {afterImage ? (
+                <img
+                  src={afterImage.url}
+                  alt="Latest after"
+                  className="h-full w-full object-contain transition-all
+                    duration-500 group-hover:scale-[1.01]"
+                />
               ) : (
-                <div className={`${imageFrameStyles} text-muted-foreground flex-col gap-1 text-sm`}>
-                  <span className="text-base">No after photo yet</span>
-                  <span className="text-muted-foreground/80 text-xs">
-                    Upload one when you are ready to compare.
-                  </span>
+                <div
+                  className="text-muted-foreground flex flex-col items-center
+                    gap-3"
+                >
+                  <div className="text-center">
+                    <span className="block text-sm font-bold">No Photo</span>
+                    <span className="text-muted-foreground/60 text-xs">
+                      Reach your goals
+                    </span>
+                  </div>
                 </div>
               )}
             </div>
           </div>
         </div>
       </section>
-
-
     </div>
   );
 }
