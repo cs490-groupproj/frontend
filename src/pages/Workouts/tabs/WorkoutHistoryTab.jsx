@@ -1,4 +1,5 @@
 import React from "react";
+import { Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 
 const WorkoutHistoryTab = ({
@@ -53,7 +54,13 @@ const WorkoutHistoryTab = ({
                     ) : null}
                   </div>
                   {historyWorkoutLoadingById[workout.workout_id] && (
-                    <p className="text-muted-foreground text-sm">Loading exercises...</p>
+                    <div className="flex items-center gap-2 py-2">
+                      <Loader2
+                        className="text-primary h-5 w-5 shrink-0 animate-spin"
+                        aria-hidden
+                      />
+                      <p className="text-muted-foreground text-sm">Loading exercises...</p>
+                    </div>
                   )}
                   {!historyWorkoutLoadingById[workout.workout_id] &&
                     (historyWorkoutDetailsById[workout.workout_id]?.exercises || []).length ===
