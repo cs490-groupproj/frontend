@@ -369,6 +369,9 @@ const WorkoutPlansTab = ({
                   ? Boolean(plan.is_locked_assigned_plan)
                   : Boolean(plan.is_locked_assigned_plan || isGlobalTemplate);
                 const canAssignPlan = allowAssignments && !plan.is_locked_assigned_plan;
+                const canRemoveAssignment =
+                  !plan.is_locked_assigned_plan &&
+                  (!isGlobalTemplate || isCoachAssignScreen || globalTemplateManagementMode);
                 return (
                   <>
               <div className="flex flex-wrap items-center gap-3">
@@ -480,7 +483,7 @@ const WorkoutPlansTab = ({
                       <span className="font-medium">
                         {entry.weekday} {formatScheduleTime(entry.schedule_time)}
                       </span>
-                      {!isRestrictedTemplate && (
+                      {canRemoveAssignment && (
                         <button
                           type="button"
                           className="text-muted-foreground hover:text-foreground"
