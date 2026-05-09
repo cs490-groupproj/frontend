@@ -247,7 +247,7 @@ import useGetFromAPI from "@/hooks/useGetFromAPI";
 import usePutToAPI from "@/hooks/usePutToAPI";
 import useDeleteFromAPI from "@/hooks/useDeleteFromAPI";
 import usePostToAPI from "@/hooks/usePostToAPI.js";
-import { Spinner } from "@/components/ui/spinner.jsx";
+import { Loader2 } from "lucide-react";
 
 //backend response to frontend
 const mapCoachFromBackend = (coach) => {
@@ -285,10 +285,7 @@ export default function MyCoach() {
 
   const coachesRequestUri = userId ? `/clients/${userId}/coaches` : null;
 
-  const { data, error } = useGetFromAPI(
-    coachesRequestUri,
-    refreshTrigger
-  );
+  const { data, error } = useGetFromAPI(coachesRequestUri, refreshTrigger);
   const coach =
     data?.coaches && data.coaches.length > 0
       ? mapCoachFromBackend(data.coaches[0])
@@ -380,13 +377,14 @@ export default function MyCoach() {
 
   if (showInitialLoading) {
     return (
-      <div
-        aria-live="polite"
-        aria-busy="true"
-        className="text-muted-foreground flex w-full min-h-[calc(100dvh-12rem)]
-          items-center justify-center py-8"
-      >
-        <Spinner className="size-8" aria-label="Loading your coach" />
+      <div className="flex w-full flex-col items-center justify-center py-12">
+        <Loader2 className="text-primary h-12 w-12 animate-spin" />
+        <p
+          className="text-muted-foreground mt-4 text-xs font-bold
+            tracking-widest uppercase"
+        >
+          Loading My Coach
+        </p>
       </div>
     );
   }
@@ -481,7 +479,10 @@ export default function MyCoach() {
             Leave Review
           </Button>
 
-          <AlertDialog open={reportDialogOpen} onOpenChange={setReportDialogOpen}>
+          <AlertDialog
+            open={reportDialogOpen}
+            onOpenChange={setReportDialogOpen}
+          >
             <AlertDialogTrigger asChild>
               <Button variant="ghost">Report Coach</Button>
             </AlertDialogTrigger>
@@ -489,7 +490,8 @@ export default function MyCoach() {
               <AlertDialogHeader>
                 <AlertDialogTitle>Report {coach.name}?</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Share what happened. This report will be sent to admins for review.
+                  Share what happened. This report will be sent to admins for
+                  review.
                 </AlertDialogDescription>
               </AlertDialogHeader>
 
@@ -497,7 +499,10 @@ export default function MyCoach() {
                 value={reportReason}
                 onChange={(e) => setReportReason(e.target.value)}
                 placeholder="Describe the issue..."
-                className="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring min-h-28 w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:outline-none"
+                className="border-input bg-background ring-offset-background
+                  placeholder:text-muted-foreground focus-visible:ring-ring
+                  min-h-28 w-full rounded-md border px-3 py-2 text-sm
+                  focus-visible:ring-2 focus-visible:outline-none"
               />
 
               <AlertDialogFooter>
