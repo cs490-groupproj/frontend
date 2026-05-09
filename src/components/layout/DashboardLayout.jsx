@@ -23,22 +23,30 @@ const DashboardLayout = () => {
   useEffect(() => {
     if (activeMode) {
       localStorage.setItem("activeMode", activeMode);
+    } else {
+      localStorage.removeItem("activeMode");
     }
   }, [activeMode]);
   useEffect(() => {
     if (!user) {
       return;
     }
-    if (activeMode) return;
-
-    if (user?.is_coach) {
-      setActiveMode(ACTIVE_MODE_MODES.COACH);
-    } else if (user?.is_client) {
-      setActiveMode(ACTIVE_MODE_MODES.CLIENT);
-    } else if (user?.is_admin) {
-      setActiveMode(ACTIVE_MODE_MODES.ADMIN);
-    } else {
-      console.log("'Ey Jimmy. Gimme a user with nuthin'");
+    const isModeValid =
+      (activeMode === ACTIVE_MODE_MODES.COACH && user.is_coach) ||
+      (activeMode === ACTIVE_MODE_MODES.CLIENT && user.is_client) ||
+      (activeMode === ACTIVE_MODE_MODES.ADMIN && user.is_admin);
+    if (!activeMode || !isModeValid) {
+      let defaultMode = ACTIVE_MODE_MODES.CLIENT;
+      if (user?.is_admin) {
+        defaultMode = ACTIVE_MODE_MODES.ADMIN;
+      } else if (user?.is_coach) {
+        defaultMode = ACTIVE_MODE_MODES.COACH;
+      } else if (user?.is_client) {
+        defaultMode = ACTIVE_MODE_MODES.CLIENT;
+      } else {
+        console.log("'Ey Jimmy. Gimme a user with nuthin'");
+      }
+      setActiveMode(defaultMode);
     }
   }, [user]);
 
