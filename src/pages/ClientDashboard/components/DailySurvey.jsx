@@ -160,9 +160,6 @@ useEffect(() => {
       })
     );
 
-    console.log(localStorage.getItem(DAILY_SURVEY_STORAGE_KEY));
-    console.log(timezone);
-    console.log(todayKey);
     onSubmitted?.();
     setIsSaved(true);
   } catch (err) {
