@@ -5,19 +5,26 @@ const Transformations = () => {
   const transformations = [
     {
       name: "Terry Crews",
-      loss: { lossAmount: 20, lossTime: 6 },
-      before:
-        "https://t4.ftcdn.net/jpg/02/35/37/23/360_F_235372323_37LLhGUi5p1cg5PfWLI1cgOHT0xO5byz.jpg",
+      gains: 26,
+      before: "https://i.redd.it/qqwttcadsf921.png",
       after:
         "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQtaUoQcHU1oT16BmdSP76f-Sh7Lkxui-CvkA&s",
     },
     {
-      name: "Kyriakos Kapakoulak",
-      gains: 50,
+      name: "Lean Beef Patty",
+      gains: 17,
       before:
-        "https://images.presentationgo.com/2025/05/fit-woman-gym-confidence.jpg",
+        "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSxFd4tbX3RoWjKCPuVH7ADMswdMxK7arBoOg&s",
       after:
-        "https://premium-storefronts.s3.amazonaws.com/storefronts/grizzlywearcom/assets/logo.png",
+        "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRaaKL_qLxuZBBOZVr_7OcxBwvLYTInwDmmvg&s",
+    },
+    {
+      name: "Connor McGregor ",
+      loss: { lossAmount: 22, lossTime: 3 },
+      before:
+        "https://www.the-sun.com/wp-content/uploads/sites/6/2021/12/NINTCHDBPICT000697801578-5.jpg?quality=80&strip=all&w=823",
+      after:
+        "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRTDlx1X_gQ8gZgXYGwXwQSnh75rGplcU1d7w&s",
     },
   ];
 
