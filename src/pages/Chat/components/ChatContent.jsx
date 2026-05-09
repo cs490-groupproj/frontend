@@ -1,4 +1,5 @@
 import React from "react";
+import { Loader2 } from "lucide-react";
 
 const ChatContent = ({
   chatMessageContainerRef,
@@ -29,7 +30,9 @@ const ChatContent = ({
           <p>Select a Chat</p>
         )}
         {!messageHistoryError && !chatHistory && selectedChatUserID && (
-          <p>Loading Messages</p>
+          <div className="flex w-full flex-col items-center p-6">
+            <Loader2 className="text-primary h-12 w-12 animate-spin" />
+          </div>
         )}
       </div>
       {!messageHistoryError && chatHistory && (
