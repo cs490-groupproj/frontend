@@ -196,7 +196,7 @@ export default function EditCoachProfile() {
   if (!isDataReady) {
     return (
       <div
-        className="bg-background flex h-screen w-full flex-col items-center
+        className="bg-background flex w-full flex-col items-center
           justify-center text-white"
       >
         {/* Matching the Loader2 styling from your nutrition page */}
@@ -259,14 +259,11 @@ export default function EditCoachProfile() {
                 text-sm"
             >
               <Mail className="size-4 shrink-0" aria-hidden="true" />
-              <span className="break-all">
-                {email || "No email on file"}
-              </span>
+              <span className="break-all">{email || "No email on file"}</span>
             </div>
           </div>
           <div
-            className="flex flex-col gap-2 sm:items-stretch
-              sm:[&>button]:w-44"
+            className="flex flex-col gap-2 sm:items-stretch sm:[&>button]:w-44"
           >
             <Button
               type="button"
