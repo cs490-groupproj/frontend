@@ -190,6 +190,22 @@ const Workouts = () => {
     plansRequestUri,
     plansRefreshKey
   );
+
+  useEffect(() => {
+    if (!plansRequestUri || !Array.isArray(plansData)) return;
+    console.log("[Workouts] plans API response", {
+      request: plansRequestUri,
+      count: plansData.length,
+      plans: plansData.map((plan) => ({
+        workout_plan_id: plan?.workout_plan_id,
+        title: plan?.title,
+        created_by: plan?.created_by ?? null,
+        is_created_by_user: plan?.is_created_by_user ?? null,
+        is_assigned_to_user: plan?.is_assigned_to_user ?? null,
+        has_assignment_days: plan?.has_assignment_days ?? null,
+      })),
+    });
+  }, [plansRequestUri, plansData]);
   const { data: selectedClientScheduleData } = useGetFromAPI(
     isCoachAssignScreen && selectedClientId
       ? `/workouts/my_schedule?user_id=${selectedClientId}`
@@ -357,10 +373,21 @@ const Workouts = () => {
           : isCoachAssignScreen
             ? []
             : baseAssignments;
-      const isCreatedByUser = Boolean(plan?.is_created_by_user);
+      const createdBy = detail?.created_by ?? plan?.created_by ?? null;
+      const isCreatedByUserFlag = Boolean(plan?.is_created_by_user);
+      const isCreatedByCurrentUserId =
+        createdBy != null &&
+        userId != null &&
+        String(createdBy) === String(userId);
+      const isCreatedByUser = isCreatedByUserFlag || isCreatedByCurrentUserId;
       const isAssignedToUser = Boolean(plan?.is_assigned_to_user);
-      const isLockedAssignedPlan =
-        !isCoachAssignScreen && isAssignedToUser && !isCreatedByUser;
+      const isGlobalTemplate = createdBy == null;
+      const hasAssignmentDays = Boolean(plan?.has_assignment_days);
+      const isLockedAssignedPlan = !isCoachAssignScreen
+        ? isGlobalTemplate
+          ? hasAssignmentDays
+          : isAssignedToUser && !isCreatedByUser
+        : false;
       return {
         workout_plan_id: plan.workout_plan_id,
         title: detail?.title || plan.title || "",
@@ -370,9 +397,10 @@ const Workouts = () => {
             ? detail.duration_min
             : plan.duration_min || 0,
         workout_type_id: detail?.workout_type_id ?? null,
-        created_by: detail?.created_by || plan.created_by || null,
+        created_by: createdBy,
         is_created_by_user: isCreatedByUser,
         is_assigned_to_user: isAssignedToUser,
+        has_assignment_days: hasAssignmentDays,
         is_locked_assigned_plan: isLockedAssignedPlan,
         exercises: detailExercises,
         assignments: assignmentsForView,
@@ -384,6 +412,7 @@ const Workouts = () => {
     isCoachAssignScreen,
     selectedClientId,
     selectedClientAssignmentsByPlanId,
+    userId,
   ]);
 
   const coachClients = useMemo(() => {
@@ -635,7 +664,9 @@ const Workouts = () => {
     const selectedPlan = plans.find(
       (plan) => String(plan.workout_plan_id) === String(planId)
     );
-    if (selectedPlan?.is_locked_assigned_plan) {
+    const isGlobalTemplate = selectedPlan?.created_by == null;
+    const isPersonalTemplate = Boolean(selectedPlan?.is_created_by_user);
+    if (selectedPlan?.is_locked_assigned_plan && !isGlobalTemplate && !isPersonalTemplate) {
       setFormError("Assigned plans cannot be modified.");
       return;
     }
@@ -666,10 +697,8 @@ const Workouts = () => {
           assignments: cleanedAssignments,
         });
       } else {
-        const firstAssignment = cleanedAssignments[0];
         await postFunction(`/workout-plans/${planId}/assignments`, {
-          weekday: firstAssignment.weekday,
-          schedule_time: firstAssignment.schedule_time,
+          assignments: cleanedAssignments,
         });
       }
       setFormError("");
@@ -683,12 +712,100 @@ const Workouts = () => {
     }
   };
 
-  const removePlanAssignment = async (assignmentId) => {
+  const removePlanAssignment = async (assignmentId, assignmentMeta, planMeta) => {
     if (!assignmentId) return;
     if (isCoachAssignScreen && !selectedClientId) {
       setFormError("Select a client before changing assignments.");
       return;
     }
+    const isCoachMadeAssignment = (assignment) => {
+      const hasIds =
+        assignment?.assigned_by != null && assignment?.client_id != null;
+      if (hasIds) {
+        return String(assignment.assigned_by) !== String(assignment.client_id);
+      }
+      return String(assignment?.source || "").toLowerCase() === "coach";
+    };
+    const isSelfMadeAssignment = (assignment) => {
+      const hasIds =
+        assignment?.assigned_by != null && assignment?.client_id != null;
+      if (hasIds) {
+        return String(assignment.assigned_by) === String(assignment.client_id);
+      }
+      const source = String(assignment?.source || "").toLowerCase();
+      return source === "self" || source === "user";
+    };
+
+    const assignmentFromPlans =
+      assignmentMeta ||
+      plans
+        .flatMap((plan) => plan.assignments || [])
+        .find((assignment) => String(assignment.id) === String(assignmentId));
+
+    const planForAssignment =
+      planMeta ||
+      plans.find((plan) =>
+        (plan.assignments || []).some(
+          (assignment) => String(assignment.id) === String(assignmentId)
+        )
+      );
+    const isGlobalTemplate = planForAssignment?.created_by == null;
+    const isPersonalTemplate = Boolean(planForAssignment?.is_created_by_user);
+    const coachMade = assignmentFromPlans
+      ? isCoachMadeAssignment(assignmentFromPlans)
+      : null;
+    const selfMade = assignmentFromPlans
+      ? isSelfMadeAssignment(assignmentFromPlans)
+      : null;
+
+    console.log("[Workouts] removePlanAssignment pre-check", {
+      assignmentId,
+      isCoachAssignScreen,
+      selectedClientId: selectedClientId || null,
+      plan: planForAssignment
+        ? {
+            workout_plan_id: planForAssignment.workout_plan_id,
+            title: planForAssignment.title,
+            created_by: planForAssignment.created_by ?? null,
+            is_created_by_user: planForAssignment.is_created_by_user ?? null,
+            is_assigned_to_user: planForAssignment.is_assigned_to_user ?? null,
+            is_locked_assigned_plan: planForAssignment.is_locked_assigned_plan ?? null,
+            has_assignment_days: planForAssignment.has_assignment_days ?? null,
+          }
+        : null,
+      assignment: assignmentFromPlans
+        ? {
+            id: assignmentFromPlans.id ?? null,
+            weekday: assignmentFromPlans.weekday ?? null,
+            schedule_time: assignmentFromPlans.schedule_time ?? null,
+            assigned_by: assignmentFromPlans.assigned_by ?? null,
+            client_id: assignmentFromPlans.client_id ?? null,
+            source: assignmentFromPlans.source ?? null,
+          }
+        : null,
+      derived: {
+        isGlobalTemplate,
+        coachMade,
+        selfMade,
+      },
+    });
+
+    if (
+      !isGlobalTemplate &&
+      !isPersonalTemplate &&
+      assignmentFromPlans &&
+      (coachMade || !selfMade)
+    ) {
+      console.log("[Workouts] removePlanAssignment blocked", {
+        reason: "ownership_check_failed",
+        assignmentId,
+        coachMade,
+        selfMade,
+      });
+      setFormError("Coach-assigned workouts cannot be removed.");
+      return;
+    }
+
     const hasLockedPlanWithAssignment = plans.some(
       (plan) =>
         plan.is_locked_assigned_plan &&
@@ -696,7 +813,19 @@ const Workouts = () => {
           (assignment) => String(assignment.id) === String(assignmentId)
         )
     );
-    if (hasLockedPlanWithAssignment) {
+    if (
+      hasLockedPlanWithAssignment &&
+      !isGlobalTemplate &&
+      !isPersonalTemplate &&
+      !(assignmentFromPlans && selfMade)
+    ) {
+      console.log("[Workouts] removePlanAssignment blocked", {
+        reason: "locked_plan_block",
+        assignmentId,
+        hasLockedPlanWithAssignment,
+        isGlobalTemplate,
+        selfMade,
+      });
       setFormError("Assigned plans cannot be modified.");
       return;
     }

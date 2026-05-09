@@ -365,13 +365,32 @@ const WorkoutPlansTab = ({
             <CardContent className="space-y-4 p-4">
               {(() => {
                 const isGlobalTemplate = plan.created_by == null;
+                const isPersonalTemplate = !isGlobalTemplate && Boolean(plan.is_created_by_user);
                 const isRestrictedTemplate = globalTemplateManagementMode
                   ? Boolean(plan.is_locked_assigned_plan)
                   : Boolean(plan.is_locked_assigned_plan || isGlobalTemplate);
-                const canAssignPlan = allowAssignments && !plan.is_locked_assigned_plan;
+                const canAssignPlan =
+                  allowAssignments &&
+                  (!plan.is_locked_assigned_plan || isGlobalTemplate || isPersonalTemplate);
                 const canRemoveAssignment =
-                  !plan.is_locked_assigned_plan &&
-                  (!isGlobalTemplate || isCoachAssignScreen || globalTemplateManagementMode);
+                  !plan.is_locked_assigned_plan || isGlobalTemplate || isPersonalTemplate;
+                const isCoachMadeAssignment = (entry) => {
+                  const hasIds =
+                    entry?.assigned_by != null && entry?.client_id != null;
+                  if (hasIds) {
+                    return String(entry.assigned_by) !== String(entry.client_id);
+                  }
+                  return String(entry?.source || "").toLowerCase() === "coach";
+                };
+                const isSelfMadeAssignment = (entry) => {
+                  const hasIds =
+                    entry?.assigned_by != null && entry?.client_id != null;
+                  if (hasIds) {
+                    return String(entry.assigned_by) === String(entry.client_id);
+                  }
+                  const source = String(entry?.source || "").toLowerCase();
+                  return source === "self" || source === "user";
+                };
                 return (
                   <>
               <div className="flex flex-wrap items-center gap-3">
@@ -483,11 +502,14 @@ const WorkoutPlansTab = ({
                       <span className="font-medium">
                         {entry.weekday} {formatScheduleTime(entry.schedule_time)}
                       </span>
-                      {canRemoveAssignment && (
+                      {canRemoveAssignment &&
+                        (isGlobalTemplate ||
+                          isPersonalTemplate ||
+                          (isSelfMadeAssignment(entry) && !isCoachMadeAssignment(entry))) && (
                         <button
                           type="button"
                           className="text-muted-foreground hover:text-foreground"
-                          onClick={() => removePlanAssignment(entry.id)}
+                          onClick={() => removePlanAssignment(entry.id, entry, plan)}
                           disabled={!entry.id || (isCoachAssignScreen && !selectedClientId)}
                           aria-label="Delete assignment"
                         >
@@ -502,7 +524,7 @@ const WorkoutPlansTab = ({
               {allowAssignments && assigningPlanId === plan.workout_plan_id && (
                 <Card>
                   <CardContent className="grid grid-cols-1 gap-3 p-3 md:grid-cols-2">
-                    {isCoachAssignScreen ? (
+                    {isCoachAssignScreen || isGlobalTemplate || isPersonalTemplate ? (
                       <div className="md:col-span-2 space-y-3">
                         {(scheduleDraftsByPlan[plan.workout_plan_id]?.entries || [
                           { day: DAYS_OF_WEEK[0], time: "09:00" },
