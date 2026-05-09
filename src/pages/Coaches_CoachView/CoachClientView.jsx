@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import { Loader2 } from "lucide-react";
 import useGetFromAPI from "@/hooks/useGetFromAPI";
 import { Card, CardContent } from "@/components/ui/card";
 import ClientDashboard from "@/pages/ClientDashboard/ClientDashboard.jsx";
@@ -171,7 +172,9 @@ export default function CoachClientView() {
             <Card className="mx-auto w-full max-w-4xl">
               <CardContent className="space-y-4 p-5">
                 {workoutsLoading && (
-                  <p className="text-muted-foreground text-sm">Loading workout history...</p>
+                  <div className="flex h-64 w-full items-center justify-center">
+                    <Loader2 className="text-primary animate-spin" size={40} />
+                  </div>
                 )}
 
                 {!workoutsLoading &&
@@ -212,9 +215,15 @@ export default function CoachClientView() {
                           </div>
 
                           {historyWorkoutLoadingById[workout.workout_id] && (
-                            <p className="text-muted-foreground text-sm">
-                              Loading exercises...
-                            </p>
+                            <div className="flex items-center gap-2 py-2">
+                              <Loader2
+                                className="text-primary h-5 w-5 shrink-0 animate-spin"
+                                aria-hidden
+                              />
+                              <p className="text-muted-foreground text-sm">
+                                Loading exercises...
+                              </p>
+                            </div>
                           )}
 
                           {!historyWorkoutLoadingById[workout.workout_id] &&

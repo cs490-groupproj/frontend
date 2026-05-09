@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useLayoutEffect, useMemo, useState } from "react";
 import useGetFromAPI from "@/hooks/useGetFromAPI";
 import usePostToAPI from "@/hooks/usePostToAPI";
 import usePatchToAPI from "@/hooks/usePatchToAPI";
@@ -149,6 +149,12 @@ export default function AdminWorkoutPlans() {
 
   const [planDetailsById, setPlanDetailsById] = useState({});
   const [planDetailsLoading, setPlanDetailsLoading] = useState(false);
+
+  useLayoutEffect(() => {
+    if (Array.isArray(plansData) && plansData.length > 0) {
+      setPlanDetailsLoading(true);
+    }
+  }, [plansData]);
 
   useEffect(() => {
     const loadPlanDetails = async () => {

@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useMemo, useState } from "react";
+﻿import React, { useEffect, useLayoutEffect, useMemo, useState } from "react";
 import { useLocation, useOutletContext } from "react-router-dom";
 import useGetFromAPI from "@/hooks/useGetFromAPI";
 import usePostToAPI from "@/hooks/usePostToAPI";
@@ -203,6 +203,12 @@ const Workouts = () => {
 
   const [planDetailsById, setPlanDetailsById] = useState({});
   const [planDetailsLoading, setPlanDetailsLoading] = useState(false);
+
+  useLayoutEffect(() => {
+    if (Array.isArray(plansData) && plansData.length > 0) {
+      setPlanDetailsLoading(true);
+    }
+  }, [plansData]);
 
   useEffect(() => {
     const loadPlanDetails = async () => {

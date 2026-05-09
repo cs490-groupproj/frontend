@@ -2,8 +2,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Progress } from "@/components/ui/progress";
-import { Plus, Trash2, Minus } from "lucide-react";
+import { Plus, Trash2, Minus, Loader2 } from "lucide-react";
 
 const MetricField = ({ label, className = "", children }) => (
   <div className={className}>
@@ -88,9 +87,9 @@ const WorkoutPlansTab = ({
           </div>
         </div>
         <Card>
-          <CardContent className="space-y-3 p-4">
+          <CardContent className="flex h-64 w-full flex-col items-center justify-center gap-3 p-4">
+            <Loader2 className="text-primary animate-spin" size={40} />
             <p className="text-muted-foreground text-sm">Loading workout plans...</p>
-            <Progress value={70} />
           </CardContent>
         </Card>
       </div>
