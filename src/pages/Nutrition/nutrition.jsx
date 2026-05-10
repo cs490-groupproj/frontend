@@ -38,12 +38,22 @@ const WeeklyHistory = ({ userId, timezone }) => {
       : null
   );
 
-  if (loading || !historyData)
+  if (loading || !historyData) {
     return (
-      <div className="flex h-48 w-full items-center justify-center">
-        <Loader2 className="text-primary animate-spin" />
+      <div
+        className="flex h-[60vh] w-full flex-col items-center justify-center
+          p-6"
+      >
+        <Loader2 className="text-primary h-12 w-12 animate-spin" />
+        <p
+          className="text-muted-foreground mt-4 text-xs font-bold
+            tracking-widest uppercase"
+        >
+          Loading Your Meal History
+        </p>
       </div>
     );
+  }
 
   const groupedByDate = (historyData?.meal_plans || []).reduce((acc, plan) => {
     const date = parseUTCDate(plan.meal_logged_at).toLocaleDateString(
@@ -435,12 +445,22 @@ const TodayView = ({ userId, timezone, apiPost, readOnly, refreshKey }) => {
     init();
   }, [todayData, userId, readOnly, apiPost]);
 
-  if (loading || !state.isReady)
+  if (loading || !state.isReady) {
     return (
-      <div className="flex h-48 w-full items-center justify-center">
-        <Loader2 className="text-primary animate-spin" />
+      <div
+        className="flex h-[60vh] w-full flex-col items-center justify-center
+          p-6"
+      >
+        <Loader2 className="text-primary h-12 w-12 animate-spin" />
+        <p
+          className="text-muted-foreground mt-4 text-xs font-bold
+            tracking-widest uppercase"
+        >
+          Loading Nutrition Tracker
+        </p>
       </div>
     );
+  }
 
   const progressValue = Math.min((state.calories / CALORIE_GOAL) * 100, 100);
 
@@ -502,31 +522,38 @@ const NutritionPage = ({ viewedUserId = null, readOnly = false }) => {
   const { postFunction: apiPost } = usePostToAPI();
 
   return (
-    <div className="mx-auto w-full max-w-7xl space-y-6 px-6 py-8">
-      <h1 className="text-3xl font-bold">Nutrition</h1>
-      <div className="border-border bg-card mb-6 inline-flex rounded-xl border p-1">
+    <div className="mx-auto w-full space-y-8">
+      <div>
+        <h1 className="text-3xl font-bold">Nutrition</h1>
+      </div>
+
+      <div
+        className="border-border bg-card mb-6 inline-flex rounded-xl border p-1"
+      >
         <button
           type="button"
           onClick={() => {
             setActiveTab("today");
             setTodayKey((k) => k + 1);
           }}
-          className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
-            activeTab === "today"
-              ? "bg-primary text-primary-foreground"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
+          className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors
+            ${
+              activeTab === "today"
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
         >
           Today
         </button>
         <button
           type="button"
           onClick={() => setActiveTab("history")}
-          className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
-            activeTab === "history"
-              ? "bg-primary text-primary-foreground"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
+          className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors
+            ${
+              activeTab === "history"
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
         >
           Weekly Logs
         </button>
