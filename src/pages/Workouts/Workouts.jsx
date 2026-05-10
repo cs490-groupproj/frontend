@@ -90,7 +90,10 @@ const MAX_LIMITS = {
   PACE: 3600,
 };
 
-const parseOptionalNumberStrict = (value, { integer = false, min = 0, max } = {}) => {
+const parseOptionalNumberStrict = (
+  value,
+  { integer = false, min = 0, max } = {}
+) => {
   if (value === null || value === undefined || value === "") {
     return { provided: false, valid: true, parsed: undefined };
   }
@@ -136,9 +139,14 @@ const Workouts = () => {
   const [deletedPlanExerciseIds, setDeletedPlanExerciseIds] = useState([]);
   const [formError, setFormError] = useState("");
   const [selectedPlanToLoad, setSelectedPlanToLoad] = useState("");
-  const [expandedHistoryWorkoutId, setExpandedHistoryWorkoutId] = useState(null);
-  const [historyWorkoutDetailsById, setHistoryWorkoutDetailsById] = useState({});
-  const [historyWorkoutLoadingById, setHistoryWorkoutLoadingById] = useState({});
+  const [expandedHistoryWorkoutId, setExpandedHistoryWorkoutId] =
+    useState(null);
+  const [historyWorkoutDetailsById, setHistoryWorkoutDetailsById] = useState(
+    {}
+  );
+  const [historyWorkoutLoadingById, setHistoryWorkoutLoadingById] = useState(
+    {}
+  );
   const [workoutsRefreshKey, setWorkoutsRefreshKey] = useState(0);
   const [logSaveError, setLogSaveError] = useState("");
   const [logSaveSuccess, setLogSaveSuccess] = useState("");
@@ -147,7 +155,10 @@ const Workouts = () => {
   const [mood, setMood] = useState("");
   const [sessionNotes, setSessionNotes] = useState("");
   const [selectedClientId, setSelectedClientId] = useState("");
-  const [selectedClientScheduleRefreshKey, setSelectedClientScheduleRefreshKey] = useState(0);
+  const [
+    selectedClientScheduleRefreshKey,
+    setSelectedClientScheduleRefreshKey,
+  ] = useState(0);
 
   useEffect(() => {
     if (
@@ -167,22 +178,16 @@ const Workouts = () => {
     "/workout-types",
     null
   );
-  const { data: exercisesCatalog, loading: exercisesCatalogLoading } = useGetFromAPI(
-    "/exercises",
-    null
-  );
+  const { data: exercisesCatalog, loading: exercisesCatalogLoading } =
+    useGetFromAPI("/exercises", null);
   const { data: bodyParts, loading: bodyPartsLoading } = useGetFromAPI(
     "/body-parts",
     null
   );
-  const { data: exerciseCategories, loading: exerciseCategoriesLoading } = useGetFromAPI(
-    "/exercise-categories",
-    null
-  );
-  const { data: coachClientsData, loading: coachClientsLoading } = useGetFromAPI(
-    isCoachAssignScreen ? "/coaches/clients" : null,
-    null
-  );
+  const { data: exerciseCategories, loading: exerciseCategoriesLoading } =
+    useGetFromAPI("/exercise-categories", null);
+  const { data: coachClientsData, loading: coachClientsLoading } =
+    useGetFromAPI(isCoachAssignScreen ? "/coaches/clients" : null, null);
   const plansRequestUri =
     isCoachAssignScreen || !userId
       ? "/workout-plans?created_by=me"
@@ -298,7 +303,10 @@ const Workouts = () => {
   const categoryKeyByExerciseId = useMemo(() => {
     if (!Array.isArray(exercisesCatalog)) return {};
     return exercisesCatalog.reduce((acc, exercise) => {
-      acc[exercise.exercise_id] = resolveCategoryKey(exercise, categoryNameById);
+      acc[exercise.exercise_id] = resolveCategoryKey(
+        exercise,
+        categoryNameById
+      );
       return acc;
     }, {});
   }, [exercisesCatalog, categoryNameById]);
@@ -366,8 +374,12 @@ const Workouts = () => {
     if (!Array.isArray(plansData)) return [];
     return plansData.map((plan) => {
       const detail = planDetailsById[plan.workout_plan_id];
-      const detailExercises = Array.isArray(detail?.exercises) ? detail.exercises : [];
-      const baseAssignments = Array.isArray(detail?.assignments) ? detail.assignments : [];
+      const detailExercises = Array.isArray(detail?.exercises)
+        ? detail.exercises
+        : [];
+      const baseAssignments = Array.isArray(detail?.assignments)
+        ? detail.assignments
+        : [];
       const assignmentsForView =
         isCoachAssignScreen && selectedClientId
           ? selectedClientAssignmentsByPlanId[plan.workout_plan_id] || []
@@ -423,11 +435,16 @@ const Workouts = () => {
 
     return rawClients
       .map((client) => {
-        const clientUserId = client.client_id ?? client.client_user_id ?? client.user_id ?? client.id;
+        const clientUserId =
+          client.client_id ??
+          client.client_user_id ??
+          client.user_id ??
+          client.id;
         if (!clientUserId) return null;
         const firstName = client.first_name || "";
         const lastName = client.last_name || "";
-        const fallbackName = client.name || client.email || `Client ${clientUserId}`;
+        const fallbackName =
+          client.name || client.email || `Client ${clientUserId}`;
         const fullName = `${firstName} ${lastName}`.trim() || fallbackName;
         return {
           client_id: String(clientUserId),
@@ -463,7 +480,8 @@ const Workouts = () => {
       (plan.assignments || [])
         .filter(
           (assignment) =>
-            (assignment.weekday || "").toLowerCase() === todayWeekday.toLowerCase()
+            (assignment.weekday || "").toLowerCase() ===
+            todayWeekday.toLowerCase()
         )
         .map((assignment, index) => ({
           workout_id: `${plan.workout_plan_id}-${assignment.id || index}`,
@@ -490,7 +508,11 @@ const Workouts = () => {
     return Number.isFinite(parsed) ? parsed : undefined;
   };
 
-  const validateMetricRow = (row, exerciseMeta, { includeWeight = false } = {}) => {
+  const validateMetricRow = (
+    row,
+    exerciseMeta,
+    { includeWeight = false } = {}
+  ) => {
     const categoryKey = resolveCategoryKey(exerciseMeta, categoryNameById);
 
     const validateField = (
@@ -498,7 +520,11 @@ const Workouts = () => {
       fieldName,
       { integer = false, max } = {}
     ) => {
-      const result = parseOptionalNumberStrict(fieldValue, { integer, min: 0, max });
+      const result = parseOptionalNumberStrict(fieldValue, {
+        integer,
+        min: 0,
+        max,
+      });
       if (!result.valid) {
         return `${fieldName} must be a valid ${integer ? "integer" : "number"}${max !== undefined ? ` between 0 and ${max}` : ""}.`;
       }
@@ -548,7 +574,11 @@ const Workouts = () => {
     );
   };
 
-  const buildMetricPayload = (row, exerciseMeta, { includeWeight = false } = {}) => {
+  const buildMetricPayload = (
+    row,
+    exerciseMeta,
+    { includeWeight = false } = {}
+  ) => {
     const categoryKey = resolveCategoryKey(exerciseMeta, categoryNameById);
     const payload = {};
 
@@ -631,8 +661,9 @@ const Workouts = () => {
     setScheduleDraftsByPlan((prev) => ({
       ...prev,
       [planId]: {
-        entries: (prev[planId]?.entries || [defaultScheduleEntry()]).map((entry, entryIndex) =>
-          entryIndex === index ? { ...entry, [key]: value } : entry
+        entries: (prev[planId]?.entries || [defaultScheduleEntry()]).map(
+          (entry, entryIndex) =>
+            entryIndex === index ? { ...entry, [key]: value } : entry
         ),
       },
     }));
@@ -642,20 +673,24 @@ const Workouts = () => {
     setScheduleDraftsByPlan((prev) => ({
       ...prev,
       [planId]: {
-        entries: [...(prev[planId]?.entries || [defaultScheduleEntry()]), defaultScheduleEntry()],
+        entries: [
+          ...(prev[planId]?.entries || [defaultScheduleEntry()]),
+          defaultScheduleEntry(),
+        ],
       },
     }));
   };
 
   const removeScheduleDraftEntry = (planId, index) => {
     setScheduleDraftsByPlan((prev) => {
-      const nextEntries = (prev[planId]?.entries || [defaultScheduleEntry()]).filter(
-        (_, entryIndex) => entryIndex !== index
-      );
+      const nextEntries = (
+        prev[planId]?.entries || [defaultScheduleEntry()]
+      ).filter((_, entryIndex) => entryIndex !== index);
       return {
         ...prev,
         [planId]: {
-          entries: nextEntries.length > 0 ? nextEntries : [defaultScheduleEntry()],
+          entries:
+            nextEntries.length > 0 ? nextEntries : [defaultScheduleEntry()],
         },
       };
     });
@@ -667,7 +702,11 @@ const Workouts = () => {
     );
     const isGlobalTemplate = selectedPlan?.created_by == null;
     const isPersonalTemplate = Boolean(selectedPlan?.is_created_by_user);
-    if (selectedPlan?.is_locked_assigned_plan && !isGlobalTemplate && !isPersonalTemplate) {
+    if (
+      selectedPlan?.is_locked_assigned_plan &&
+      !isGlobalTemplate &&
+      !isPersonalTemplate
+    ) {
       setFormError("Assigned plans cannot be modified.");
       return;
     }
@@ -688,7 +727,8 @@ const Workouts = () => {
       .filter((entry) => entry?.day && entry?.time)
       .map((entry) => ({
         weekday: entry.day,
-        schedule_time: entry.time.length === 5 ? `${entry.time}:00` : entry.time,
+        schedule_time:
+          entry.time.length === 5 ? `${entry.time}:00` : entry.time,
       }));
     if (cleanedAssignments.length === 0) return;
     try {
@@ -713,7 +753,11 @@ const Workouts = () => {
     }
   };
 
-  const removePlanAssignment = async (assignmentId, assignmentMeta, planMeta) => {
+  const removePlanAssignment = async (
+    assignmentId,
+    assignmentMeta,
+    planMeta
+  ) => {
     if (!assignmentId) return;
     if (isCoachAssignScreen && !selectedClientId) {
       setFormError("Select a client before changing assignments.");
@@ -770,7 +814,8 @@ const Workouts = () => {
             created_by: planForAssignment.created_by ?? null,
             is_created_by_user: planForAssignment.is_created_by_user ?? null,
             is_assigned_to_user: planForAssignment.is_assigned_to_user ?? null,
-            is_locked_assigned_plan: planForAssignment.is_locked_assigned_plan ?? null,
+            is_locked_assigned_plan:
+              planForAssignment.is_locked_assigned_plan ?? null,
             has_assignment_days: planForAssignment.has_assignment_days ?? null,
           }
         : null,
@@ -870,14 +915,18 @@ const Workouts = () => {
         : ""
     );
     setPlanDurationMin(
-      plan.duration_min === 0 || plan.duration_min ? String(plan.duration_min) : ""
+      plan.duration_min === 0 || plan.duration_min
+        ? String(plan.duration_min)
+        : ""
     );
     setPlanDescription(plan.description || "");
     setPlanExercises(
       plan.exercises?.length
         ? plan.exercises.map((exercise) => ({
             workout_plan_exercise_id: exercise.workout_plan_exercise_id || null,
-            exercise_id: exercise.exercise_id ? String(exercise.exercise_id) : "",
+            exercise_id: exercise.exercise_id
+              ? String(exercise.exercise_id)
+              : "",
             sets:
               exercise.sets === 0 || exercise.sets ? String(exercise.sets) : "",
             reps:
@@ -939,7 +988,9 @@ const Workouts = () => {
       max: MAX_LIMITS.DURATION_MIN,
     });
     if (!durationValidation.valid) {
-      setFormError(`Plan duration must be a valid integer between 0 and ${MAX_LIMITS.DURATION_MIN}.`);
+      setFormError(
+        `Plan duration must be a valid integer between 0 and ${MAX_LIMITS.DURATION_MIN}.`
+      );
       return;
     }
 
@@ -985,16 +1036,23 @@ const Workouts = () => {
           );
         }
 
-        const existingRows = cleanedRows.filter((row) => row.workout_plan_exercise_id);
-        const newRows = cleanedRows.filter((row) => !row.workout_plan_exercise_id);
+        const existingRows = cleanedRows.filter(
+          (row) => row.workout_plan_exercise_id
+        );
+        const newRows = cleanedRows.filter(
+          (row) => !row.workout_plan_exercise_id
+        );
 
         await Promise.all(
           existingRows.map((row, index) =>
-            putFunction(`/workout-plan-exercises/${row.workout_plan_exercise_id}`, {
-              exercise_id: Number(row.exercise_id),
-              position: index,
-              ...buildMetricPayload(row, exerciseById[row.exercise_id]),
-            })
+            putFunction(
+              `/workout-plan-exercises/${row.workout_plan_exercise_id}`,
+              {
+                exercise_id: Number(row.exercise_id),
+                position: index,
+                ...buildMetricPayload(row, exerciseById[row.exercise_id]),
+              }
+            )
           )
         );
 
@@ -1049,14 +1107,18 @@ const Workouts = () => {
       max: MAX_LIMITS.DURATION_MIN,
     });
     if (!logDurationValidation.valid) {
-      setLogSaveError(`Duration must be a valid integer between 0 and ${MAX_LIMITS.DURATION_MIN}.`);
+      setLogSaveError(
+        `Duration must be a valid integer between 0 and ${MAX_LIMITS.DURATION_MIN}.`
+      );
       return;
     }
 
     const selectedPlan = plans.find(
       (plan) => String(plan.workout_plan_id) === String(selectedPlanToLoad)
     );
-    const title = selectedPlan?.title || `Workout ${new Date().toLocaleDateString("en-US")}`;
+    const title =
+      selectedPlan?.title ||
+      `Workout ${new Date().toLocaleDateString("en-US")}`;
 
     const rowsWithExerciseIds = logRows
       .map((row) => {
@@ -1069,7 +1131,8 @@ const Workouts = () => {
           };
         }
         const byName = (exercisesCatalog || []).find(
-          (exercise) => exercise.name?.toLowerCase() === row.exercise?.trim()?.toLowerCase()
+          (exercise) =>
+            exercise.name?.toLowerCase() === row.exercise?.trim()?.toLowerCase()
         );
         return byName
           ? {
@@ -1077,7 +1140,11 @@ const Workouts = () => {
               resolved_exercise_id: Number(byName.exercise_id),
               resolved_exercise_meta: byName,
             }
-          : { ...row, resolved_exercise_id: null, resolved_exercise_meta: null };
+          : {
+              ...row,
+              resolved_exercise_id: null,
+              resolved_exercise_meta: null,
+            };
       })
       .filter((row) => row.resolved_exercise_id);
 
@@ -1088,9 +1155,13 @@ const Workouts = () => {
 
     for (let index = 0; index < rowsWithExerciseIds.length; index += 1) {
       const row = rowsWithExerciseIds[index];
-      const validationError = validateMetricRow(row, row.resolved_exercise_meta, {
-        includeWeight: true,
-      });
+      const validationError = validateMetricRow(
+        row,
+        row.resolved_exercise_meta,
+        {
+          includeWeight: true,
+        }
+      );
       if (validationError) {
         setLogSaveError(`Exercise row ${index + 1}: ${validationError}`);
         return;
@@ -1130,7 +1201,9 @@ const Workouts = () => {
         exercises: rowsWithExerciseIds.map((row, index) => ({
           exercise_id: row.resolved_exercise_id,
           position: index,
-          ...buildMetricPayload(row, row.resolved_exercise_meta, { includeWeight: true }),
+          ...buildMetricPayload(row, row.resolved_exercise_meta, {
+            includeWeight: true,
+          }),
         })),
       });
 
@@ -1153,13 +1226,20 @@ const Workouts = () => {
     }
 
     setExpandedHistoryWorkoutId(workoutId);
-    if (historyWorkoutDetailsById[workoutId] || historyWorkoutLoadingById[workoutId]) return;
+    if (
+      historyWorkoutDetailsById[workoutId] ||
+      historyWorkoutLoadingById[workoutId]
+    )
+      return;
 
     setHistoryWorkoutLoadingById((prev) => ({ ...prev, [workoutId]: true }));
     try {
       const detail = await fetchWorkoutDetail(workoutId);
       if (detail) {
-        setHistoryWorkoutDetailsById((prev) => ({ ...prev, [workoutId]: detail }));
+        setHistoryWorkoutDetailsById((prev) => ({
+          ...prev,
+          [workoutId]: detail,
+        }));
       }
     } finally {
       setHistoryWorkoutLoadingById((prev) => ({ ...prev, [workoutId]: false }));
@@ -1204,27 +1284,31 @@ const Workouts = () => {
   }
 
   return (
-    <div className="mx-auto w-full max-w-7xl space-y-6">
+    <div className="mx-auto w-full space-y-8">
+      <h1 className="text-3xl font-bold">Exercise Manager</h1>
+
       <div className="border-border bg-card inline-flex rounded-xl border p-1">
         <button
           type="button"
           onClick={() => setActiveTab(TABS.PLANS)}
-          className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
-            activeTab === TABS.PLANS
-              ? "bg-primary text-primary-foreground"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
+          className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors
+            ${
+              activeTab === TABS.PLANS
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
         >
           {isCoachAssignScreen ? "Assign Workouts" : "Workout Plans"}
         </button>
         <button
           type="button"
           onClick={() => setActiveTab(TABS.BANK)}
-          className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
-            activeTab === TABS.BANK
-              ? "bg-primary text-primary-foreground"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
+          className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors
+            ${
+              activeTab === TABS.BANK
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
         >
           Exercise Bank
         </button>
@@ -1232,7 +1316,8 @@ const Workouts = () => {
           <button
             type="button"
             onClick={() => setActiveTab(TABS.HISTORY)}
-            className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+            className={`rounded-lg px-4 py-2 text-sm font-medium
+            transition-colors ${
               activeTab === TABS.HISTORY
                 ? "bg-primary text-primary-foreground"
                 : "text-muted-foreground hover:text-foreground"
@@ -1245,7 +1330,8 @@ const Workouts = () => {
           <button
             type="button"
             onClick={() => setActiveTab(TABS.LOG)}
-            className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+            className={`rounded-lg px-4 py-2 text-sm font-medium
+            transition-colors ${
               activeTab === TABS.LOG
                 ? "bg-primary text-primary-foreground"
                 : "text-muted-foreground hover:text-foreground"
@@ -1258,7 +1344,11 @@ const Workouts = () => {
 
       {activeTab === TABS.PLANS && (
         <WorkoutPlansTab
-          pageTitle={isCoachAssignScreen ? "Assign Workouts" : "Create and Manage Workout Plans"}
+          pageTitle={
+            isCoachAssignScreen
+              ? "Assign Workouts"
+              : "Create and Manage Workout Plans"
+          }
           isLoading={isWorkoutPlansTabLoading}
           isCoachAssignScreen={isCoachAssignScreen}
           coachClients={coachClients}
