@@ -11,6 +11,7 @@ import WorkoutHistoryTab from "@/pages/Workouts/tabs/WorkoutHistoryTab";
 import LogWorkoutTab from "@/pages/Workouts/tabs/LogWorkoutTab";
 import { API_BASE_URL } from "../../../config.js";
 import { getAuthHeader } from "@/lib/authHeader";
+import { Loader2 } from "lucide-react";
 
 const TABS = {
   PLANS: "plans",
@@ -1183,6 +1184,23 @@ const Workouts = () => {
     });
     if (!response.ok) return null;
     return response.json();
+  }
+
+  if (isWorkoutPlansTabLoading) {
+    return (
+      <div
+        className="bg-background flex w-full flex-col items-center
+          justify-center py-24 text-white"
+      >
+        <Loader2 className="text-primary h-12 w-12 animate-spin" />
+        <p
+          className="text-muted-foreground mt-4 text-xs font-bold
+            tracking-widest uppercase"
+        >
+          Loading Workouts
+        </p>
+      </div>
+    );
   }
 
   return (
