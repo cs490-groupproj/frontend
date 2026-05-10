@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { signInWithGooglePopup } from "@/lib/googleSignIn.js";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "@/firebase.js";
-import { API_BASE_URL, ACTIVE_MODE_MODES } from "../../../config.js";
+import { API_BASE_URL } from "../../../config.js";
 import { getAuthHeader } from "@/lib/authHeader";
 
 function mapEmailPasswordError(err) {
@@ -33,13 +33,10 @@ const LogIn = () => {
       return "/";
     }
     if (user?.is_coach) {
-      localStorage.setItem("activeMode", ACTIVE_MODE_MODES.COACH);
       return "/coachDashboard";
     } else if (user?.is_client) {
-      localStorage.setItem("activeMode", ACTIVE_MODE_MODES.CLIENT);
       return "/clientDashboard";
     } else if (user?.is_admin) {
-      localStorage.setItem("activeMode", ACTIVE_MODE_MODES.ADMIN);
       return "/adminDashboard";
     } else {
       console.log("here");
