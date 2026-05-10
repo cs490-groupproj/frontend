@@ -24,7 +24,6 @@ const MEAL_NAMES = ["Breakfast", "Lunch", "Dinner", "Snacks"];
 const mealTypeToName = { 1: "Breakfast", 2: "Lunch", 3: "Dinner", 4: "Snacks" };
 const mealNameToType = { Breakfast: 1, Lunch: 2, Dinner: 3, Snacks: 4 };
 
-// --- Helpers ---
 const parseUTCDate = (dateStr) => {
   if (!dateStr) return new Date();
   const standardized =
@@ -38,7 +37,6 @@ const formatTime = (isoString) => {
   return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 };
 
-// --- Weekly History ---
 const WeeklyHistory = ({ userId, timezone }) => {
   const { data: historyData, loading } = useGetFromAPI(
     userId
@@ -46,7 +44,6 @@ const WeeklyHistory = ({ userId, timezone }) => {
       : null
   );
 
-  // FIXED: Synchronized loading state
   if (loading || !historyData)
     return (
       <div className="flex h-48 w-full items-center justify-center">
@@ -444,7 +441,6 @@ const TodayView = ({ userId, timezone, apiPost, readOnly, refreshKey }) => {
     init();
   }, [todayData, userId, readOnly, apiPost]);
 
-  // FIXED: Synchronized loading state (matches WeeklyHistory)
   if (loading || !state.isReady)
     return (
       <div className="flex h-48 w-full items-center justify-center">
@@ -505,7 +501,6 @@ const TodayView = ({ userId, timezone, apiPost, readOnly, refreshKey }) => {
   );
 };
 
-// --- Main Page ---
 const NutritionPage = ({ viewedUserId = null, readOnly = false }) => {
   const currentUserId = viewedUserId || localStorage.getItem("userId");
   const [activeTab, setActiveTab] = useState("today");
