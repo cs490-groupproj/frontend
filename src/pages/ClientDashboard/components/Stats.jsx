@@ -51,15 +51,16 @@ function buildLastNDaysChartData(apiRows, n = 7) {
   return out;
 }
 
-function dateKeyFromCompletion(completionDate) {
-  if (!completionDate) return null;
-  return String(completionDate).slice(0, 10);
+function dateKeyFromCompletion(row) {
+  if (row?.local_date) return String(row.local_date).slice(0, 10);
+  if (!row?.completion_date) return null;
+  return String(row.completion_date).slice(0, 10);
 }
 
 function buildWorkoutMetricChartData(apiRows, n, valueKey) {
   const summedByDate = new Map();
   for (const row of apiRows || []) {
-    const key = dateKeyFromCompletion(row.completion_date);
+    const key = dateKeyFromCompletion(row);
     if (!key) continue;
     const rawValue = Number(row?.[valueKey]);
     const safeValue = Number.isFinite(rawValue) ? rawValue : 0;
@@ -71,7 +72,7 @@ function buildWorkoutMetricChartData(apiRows, n, valueKey) {
     const d = new Date();
     d.setHours(12, 0, 0, 0);
     d.setDate(d.getDate() - i);
-    const key = d.toISOString().slice(0, 10);
+    const key = localDayKey(d);
     out.push({
       dayShort: d.toLocaleDateString(undefined, { weekday: "short" }),
       dayDate: d.toLocaleDateString(undefined, {
@@ -197,13 +198,13 @@ const Stats = ({ viewedUserId = null }) => {
     error: caloriesError,
   } = useGetFromAPI(caloriesUri, calRange);
   const setsUri = userId
-    ? `/workouts/history/sets-logged?user_id=${userId}&days=${workoutRange}`
+    ? `/workouts/history/sets-logged?user_id=${userId}&days=${workoutRange}&timezone=${tzParam}`
     : null;
   const workoutTimeUri = userId
-    ? `/workouts/history/total-workout-time?user_id=${userId}&days=${workoutRange}`
+    ? `/workouts/history/total-workout-time?user_id=${userId}&days=${workoutRange}&timezone=${tzParam}`
     : null;
   const workoutVolumeUri = userId
-    ? `/workouts/history/total-volume?user_id=${userId}&days=${workoutRange}`
+    ? `/workouts/history/total-volume?user_id=${userId}&days=${workoutRange}&timezone=${tzParam}`
     : null;
   const {
     data: setsData,
