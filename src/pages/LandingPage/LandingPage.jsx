@@ -15,7 +15,7 @@ const LandingPage = () => {
         >
           <div className="text-foreground flex flex-col gap-4">
             <h1 className="text-5xl leading-16 font-bold">
-              Optimal for your hHealth, Optimal for your Wallet.
+              Optimal for your Health, Optimal for your Wallet.
             </h1>
             <p className="text-muted-foreground text-xl">
               {`We bring your fitness journey to the world's best coaches and nutritionists.`}
