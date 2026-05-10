@@ -45,6 +45,8 @@ const DashboardLayout = () => {
     const isAdminRoute = ["/admin"].some((p) => path.startsWith(p));
 
     const isClientRoute = [
+      "/ClientDashboard",
+
       "/clientDashboard",
       "/coaches/browse",
       "/coaches/my-coach",
