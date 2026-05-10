@@ -7,6 +7,7 @@ import usePutToAPI from "@/hooks/usePutToAPI";
 import WorkoutPlansTab from "@/pages/Workouts/tabs/WorkoutPlansTab";
 import { API_BASE_URL } from "../../../config.js";
 import { getAuthHeader } from "@/lib/authHeader";
+import { Loader2 } from "lucide-react";
 
 const DAYS_OF_WEEK = [
   "Monday",
@@ -537,6 +538,23 @@ export default function AdminWorkoutPlans() {
       setFormError(error?.message || "Failed to delete workout plan.");
     }
   };
+
+  if (isWorkoutPlansTabLoading) {
+    return (
+      <div
+        className="bg-background flex w-full flex-col items-center
+          justify-center py-24 text-white"
+      >
+        <Loader2 className="text-primary h-12 w-12 animate-spin" />
+        <p
+          className="text-muted-foreground mt-4 text-xs font-bold
+            tracking-widest uppercase"
+        >
+          Loading Workout Plans
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto w-full max-w-7xl space-y-6">

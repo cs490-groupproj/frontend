@@ -4,12 +4,6 @@ import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { Progress } from "../../components/ui/progress";
 import {
-  Tabs,
-  TabsList,
-  TabsTrigger,
-  TabsContent,
-} from "../../components/ui/tabs";
-import {
   Loader2,
   Search,
   Utensils,
@@ -503,34 +497,50 @@ const NutritionPage = ({ viewedUserId = null, readOnly = false }) => {
   return (
     <div className="mx-auto w-full max-w-7xl space-y-6 px-6 py-8">
       <h1 className="text-3xl font-bold">Nutrition</h1>
-      <Tabs
-        defaultValue="today"
-        onValueChange={(val) => {
-          setActiveTab(val);
-          if (val === "today") setTodayKey((k) => k + 1);
-        }}
-      >
-        <TabsList className="mb-6 grid w-full max-w-md grid-cols-2">
-          <TabsTrigger value="today">Today</TabsTrigger>
-          <TabsTrigger value="history">Weekly Logs</TabsTrigger>
-        </TabsList>
-        <TabsContent value="today">
-          <TodayView
-            userId={currentUserId}
-            timezone={Intl.DateTimeFormat().resolvedOptions().timeZone}
-            apiPost={apiPost}
-            readOnly={readOnly}
-            refreshKey={todayKey}
-          />
-        </TabsContent>
-        <TabsContent value="history">
-          <WeeklyHistory
-            key={activeTab}
-            userId={currentUserId}
-            timezone={Intl.DateTimeFormat().resolvedOptions().timeZone}
-          />
-        </TabsContent>
-      </Tabs>
+      <div className="border-border bg-card mb-6 inline-flex rounded-xl border p-1">
+        <button
+          type="button"
+          onClick={() => {
+            setActiveTab("today");
+            setTodayKey((k) => k + 1);
+          }}
+          className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+            activeTab === "today"
+              ? "bg-primary text-primary-foreground"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          Today
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab("history")}
+          className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+            activeTab === "history"
+              ? "bg-primary text-primary-foreground"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          Weekly Logs
+        </button>
+      </div>
+
+      {activeTab === "today" && (
+        <TodayView
+          userId={currentUserId}
+          timezone={Intl.DateTimeFormat().resolvedOptions().timeZone}
+          apiPost={apiPost}
+          readOnly={readOnly}
+          refreshKey={todayKey}
+        />
+      )}
+      {activeTab === "history" && (
+        <WeeklyHistory
+          key={activeTab}
+          userId={currentUserId}
+          timezone={Intl.DateTimeFormat().resolvedOptions().timeZone}
+        />
+      )}
     </div>
   );
 };

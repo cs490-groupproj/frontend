@@ -51,47 +51,50 @@ export default function ClientDashboard({
           Welcome back, {firstName || "Client"}
         </h1>
       </div>
-      <div className="flex w-fit border-b border-gray-200">
+      <div className="border-border bg-card inline-flex rounded-xl border p-1">
         <button
+          type="button"
           onClick={() => setActiveTab("weeklySchedule")}
-          className={`px-4 py-2 text-sm font-medium focus:outline-none ${
+          className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
             activeTab === "weeklySchedule"
-              ? "border-border-600 text-text border-b-2"
-              : "text-gray-500 hover:text-gray-700"
-            }`}
+              ? "bg-primary text-primary-foreground"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
         >
           This Week
         </button>
         <button
+          type="button"
           onClick={() => setActiveTab("stats")}
-          className={`px-4 py-2 text-sm font-medium focus:outline-none ${
+          className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
             activeTab === "stats"
-              ? "border-border-600 text-text border-b-2"
-              : "text-gray-500 hover:text-gray-700"
-            }`}
+              ? "bg-primary text-primary-foreground"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
         >
           Statistics
         </button>
         {!readOnly && (
           <button
+            type="button"
             onClick={() => setActiveTab("dailySurvey")}
-            className={`px-4 py-2 text-sm font-medium focus:outline-none ${
+            className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
               activeTab === "dailySurvey"
-                ? "border-border-600 text-text border-b-2"
-                : "text-gray-500 hover:text-gray-700"
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:text-foreground"
             }`}
           >
             Daily Survey
           </button>
         )}
-
         {!readOnly && (
           <button
+            type="button"
             onClick={() => setActiveTab("progressPics")}
-            className={`px-4 py-2 text-sm font-medium focus:outline-none ${
+            className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
               activeTab === "progressPics"
-                ? "border-border-600 text-text border-b-2"
-                : "text-gray-500 hover:text-gray-700"
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:text-foreground"
             }`}
           >
             Progress Pics
