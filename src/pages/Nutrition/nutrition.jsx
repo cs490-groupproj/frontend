@@ -46,9 +46,10 @@ const WeeklyHistory = ({ userId, timezone }) => {
       : null
   );
 
+  // FIXED: Synchronized loading state
   if (loading || !historyData)
     return (
-      <div className="flex h-48 items-center justify-center">
+      <div className="flex h-48 w-full items-center justify-center">
         <Loader2 className="text-primary animate-spin" />
       </div>
     );
@@ -443,10 +444,11 @@ const TodayView = ({ userId, timezone, apiPost, readOnly, refreshKey }) => {
     init();
   }, [todayData, userId, readOnly, apiPost]);
 
+  // FIXED: Synchronized loading state (matches WeeklyHistory)
   if (loading || !state.isReady)
     return (
-      <div className="flex h-64 w-full items-center justify-center">
-        <Loader2 className="text-primary animate-spin" size={40} />
+      <div className="flex h-48 w-full items-center justify-center">
+        <Loader2 className="text-primary animate-spin" />
       </div>
     );
 
@@ -454,21 +456,31 @@ const TodayView = ({ userId, timezone, apiPost, readOnly, refreshKey }) => {
 
   return (
     <div className="space-y-6">
-      <Card className="flex flex-col items-center justify-center p-8">
-        <div className="text-primary text-6xl font-bold">{state.calories}</div>
+      {/* Refined Calorie Card */}
+      <Card
+        className="bg-card/50 flex min-h-[280px] flex-col items-center
+          justify-center border-white/5 p-6 shadow-sm"
+      >
+        <div
+          className="text-6xl leading-none font-bold tracking-tight
+            text-[#e11d48]"
+        >
+          {state.calories}
+        </div>
         <p
-          className="text-muted-foreground mt-2 text-xs font-bold
-            tracking-widest uppercase"
+          className="text-muted-foreground mt-3 text-[11px] font-bold
+            tracking-[0.2em] uppercase"
         >
           Total Calories Today
         </p>
-        <div className="mt-8 w-full max-w-md space-y-2">
-          <Progress value={progressValue} className="h-3" />
+
+        <div className="mt-8 w-full max-w-sm space-y-2">
+          <Progress value={progressValue} className="h-2" />
           <div
-            className="text-muted-foreground flex justify-between text-[10px]
-              font-bold uppercase"
+            className="text-muted-foreground flex justify-between text-[9px]
+              font-black tracking-wider uppercase opacity-60"
           >
-            <span>0 KCAL</span>
+            <span>{state.calories} KCAL</span>
             <span>GOAL: {CALORIE_GOAL} KCAL</span>
           </div>
         </div>
