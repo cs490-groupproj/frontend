@@ -136,27 +136,85 @@ export default function ClientManagement() {
         <button
           type="button"
           onClick={() => setTab("active")}
-          className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
-            tab === "active"
-              ? "bg-primary text-primary-foreground"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
+          className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors
+            ${
+              tab === "active"
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
         >
           Active Clients ({activeClients.length})
         </button>
         <button
           type="button"
           onClick={() => setTab("requests")}
-          className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
-            tab === "requests"
-              ? "bg-primary text-primary-foreground"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
+          className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors
+            ${
+              tab === "requests"
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
         >
           Incoming Requests ({requests.length})
         </button>
       </div>
+      {tab === "requests" && (
+        <div className="space-y-4">
+          {requestsLoading ? (
+            <div className="text-muted-foreground rounded-xl border p-6">
+              Loading incoming requests...
+            </div>
+          ) : requests.length === 0 ? (
+            <div className="text-muted-foreground rounded-xl border p-6">
+              No incoming requests
+            </div>
+          ) : (
+            requests.map((r) => (
+              <div
+                key={r.id}
+                className="bg-card flex items-center justify-between gap-4
+                  rounded-xl border p-5 shadow-sm"
+              >
+                <div className="flex items-start gap-4">
+                  <div
+                    className="bg-muted text-foreground flex h-10 w-10
+                      items-center justify-center rounded-full font-semibold"
+                  >
+                    {r.initials}
+                  </div>
+                  <div>
+                    <div className="font-semibold">{r.name}</div>
+                    <div className="text-muted-foreground text-sm">
+                      {r.message}
+                    </div>
+                  </div>
+                </div>
 
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="bg-muted/40 border-border text-foreground
+                      hover:bg-muted font-medium transition-colors"
+                    onClick={() => declineRequest(r.id)}
+                  >
+                    Decline
+                  </Button>
+                  <Button
+                    variant="default"
+                    size="sm"
+                    className="bg-primary text-primary-foreground
+                      hover:bg-primary/90 font-bold transition-all"
+                    onClick={() => acceptRequest(r.id)}
+                  >
+                    Accept
+                  </Button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      )}
       {tab === "active" && (
         <div className="space-y-4">
           {clientsLoading && activeClients.length === 0 ? (
