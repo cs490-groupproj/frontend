@@ -2,8 +2,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Progress } from "@/components/ui/progress";
-import { Plus, Trash2, Minus } from "lucide-react";
+import { Plus, Trash2, Minus, Loader2 } from "lucide-react";
 
 const MetricField = ({ label, className = "", children }) => (
   <div className={className}>
@@ -73,6 +72,11 @@ const WorkoutPlansTab = ({
   addScheduleDraftEntry,
   removeScheduleDraftEntry,
   assignScheduleToPlan,
+  /** When false, hides schedule assignment UI entirely (coach + client flows). */
+  allowAssignments = true,
+  /** When true, global templates (`created_by == null`) remain editable/deleteable like normal plans (admin tooling). */
+  globalTemplateManagementMode = false,
+  emptyListMessage = "No plans yet for this user.",
 }) => {
   if (isLoading) {
     return (
@@ -83,9 +87,9 @@ const WorkoutPlansTab = ({
           </div>
         </div>
         <Card>
-          <CardContent className="space-y-3 p-4">
+          <CardContent className="flex h-64 w-full flex-col items-center justify-center gap-3 p-4">
+            <Loader2 className="text-primary animate-spin" size={40} />
             <p className="text-muted-foreground text-sm">Loading workout plans...</p>
-            <Progress value={70} />
           </CardContent>
         </Card>
       </div>
@@ -361,8 +365,36 @@ const WorkoutPlansTab = ({
             <CardContent className="space-y-4 p-4">
               {(() => {
                 const isGlobalTemplate = plan.created_by == null;
-                const isRestrictedTemplate = plan.is_locked_assigned_plan || isGlobalTemplate;
-                const canAssignPlan = !plan.is_locked_assigned_plan;
+                const isPersonalTemplate = !isGlobalTemplate && Boolean(plan.is_created_by_user);
+                const isRestrictedTemplate = globalTemplateManagementMode
+                  ? Boolean(plan.is_locked_assigned_plan)
+                  : Boolean(plan.is_locked_assigned_plan || isGlobalTemplate);
+                const canAssignPlan =
+                  allowAssignments &&
+                  (!plan.is_locked_assigned_plan || isGlobalTemplate || isPersonalTemplate);
+                const canRemoveAssignment =
+                  !plan.is_locked_assigned_plan || isGlobalTemplate || isPersonalTemplate;
+                const isCoachMadeAssignment = (entry) => {
+                  const hasIds =
+                    entry?.assigned_by != null && entry?.client_id != null;
+                  if (hasIds) {
+                    return String(entry.assigned_by) !== String(entry.client_id);
+                  }
+                  return String(entry?.source || "").toLowerCase() === "coach";
+                };
+                const isSelfMadeAssignment = (entry) => {
+                  const hasIds =
+                    entry?.assigned_by != null && entry?.client_id != null;
+                  if (hasIds) {
+                    return String(entry.assigned_by) === String(entry.client_id);
+                  }
+                  const source = String(entry?.source || "").toLowerCase();
+                  return source === "self" || source === "user";
+                };
+                const hasAssignments = (plan.assignments || []).length > 0;
+                const hasCoachAssignedTag = Boolean(
+                  plan.created_by != null && !plan.is_created_by_user
+                );
                 return (
                   <>
               <div className="flex flex-wrap items-center gap-3">
@@ -394,9 +426,14 @@ const WorkoutPlansTab = ({
                         {bodyPart}
                       </span>
                     ))}
-                    {plan.is_locked_assigned_plan && (
+                    {hasAssignments && (
                       <span className="bg-destructive/15 text-destructive rounded-full px-2.5 py-1 text-xs">
                         Assigned
+                      </span>
+                    )}
+                    {hasCoachAssignedTag && (
+                      <span className="bg-violet-500/15 text-violet-300 rounded-full px-2.5 py-1 text-xs">
+                        Coach Assigned
                       </span>
                     )}
                     {isGlobalTemplate && (
@@ -464,7 +501,7 @@ const WorkoutPlansTab = ({
                 </Button>
               </div>
 
-              {(plan.assignments || []).length > 0 && (
+              {allowAssignments && (plan.assignments || []).length > 0 && (
                 <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
                   {(plan.assignments || []).map((entry, index) => (
                     <div
@@ -474,11 +511,14 @@ const WorkoutPlansTab = ({
                       <span className="font-medium">
                         {entry.weekday} {formatScheduleTime(entry.schedule_time)}
                       </span>
-                      {!isRestrictedTemplate && (
+                      {canRemoveAssignment &&
+                        (isGlobalTemplate ||
+                          isPersonalTemplate ||
+                          (isSelfMadeAssignment(entry) && !isCoachMadeAssignment(entry))) && (
                         <button
                           type="button"
                           className="text-muted-foreground hover:text-foreground"
-                          onClick={() => removePlanAssignment(entry.id)}
+                          onClick={() => removePlanAssignment(entry.id, entry, plan)}
                           disabled={!entry.id || (isCoachAssignScreen && !selectedClientId)}
                           aria-label="Delete assignment"
                         >
@@ -490,10 +530,10 @@ const WorkoutPlansTab = ({
                 </div>
               )}
 
-              {assigningPlanId === plan.workout_plan_id && (
+              {allowAssignments && assigningPlanId === plan.workout_plan_id && (
                 <Card>
                   <CardContent className="grid grid-cols-1 gap-3 p-3 md:grid-cols-2">
-                    {isCoachAssignScreen ? (
+                    {isCoachAssignScreen || isGlobalTemplate || isPersonalTemplate ? (
                       <div className="md:col-span-2 space-y-3">
                         {(scheduleDraftsByPlan[plan.workout_plan_id]?.entries || [
                           { day: DAYS_OF_WEEK[0], time: "09:00" },
@@ -668,7 +708,7 @@ const WorkoutPlansTab = ({
         {plans.length === 0 && (
           <Card>
             <CardContent className="text-muted-foreground p-6 text-center">
-              No plans yet for this user.
+              {emptyListMessage}
             </CardContent>
           </Card>
         )}

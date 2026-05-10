@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import CoachCard from "@/features/coach/CoachCard";
 import useGetPublicAPI from "@/hooks/useGetPublicAPI";
+import { Loader2 } from "lucide-react";
 
 const TopCoaches = () => {
   const [coachData, setCoachData] = useState([]);
@@ -41,7 +42,35 @@ const TopCoaches = () => {
     }
     setCoachData(coachesData.coaches.map(mapCoachFromBackend));
   }, [coachesData]);
-
+  if (coachesError) {
+    return (
+      <div
+        className="flex h-[40vh] w-full flex-col items-center justify-center
+          p-6"
+      >
+        <p className="text-destructive text-sm font-medium">
+          Failed to load top coach data.
+        </p>
+        <p className="text-muted-foreground mt-1 text-xs">{coachesError}</p>
+      </div>
+    );
+  }
+  if (coachesLoading || !coachesData) {
+    return (
+      <div
+        className="flex h-[40vh] w-full flex-col items-center justify-center
+          p-6"
+      >
+        <Loader2 className="text-primary h-12 w-12 animate-spin" />
+        <p
+          className="text-muted-foreground mt-4 text-xs font-bold
+            tracking-widest uppercase"
+        >
+          Loading our Top Coaches
+        </p>
+      </div>
+    );
+  }
   return (
     <section className="flex flex-col items-center gap-8 py-16">
       <div className="flex flex-col items-center gap-4 pb-4">
@@ -50,17 +79,11 @@ const TopCoaches = () => {
           Coaches that change client lives, one optimal decision at a time.
         </p>
       </div>
-      {coachesError ? (
-        <p>error: {coachesError}</p>
-      ) : coachesLoading ? (
-        <p>Loading Coaches</p>
-      ) : (
-        <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-          {coachData.map((coach_info) => (
-            <CoachCard key={coach_info.name} coach_info={coach_info} />
-          ))}
-        </div>
-      )}
+      <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+        {coachData.map((coach_info) => (
+          <CoachCard key={coach_info.name} coach_info={coach_info} />
+        ))}
+      </div>
     </section>
   );
 };

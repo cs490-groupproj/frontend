@@ -2,6 +2,7 @@ import React, { useState, useMemo } from "react";
 import { Button } from "../../components/ui/button.jsx";
 import useGetFromAPI from "../../hooks/useGetFromAPI";
 import usePostToAPI from "../../hooks/usePostToAPI";
+import { Loader2 } from "lucide-react";
 
 const mapApplicationFromBackend = (data) => {
   return {
@@ -68,21 +69,17 @@ export default function AdminCoachApplications() {
 
   if (isInitialLoading) {
     return (
-      <div
-        className="flex min-h-[400px] w-full flex-col items-center
-          justify-center space-y-4"
-      >
-        <div
-          className="border-primary h-10 w-10 animate-spin rounded-full border-4
-            border-t-transparent"
-        />
-        <p className="text-muted-foreground font-medium">
+      <div className="flex w-full flex-col items-center justify-center py-12">
+        <Loader2 className="text-primary h-12 w-12 animate-spin" />
+        <p
+          className="text-muted-foreground mt-4 text-xs font-bold
+            tracking-widest uppercase"
+        >
           Fetching applications...
         </p>
       </div>
     );
   }
-
   return (
     <div className="space-y-6">
       <header>

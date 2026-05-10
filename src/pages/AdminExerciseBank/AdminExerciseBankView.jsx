@@ -4,6 +4,7 @@ import usePostToAPI from "@/hooks/usePostToAPI";
 import usePutToAPI from "@/hooks/usePutToAPI";
 import useDeleteFromAPI from "@/hooks/useDeleteFromAPI";
 import AdminExercisesBank from "./components/AdminExercisesBank";
+import { Loader2 } from "lucide-react";
 
 const emptyForm = {
   name: "",
@@ -30,12 +31,25 @@ const AdminExerciseBankView = () => {
     loading: loadingExercises,
     error: errorExercises,
   } = useGetFromAPI("/exercises", refreshKey);
-  const { data: bodyParts } = useGetFromAPI("/body-parts", null);
+  const {
+    data: bodyParts,
+    loading: loadingBodyParts,
+    error: errorBodyParts,
+  } = useGetFromAPI("/body-parts", null);
   const {
     data: exerciseCategories,
     loading: loadingExerciseCategories,
     error: errorExerciseCategories,
   } = useGetFromAPI("/exercise-categories", null);
+
+  const isLoading =
+    loadingExercises ||
+    loadingBodyParts ||
+    loadingExerciseCategories ||
+    exercisesCatalog === null ||
+    bodyParts === null ||
+    exerciseCategories === null;
+  const hasError = errorExercises || errorBodyParts || errorExerciseCategories;
 
   const bodyPartNameById = useMemo(() => {
     if (!Array.isArray(bodyParts)) return {};
@@ -164,7 +178,35 @@ const AdminExerciseBankView = () => {
       setActionError(error?.message || "Failed to remove exercise.");
     }
   };
+  if (hasError) {
+    return (
+      <div
+        className="flex w-full flex-col items-center justify-center space-y-2
+          py-12 text-center"
+      >
+        <p className="text-destructive text-lg font-semibold">
+          Unable to load exercise bank
+        </p>
+        <p className="text-muted-foreground text-sm">
+          Please refresh the page or try again later.
+        </p>
+      </div>
+    );
+  }
 
+  if (isLoading) {
+    return (
+      <div className="flex w-full flex-col items-center justify-center py-12">
+        <Loader2 className="text-primary h-12 w-12 animate-spin" />
+        <p
+          className="text-muted-foreground mt-4 text-xs font-bold
+            tracking-widest uppercase"
+        >
+          Getting Exercise Library
+        </p>
+      </div>
+    );
+  }
   return (
     <div className="mx-auto flex w-full max-w-7xl flex-col space-y-6">
       <AdminExercisesBank

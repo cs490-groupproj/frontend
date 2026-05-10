@@ -1,6 +1,7 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import ChatCard from "./ChatCard";
+import { Loader2 } from "lucide-react";
 
 const ChatSidebar = ({
   userChattersData,
@@ -30,7 +31,9 @@ const ChatSidebar = ({
         {userChattersError ? (
           <p>error: {userChattersError}</p>
         ) : userChattersLoading || userChattersData === null ? (
-          <p>Loading Contacts</p>
+          <div className="flex w-full flex-col items-center p-6">
+            <Loader2 className="text-primary h-6 w-6 animate-spin" />
+          </div>
         ) : chatters?.length === 0 ? (
           <p>No contacts yet</p>
         ) : (
