@@ -119,20 +119,29 @@ export default function ClientManagement() {
  </p>
  </div>
 
- <div className="flex gap-3">
- <Button
- variant={tab === "requests" ? "default" : "outline"}
+ <div className="border-border bg-card inline-flex rounded-xl border p-1">
+ <button
+ type="button"
  onClick={() => setTab("requests")}
+ className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+ tab === "requests"
+ ? "bg-primary text-primary-foreground"
+ : "text-muted-foreground hover:text-foreground"
+ }`}
  >
  Incoming Requests ({requests.length})
- </Button>
-
- <Button
- variant={tab === "active" ? "default" : "outline"}
+ </button>
+ <button
+ type="button"
  onClick={() => setTab("active")}
+ className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+ tab === "active"
+ ? "bg-primary text-primary-foreground"
+ : "text-muted-foreground hover:text-foreground"
+ }`}
  >
  Active Clients ({activeClients.length})
- </Button>
+ </button>
  </div>
 
  {tab === "requests" && (
