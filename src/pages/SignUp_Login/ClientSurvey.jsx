@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import usePostToAPI from "@/hooks/usePostToAPI";
 import { useNavigate } from "react-router-dom";
-   
+
 const GOALS = [
   { id: 0, label: "Lose weight" },
   { id: 1, label: "Build muscle" },
@@ -12,7 +12,6 @@ const GOALS = [
   { id: 5, label: "Sports performance" },
 ];
 const HEIGHT_STORAGE_KEY = "client_height_inches";
-
 
 const ClientSurvey = ({ onSubmitted }) => {
   const navigate = useNavigate();
@@ -53,12 +52,10 @@ const ClientSurvey = ({ onSubmitted }) => {
       (dailyExerciseHours === "" ? 0 : Number(dailyExerciseHours) * 60) +
       (dailyExerciseMinutes === "" ? 0 : Number(dailyExerciseMinutes));
 
-   
     const payload = {
       primary_goals_binary: primaryGoalsBinary,
       weight: weightGoalLbs === "" ? null : Number(weightGoalLbs),
-      exercise_minutes:
-        totalExerciseMinutes > 0 ? totalExerciseMinutes : null,
+      exercise_minutes: totalExerciseMinutes > 0 ? totalExerciseMinutes : null,
       personal_goals:
         otherEnabled && otherText.trim() ? otherText.trim() : null,
     };
@@ -70,7 +67,7 @@ const ClientSurvey = ({ onSubmitted }) => {
         localStorage.setItem(HEIGHT_STORAGE_KEY, String(heightInInches));
       }
       onSubmitted?.();
-      navigate("/ClientDashboard", { replace: true });
+      navigate("/clientDashboard", { replace: true });
     } catch (err) {
       console.error("survey request error:", err);
     }
