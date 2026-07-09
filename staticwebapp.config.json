@@ -1,5 +1,27 @@
 {
-"navigationFallback": {
+  "navigationFallback": {
     "rewrite": "index.html",
-    "exclude": ["*.{svg,png,jpg,gif}","*.{css,scss}","*.js"]
-  }}
+    "exclude": [
+      "*.{svg,png,jpg,gif}",
+      "*.{css,scss}",
+      "*.js"
+    ]
+  },
+  "routes": [
+    {
+      "route": "/*",
+      "methods": [
+        "post",
+        "delete",
+        "patch",
+        "connect",
+        "options",
+        "trace",
+        "put",
+        "head",
+        "get"
+      ],
+      "statusCode": 410
+    }
+  ]
+}
